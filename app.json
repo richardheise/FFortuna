@@ -1,0 +1,13 @@
+{
+  "expo": {
+    "name": "FFortuna · Demonstração",
+    "slug": "ffortuna-demo",
+    "scheme": "ffortuna-demo",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "plugins": ["expo-router"],
+    "android": { "package": "org.ffortuna.demo" },
+    "experiments": { "typedRoutes": true }
+  }
+}
