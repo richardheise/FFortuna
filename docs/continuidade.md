@@ -23,7 +23,7 @@ Sessão encerrada a pedido do usuário. O usuário aprovou a demonstração no c
 Após encerrar o Metro anterior, no workspace:
 
 ```sh
-cd /home/heise/OpenMoney
+cd /home/heise/FFortuna
 nvm use
 npm ci
 npm run check
@@ -36,6 +36,6 @@ Com a demonstração aprovada, o próximo incremento acordado é a prova nativa 
 
 ## Git e entrega
 
-O primeiro commit em `main` reúne o código e a documentação desta entrega. O repositório não tem remoto configurado. O usuário informou que enviará a URL depois; push pendente dessa informação. Não criar/publicar um repositório remoto presumindo destino ou visibilidade. A confirmação final da sessão deve informar o hash do commit e se o push realmente ocorreu.
+O primeiro commit em `main`, `913faa0`, reúne o código e a documentação desta entrega. Em 23/10/2026, o usuário informou o remoto `https://github.com/richardheise/FFortuna.git`, configurado como `origin`, e o workspace passou a ser `/home/heise/FFortuna`. O destino da publicação é `origin/main`; a confirmação final deve refletir o resultado efetivo do push. Não criar outro repositório ou alterar sua visibilidade por suposição.
 
 Os temporários de validação não são necessários para executar os comandos acima; nenhuma dependência do projeto aponta para `/tmp`.

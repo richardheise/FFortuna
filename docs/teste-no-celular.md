@@ -9,7 +9,7 @@ Este roteiro usa exclusivamente valores inventados. Ele é um roteiro a executar
 No computador, use Node 24 e execute:
 
 ```sh
-cd /home/heise/OpenMoney
+cd /home/heise/FFortuna
 nvm use
 npm ci
 npm start -- --lan

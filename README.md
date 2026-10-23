@@ -9,7 +9,7 @@ Esta entrega é uma **demonstração no Expo Go, exclusivamente com dados fictí
 Use Node 24, npm e Expo Go para Android compatível com SDK 57. Com nvm instalado:
 
 ```sh
-cd /home/heise/OpenMoney
+cd /home/heise/FFortuna
 nvm use
 npm ci
 npm start -- --lan
