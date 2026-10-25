@@ -1,3 +1,4 @@
+import { CaptureScreen } from '../src/capture/CaptureScreen';
 import React, { useCallback, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -13,6 +14,9 @@ type Tab = 'Resumo' | 'Histórico' | 'Revisão' | 'Meu dinheiro';
 const tabs: Tab[] = ['Resumo', 'Histórico', 'Revisão', 'Meu dinheiro'];
 function currentMonth() { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`; }
 export default function Home() {
+  return process.env.EXPO_PUBLIC_FFORTUNA_MODE === 'capture-poc' ? <CaptureScreen /> : <DemoHome />;
+}
+function DemoHome() {
   const { service, snapshot, refresh, newId, loading, error } = useFinance();
   const [tab, setTab] = useState<Tab>('Resumo');
   const [month, setMonth] = useState(currentMonth());

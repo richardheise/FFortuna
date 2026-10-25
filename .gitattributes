@@ -1,0 +1,6 @@
+# Preserve audited upstream evidence and license assets byte for byte, including original whitespace.
+LICENSE -text
+legal/native-license-texts/** -text -whitespace
+legal/npm-license-texts/** -text -whitespace
+legal/source/** -text -whitespace
+modules/ffortuna-capture/android/src/main/assets/ffortuna-legal/** -text -whitespace

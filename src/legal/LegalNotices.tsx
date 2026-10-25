@@ -2,12 +2,14 @@ import { useMemo, useState } from 'react';
 import { FlatList, Modal, Pressable, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import notices from './notices.json';
+import nativeNotices from './native-notices.json';
 
 /** Small chunks keep long license texts readable without laying out the entire inventory at once. */
 export function LegalNotices({ visible, onClose }: { visible: boolean; onClose: () => void }) {
   const [section, setSection] = useState<'appLicense' | 'thirdPartyText'>('appLicense');
   const chunks = useMemo(() => {
-    const lines = notices[section].split('\n');
+    const text = section === 'thirdPartyText' ? (process.env.EXPO_PUBLIC_FFORTUNA_MODE === 'capture-poc' ? nativeNotices.text : notices.thirdPartyText) : notices.appLicense;
+    const lines = text.split('\n');
     const result: string[] = [];
     for (let start = 0; start < lines.length; start += 45) result.push(lines.slice(start, start + 45).join('\n'));
     return result;

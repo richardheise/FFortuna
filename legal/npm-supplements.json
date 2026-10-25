@@ -1,0 +1,65 @@
+[
+  {
+    "name": "@react-native/assets-registry",
+    "version": "0.86.3",
+    "license": "MIT",
+    "sourceUrl": "https://github.com/react/react-native/blob/v0.86.3/LICENSE",
+    "textFile": "legal/npm-license-texts/react-native-v0.86.3-MIT.txt",
+    "reason": "Este subpacote consta no source map do APK Android release; LICENSE do monorepo upstream na tag exata v0.86.3.",
+    "evidence": "android/app/build/generated/sourcemaps/react/release/index.android.bundle.map"
+  },
+  {
+    "name": "@react-native/js-polyfills",
+    "version": "0.86.3",
+    "license": "MIT",
+    "sourceUrl": "https://github.com/react/react-native/blob/v0.86.3/LICENSE",
+    "textFile": "legal/npm-license-texts/react-native-v0.86.3-MIT.txt",
+    "reason": "Este subpacote consta no source map do APK Android release; LICENSE do monorepo upstream na tag exata v0.86.3.",
+    "evidence": "android/app/build/generated/sourcemaps/react/release/index.android.bundle.map"
+  },
+  {
+    "name": "@react-native/normalize-colors",
+    "version": "0.86.3",
+    "license": "MIT",
+    "sourceUrl": "https://github.com/react/react-native/blob/v0.86.3/LICENSE",
+    "textFile": "legal/npm-license-texts/react-native-v0.86.3-MIT.txt",
+    "reason": "Este subpacote consta no source map do APK Android release; LICENSE do monorepo upstream na tag exata v0.86.3.",
+    "evidence": "android/app/build/generated/sourcemaps/react/release/index.android.bundle.map"
+  },
+  {
+    "name": "@react-native/virtualized-lists",
+    "version": "0.86.3",
+    "license": "MIT",
+    "sourceUrl": "https://github.com/react/react-native/blob/v0.86.3/LICENSE",
+    "textFile": "legal/npm-license-texts/react-native-v0.86.3-MIT.txt",
+    "reason": "Este subpacote consta no source map do APK Android release; LICENSE do monorepo upstream na tag exata v0.86.3.",
+    "evidence": "android/app/build/generated/sourcemaps/react/release/index.android.bundle.map"
+  },
+  {
+    "name": "expo-router",
+    "version": "57.0.29",
+    "license": "MIT",
+    "sourceUrl": "https://github.com/expo/expo/blob/c5a313cb64de255fef39c54cc3c8d08537cf7133/LICENSE",
+    "textFile": "legal/npm-license-texts/expo-sdk57-MIT.txt",
+    "reason": "Pacote consta no source map do APK; pacote publicado identifica este gitHead e o LICENSE MIT do monorepo no mesmo commit.",
+    "evidence": "package.json gitHead c5a313cb64de255fef39c54cc3c8d08537cf7133; android/app/build/generated/sourcemaps/react/release/index.android.bundle.map"
+  },
+  {
+    "name": "@expo/ui",
+    "version": "57.0.26",
+    "license": "MIT",
+    "sourceUrl": "https://github.com/expo/expo/blob/c5a313cb64de255fef39c54cc3c8d08537cf7133/LICENSE",
+    "textFile": "legal/npm-license-texts/expo-sdk57-MIT.txt",
+    "reason": "Pacote consta no source map do APK; pacote publicado identifica este gitHead e o LICENSE MIT do monorepo no mesmo commit.",
+    "evidence": "package.json gitHead c5a313cb64de255fef39c54cc3c8d08537cf7133; android/app/build/generated/sourcemaps/react/release/index.android.bundle.map"
+  },
+  {
+    "name": "standard-navigation",
+    "version": "0.0.5",
+    "license": "MIT",
+    "sourceUrl": "https://github.com/react-navigation/standard-navigation/blob/33f3d3c976a24bad9fe32583939318bc143fa41b/LICENSE",
+    "textFile": "legal/npm-license-texts/standard-navigation-0.0.5-MIT.txt",
+    "reason": "A versão 0.0.5 aparece no source map do APK. O package.json dessa versão declara MIT; o próprio upstream adicionou depois este texto LICENSE para corrigir sua ausência e fechou a issue #7.",
+    "evidence": "npm registry 0.0.5: gitHead 0016fae7800b9f27bab91326697b740a6d2266dc, license MIT e author Satyajit Sahoo; o commit gitHead não contém LICENSE nem headers copyright/SPDX no arquivo lib/src/index.js mapeado. O commit 33f3d3c976a24bad9fe32583939318bc143fa41b adiciona LICENSE com Copyright (c) 2026 React Navigation Contributors. Issue upstream #7 “License file is missing”, aberta em 2026-07-24 e fechada por esse commit em 2026-08-06."
+  }
+]

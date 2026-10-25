@@ -1,0 +1,218 @@
+[
+  {
+    "component": "Boost",
+    "version": "1.83.0",
+    "license": "BSL-1.0",
+    "sourceUrl": "https://github.com/boostorg/boost/blob/boost-1.83.0/LICENSE_1_0.txt",
+    "textFile": "legal/native-license-texts/boost-1.83.0-BSL-1.0.txt",
+    "reason": "Pinned by React Native Android native build; source license copied from the exact upstream release/tag.",
+    "evidence": "React Native v0.86.3 packages/react-native/gradle/libs.versions.toml (native dependency pins); ReactAndroid/build.gradle.kts downloads/links this component into the native build."
+  },
+  {
+    "component": "double-conversion",
+    "version": "1.1.6",
+    "license": "BSD-3-Clause",
+    "sourceUrl": "https://github.com/google/double-conversion/blob/v1.1.6/LICENSE",
+    "textFile": "legal/native-license-texts/double-conversion-1.1.6-BSD.txt",
+    "reason": "Pinned by React Native Android native build; source license copied from the exact upstream release/tag.",
+    "evidence": "React Native v0.86.3 packages/react-native/gradle/libs.versions.toml (native dependency pins); ReactAndroid/build.gradle.kts downloads/links this component into the native build."
+  },
+  {
+    "component": "fast_float",
+    "version": "8.0.0",
+    "license": "MIT OR Apache-2.0 OR BSL-1.0",
+    "sourceUrl": "https://github.com/fastfloat/fast_float/tree/v8.0.0",
+    "textFile": "legal/native-license-texts/fast-float-8.0.0-licenses.txt",
+    "reason": "Pinned by React Native Android native build; source license copied from the exact upstream release/tag.",
+    "evidence": "React Native v0.86.3 packages/react-native/gradle/libs.versions.toml (native dependency pins); ReactAndroid/build.gradle.kts downloads/links this component into the native build."
+  },
+  {
+    "component": "fmt",
+    "version": "12.1.0",
+    "license": "MIT",
+    "sourceUrl": "https://github.com/fmtlib/fmt/blob/12.1.0/LICENSE",
+    "textFile": "legal/native-license-texts/fmt-12.1.0-MIT.txt",
+    "reason": "Pinned by React Native Android native build; source license copied from the exact upstream release/tag.",
+    "evidence": "React Native v0.86.3 packages/react-native/gradle/libs.versions.toml (native dependency pins); ReactAndroid/build.gradle.kts downloads/links this component into the native build."
+  },
+  {
+    "component": "Folly",
+    "version": "2024.11.18.00",
+    "license": "Apache-2.0",
+    "sourceUrl": "https://github.com/facebook/folly/blob/v2024.11.18.00/LICENSE",
+    "textFile": "legal/native-license-texts/folly-2024.11.18.00-Apache-2.0.txt",
+    "reason": "Pinned by React Native Android native build; source license copied from the exact upstream release/tag.",
+    "evidence": "React Native v0.86.3 packages/react-native/gradle/libs.versions.toml (native dependency pins); ReactAndroid/build.gradle.kts downloads/links this component into the native build."
+  },
+  {
+    "component": "glog",
+    "version": "0.3.5",
+    "license": "BSD-3-Clause",
+    "sourceUrl": "https://github.com/google/glog/blob/v0.3.5/COPYING",
+    "textFile": "legal/native-license-texts/glog-0.3.5-BSD.txt",
+    "reason": "Pinned by React Native Android native build; source license copied from the exact upstream release/tag.",
+    "evidence": "React Native v0.86.3 packages/react-native/gradle/libs.versions.toml (native dependency pins); ReactAndroid/build.gradle.kts downloads/links this component into the native build."
+  },
+  {
+    "component": "gflags",
+    "version": "2.2.0",
+    "license": "BSD-3-Clause",
+    "sourceUrl": "https://github.com/gflags/gflags/blob/v2.2.0/COPYING.txt",
+    "textFile": "legal/native-license-texts/gflags-2.2.0-BSD.txt",
+    "reason": "Pinned by React Native Android native build; source license copied from the exact upstream release/tag.",
+    "evidence": "React Native v0.86.3 packages/react-native/gradle/libs.versions.toml (native dependency pins); ReactAndroid/build.gradle.kts downloads/links this component into the native build."
+  },
+  {
+    "component": "nlohmann/json",
+    "version": "3.11.2",
+    "license": "MIT",
+    "sourceUrl": "https://github.com/nlohmann/json/blob/v3.11.2/LICENSE.MIT",
+    "textFile": "legal/native-license-texts/nlohmann-json-3.11.2-MIT.txt",
+    "reason": "Pinned by React Native Android native build; source license copied from the exact upstream release/tag.",
+    "evidence": "React Native v0.86.3 packages/react-native/gradle/libs.versions.toml (native dependency pins); ReactAndroid/build.gradle.kts downloads/links this component into the native build."
+  },
+  {
+    "component": "React Native",
+    "version": "0.86.3",
+    "license": "MIT",
+    "sourceUrl": "https://github.com/react/react-native/tree/v0.86.3/LICENSE",
+    "textFile": "legal/native-license-texts/react-native-v0.86.3-MIT.txt",
+    "reason": "Upstream project license for the exact React Native Android native build version.",
+    "evidence": "React Native source tag v0.86.3; build version is the installed package 0.86.3."
+  },
+  {
+    "component": "Hermes",
+    "version": "250829098.0.17",
+    "license": "MIT",
+    "sourceUrl": "https://github.com/facebook/hermes/tree/hermes-v250829098.0.17/LICENSE",
+    "textFile": "legal/native-license-texts/hermes-v250829098.0.17-MIT.txt",
+    "reason": "Upstream engine license at the exact Hermes tag selected by React Native.",
+    "evidence": "node_modules/react-native/sdks/.hermesv1version = hermes-v250829098.0.17; Hermes tag LICENSE."
+  },
+  {
+    "component": "Hermes llvh",
+    "version": "bundled in Hermes 250829098.0.17",
+    "license": "Apache-2.0 WITH LLVM-exception",
+    "sourceUrl": "https://github.com/facebook/hermes/tree/hermes-v250829098.0.17/external/llvh/LICENSE.txt",
+    "textFile": "legal/native-license-texts/hermes-llvh-Apache-2.0-LLVM-exception.txt",
+    "reason": "LLVH license bundled in the exact Hermes source release; LLVH sources are compiled directly by Hermes.",
+    "evidence": "Hermes tag external/CMakeLists.txt says LLVH is included directly; exact external/llvh/LICENSE.txt."
+  },
+  {
+    "component": "Hermes ICU/Unicode notices",
+    "version": "bundled in Hermes 250829098.0.17",
+    "license": "ICU License; Unicode License and included third-party notices",
+    "sourceUrl": "https://github.com/facebook/hermes/tree/hermes-v250829098.0.17/external/icu_decls/license.html",
+    "textFile": "legal/native-license-texts/hermes-icu-unicode-license.html",
+    "reason": "Preserves the complete license page shipped with Hermes ICU declarations, including ICU, Unicode and its embedded third-party notices.",
+    "evidence": "Hermes tag external/icu_decls/README identifies ICU declarations; exact license.html is in that directory."
+  },
+  {
+    "component": "Hermes libc++ regex",
+    "version": "bundled in Hermes 250829098.0.17",
+    "license": "NCSA OR MIT",
+    "sourceUrl": "https://github.com/facebook/hermes/tree/hermes-v250829098.0.17/include/hermes/Regex/LICENSE.TXT",
+    "textFile": "legal/native-license-texts/hermes-regex-NCSA-MIT.txt",
+    "reason": "Regex license file bundled in the exact Hermes tag; preserves both permitted license alternatives.",
+    "evidence": "Exact Hermes tag include/hermes/Regex/LICENSE.TXT states libc++ is dual-licensed under NCSA and MIT."
+  },
+  {
+    "component": "Hermes zip",
+    "version": "bundled in Hermes 250829098.0.17",
+    "license": "Unlicense",
+    "sourceUrl": "https://github.com/facebook/hermes/tree/hermes-v250829098.0.17/external/zip/UNLICENSE",
+    "textFile": "legal/native-license-texts/hermes-zip-Unlicense.txt",
+    "reason": "Zip source is an unconditional external subdirectory of Hermes; preserve its public-domain dedication and disclaimer.",
+    "evidence": "Hermes tag external/CMakeLists.txt unconditionally add_subdirectory(zip); exact external/zip/UNLICENSE."
+  },
+  {
+    "component": "Fresco",
+    "version": "3.6.0",
+    "license": "MIT",
+    "sourceUrl": "https://github.com/facebook/fresco/tree/v3.6.0/LICENSE",
+    "textFile": "legal/native-license-texts/fresco-v3.6.0-MIT.txt",
+    "reason": "Root project license for the exact Fresco release used by Android.",
+    "evidence": "React Native Gradle version catalog pins fresco=3.6.0; Fresco tag v3.6.0 contains this LICENSE."
+  },
+  {
+    "component": "giflib",
+    "version": "5.2.1",
+    "license": "MIT",
+    "sourceUrl": "https://sourceforge.net/projects/giflib/files/giflib-5.2.1.tar.gz/download",
+    "textFile": "legal/native-license-texts/giflib-5.2.1-MIT.txt",
+    "reason": "Native code bundled by Fresco; source license is from the exact upstream release.",
+    "evidence": "Fresco 3.6.0 gradle.properties pins GIFLIB_VERSION=5.2.1 and animated-gif native build imports giflib.; Fresco v3.6.0 build.gradle/gradle.properties and module Android.mk."
+  },
+  {
+    "component": "libjpeg-turbo",
+    "version": "2.1.5.1",
+    "license": "IJG License; BSD-3-Clause; Zlib",
+    "sourceUrl": "https://github.com/libjpeg-turbo/libjpeg-turbo/tree/2.1.5.1",
+    "textFile": "legal/native-license-texts/libjpeg-turbo-2.1.5.1-licenses.txt",
+    "reason": "Native code bundled by Fresco; source license is from the exact upstream release.",
+    "evidence": "Fresco 3.6.0 pins LIBJPEG_TURBO_VERSION=2.1.5.1; native-imagetranscoder and static-webp build files compile it. Text preserves LICENSE.md and README.ijg.; Fresco v3.6.0 build.gradle/gradle.properties and module Android.mk."
+  },
+  {
+    "component": "libpng",
+    "version": "1.6.37",
+    "license": "libpng-2.0",
+    "sourceUrl": "https://github.com/glennrp/libpng/tree/v1.6.37",
+    "textFile": "legal/native-license-texts/libpng-1.6.37-license.txt",
+    "reason": "Native code bundled by Fresco; source license is from the exact upstream release.",
+    "evidence": "Fresco 3.6.0 pins LIBPNG_VERSION=1.6.37 and static-webp compiles libpng.; Fresco v3.6.0 build.gradle/gradle.properties and module Android.mk."
+  },
+  {
+    "component": "libwebp",
+    "version": "1.3.2",
+    "license": "BSD-3-Clause",
+    "sourceUrl": "https://github.com/webmproject/libwebp/tree/v1.3.2",
+    "textFile": "legal/native-license-texts/libwebp-1.3.2-BSD.txt",
+    "reason": "Native code bundled by Fresco; source license is from the exact upstream release.",
+    "evidence": "Fresco 3.6.0 pins LIBWEBP_VERSION=1.3.2 and static-webp compiles libwebp.; Fresco v3.6.0 build.gradle/gradle.properties and module Android.mk."
+  },
+  {
+    "component": "zstd-kmp-android",
+    "version": "0.4.0",
+    "license": "Apache-2.0",
+    "sourceUrl": "https://github.com/square/zstd-kmp/blob/parent-0.4.0/LICENSE",
+    "textFile": "legal/native-license-texts/zstd-kmp-0.4.0-Apache-2.0.txt",
+    "reason": "License of the Android wrapper artifact that packages libzstd-kmp.so.",
+    "evidence": "Maven POM com.squareup.zstd:zstd-kmp-android:0.4.0 declares Apache-2.0 and SCM https://github.com/square/okio-zstd; the published AAR contains jni/arm64-v8a/libzstd-kmp.so; APK android/app/build/outputs/apk/release/app-release.apk contains lib/arm64-v8a/libzstd-kmp.so."
+  },
+  {
+    "component": "Zstandard native core",
+    "version": "1dbc2e09084e843f6c0dcc2d0791610015c50979",
+    "license": "BSD-3-Clause",
+    "sourceUrl": "https://github.com/facebook/zstd/blob/1dbc2e09084e843f6c0dcc2d0791610015c50979/LICENSE",
+    "textFile": "legal/native-license-texts/zstd-core-1dbc2e0-BSD.txt",
+    "reason": "Separate license for the Zstandard C implementation statically compiled into the Square JNI library.",
+    "evidence": "Square zstd-kmp parent tag parent-0.4.0 has submodule zstd at exact gitlink 1dbc2e09084e843f6c0dcc2d0791610015c50979; src/androidMain/CMakeLists.txt adds ../../../zstd/build/cmake and links libzstd_static; the core license at that exact commit is BSD-3-Clause. The AAR and APK both contain libzstd-kmp.so. The wrapper POM separately declares Apache-2.0."
+  },
+  {
+    "component": "androidx.graphics:graphics-path",
+    "version": "1.0.1",
+    "license": "Apache-2.0",
+    "sourceUrl": "https://dl.google.com/dl/android/maven2/androidx/graphics/graphics-path/1.0.1/graphics-path-1.0.1.pom",
+    "textFile": "legal/native-license-texts/androidx-graphics-path-1.0.1-Apache-2.0.txt",
+    "reason": "AndroidX POM license for the release containing libandroidx.graphics.path.so; exact release native source has no Skia source dependency.",
+    "evidence": "Google Maven POM for androidx.graphics:graphics-path:1.0.1 declares Apache-2.0; AAR contains jni/arm64-v8a/libandroidx.graphics.path.so; APK contains lib/arm64-v8a/libandroidx.graphics.path.so. Release notes link source range 4fcd99eacd92d7c73fb1d3580fd423ed7704a98a..8a05a22af450d589ef911d772a001a49dcb05b71; CMakeLists.txt at 8a05a22 builds only Conic.cpp, PathIterator.cpp and pathway.cpp with no Skia dependency or copied Skia source in the module archive. The exact C++ source files carry AndroidX Apache-2.0 headers; no separate Skia BSD notice is evidenced."
+  },
+  {
+    "component": "Zstandard bundled xxhash",
+    "version": "1dbc2e09084e843f6c0dcc2d0791610015c50979",
+    "license": "BSD-3-Clause (selected root LICENSE alternative)",
+    "sourceUrl": "https://raw.githubusercontent.com/facebook/zstd/1dbc2e09084e843f6c0dcc2d0791610015c50979/lib/common/xxhash.h",
+    "textFile": "legal/native-license-texts/zstd-xxhash-copyright.txt",
+    "reason": "Copyright and redistribution conditions in the exact source headers of the statically linked Zstandard library.",
+    "evidence": "square/okio-zstd parent-0.4.0 zstd submodule and static linkage"
+  },
+  {
+    "component": "Zstandard bundled fse",
+    "version": "1dbc2e09084e843f6c0dcc2d0791610015c50979",
+    "license": "BSD-3-Clause (selected root LICENSE alternative)",
+    "sourceUrl": "https://raw.githubusercontent.com/facebook/zstd/1dbc2e09084e843f6c0dcc2d0791610015c50979/lib/common/fse.h",
+    "textFile": "legal/native-license-texts/zstd-fse-copyright.txt",
+    "reason": "Copyright and redistribution conditions in the exact source headers of the statically linked Zstandard library.",
+    "evidence": "square/okio-zstd parent-0.4.0 zstd submodule and static linkage"
+  }
+]

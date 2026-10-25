@@ -101,6 +101,8 @@ function licenseTextForFile(file, pkgName) {
   return { raw, sourceNote: '' };
 }
 
+const supplementsPath = join(root, 'legal/npm-supplements.json');
+const supplements = existsSync(supplementsPath) ? JSON.parse(readFileSync(supplementsPath, 'utf8')) : [];
 const inventory = [];
 const licenseGroups = new Map();
 const gaps = [];
@@ -114,9 +116,12 @@ for (const key of [...runtimeKeys].sort()) {
   const license = declaredLicense(lockPackage, pkg);
   const selectedLicense = chosenLicense(name, license);
   const upstream = origin(pkg, lockPackage);
-  const files = existsSync(directory) ? findLicenseFiles(directory) : [];
+  const localFiles = existsSync(directory) ? findLicenseFiles(directory) : [];
+  const extra = supplements.filter((item) => item.name === name && item.version === lockPackage.version);
+  const files = [...localFiles, ...extra.map((item) => join(root, item.textFile))];
   const sources = files.map((file) => relative(root, file).split('\\').join('/'));
-  const entry = { name, version: lockPackage.version, license, includedLicense: selectedLicense, origin: upstream, licenseSources: sources };
+  const upstreamSources = extra.map((item) => item.sourceUrl);
+  const entry = { name, version: lockPackage.version, license, includedLicense: selectedLicense, origin: upstream, licenseSources: sources, upstreamSources };
   inventory.push(entry);
   if (!files.length) gaps.push(`${name}@${lockPackage.version}: ${license}; ${existsSync(directory) ? 'nenhum LICENSE/NOTICE na raiz do pacote instalado' : 'pacote opcional sem instalação local (texto não disponível)'}`);
   for (const file of files) {
@@ -172,15 +177,17 @@ const markdown = [
   '',
   'O código-fonte do FFortuna está sob AGPL-3.0-only. O texto completo está em `LICENSE` e também no campo `appLicense` de [`src/legal/notices.json`](src/legal/notices.json).',
   '',
-  'O inventário segue o fechamento de dependências de produção de `package-lock.json`, incluindo dependências opcionais e peers instalados. Ele também inclui ferramentas de build e plataforma; isso não significa que todos os pacotes estarão no APK. O app ainda é distribuído como código-fonte e não como APK.',
+  'O inventário npm segue o fechamento de dependências de produção de `package-lock.json`, incluindo opcionais e peers. Também inclui ferramentas de build; a revisão do APK usa separadamente o source map e o grafo Android release, registrados em [legal/apk-components.json](legal/apk-components.json).',
   '',
-  'O JSON reúne textos LICENSE/NOTICE disponíveis, agrupados quando são idênticos, além de versões, metadados de licença e origens. Cada texto precisa estar na raiz do próprio pacote. O script não herda licenças de pacotes pais nem reconstrói textos ausentes.',
+  'O JSON reúne textos LICENSE/NOTICE do próprio pacote e suplementos upstream verificados e versionados em [legal/npm-supplements.json](legal/npm-supplements.json). Não há herança automática de licenças de pastas pais. Textos idênticos são deduplicados, preservando origem e avisos de copyright.',
   '',
   '| Dependência direta | Versão no lockfile | Metadados de licença | Origem upstream |',
   '| --- | --- | --- | --- |',
   ...directRows.map((item) => `| \`${item.name}\` | ${item.version} | ${item.license.replaceAll('|', '\\|')} | ${item.origin} |`),
   '',
-  `O inventário contém ${inventory.length} pacotes de produção. Há ${gaps.length} lacunas de texto LICENSE/NOTICE, detalhadas ao final do JSON. Feche essas lacunas e confira as licenças antes de distribuir um APK.`,
+  `O inventário npm contém ${inventory.length} entradas e ${gaps.length} lacunas de texto entre ferramentas/opcionais, detalhadas no JSON. Isso não é a contagem de pendências do APK. A cobertura do binário está no [relatório da revisão](docs/revisao-licencas-apk.md).`,
+  '',
+  'A prova Android também inclui [avisos nativos](src/legal/native-notices.json), exibidos na interface junto deste inventário. O inventário npm não é um inventário completo dos artefatos Maven/NDK do APK.',
   '',
   'Gere novamente o inventário após mudanças nas dependências:',
   '',

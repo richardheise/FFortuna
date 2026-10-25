@@ -1,0 +1,98 @@
+[
+  {
+    "pattern": "com.facebook.react:react-android:0.86.3",
+    "license": "MIT",
+    "textFile": "legal/native-license-texts/react-native-v0.86.3-MIT.txt",
+    "sourceUrl": "https://github.com/react/react-native/tree/v0.86.3"
+  },
+  {
+    "pattern": "com.facebook.hermes:hermes-android:250829098.0.17",
+    "license": "MIT",
+    "textFile": "legal/native-license-texts/hermes-v250829098.0.17-MIT.txt",
+    "sourceUrl": "https://github.com/facebook/hermes/tree/hermes-v250829098.0.17"
+  },
+  {
+    "pattern": "com.facebook.fresco:*:3.6.0",
+    "license": "MIT",
+    "textFile": "legal/native-license-texts/fresco-3.6.0.txt",
+    "sourceUrl": "https://github.com/facebook/fresco/tree/v3.6.0"
+  },
+  {
+    "pattern": "com.facebook.infer.annotation:infer-annotation:0.18.0",
+    "license": "MIT",
+    "textFile": "legal/native-license-texts/infer-annotation-0.18.0.txt",
+    "sourceUrl": "https://github.com/facebook/infer/tree/infer-annotation-0.18.0"
+  },
+  {
+    "pattern": "com.facebook.yoga:proguard-annotations:1.19.0",
+    "license": "MIT",
+    "textFile": "legal/native-license-texts/yoga-1.19.0.txt",
+    "sourceUrl": "https://github.com/facebook/yoga/tree/v1.19.0"
+  },
+  {
+    "pattern": "io.github.lukmccall.pika:pika-api:0.3.2",
+    "license": "MIT",
+    "textFile": "legal/native-license-texts/pika-0.3.2.txt",
+    "sourceUrl": "https://github.com/LukMcCall/pika/tree/v0.3.2"
+  },
+  {
+    "pattern": "com.parse.bolts:bolts-tasks:1.4.0",
+    "license": "BSD-3-Clause",
+    "textFile": "legal/native-license-texts/bolts-1.4.0.txt",
+    "sourceUrl": "https://github.com/BoltsFramework/Bolts-Android/tree/1.4.0"
+  },
+  {
+    "pattern": "net.zetetic:sqlcipher-android:4.19.1",
+    "license": "BSD-3-Clause",
+    "textFile": "legal/native-license-texts/sqlcipher-android-4.19.1.txt",
+    "sourceUrl": "https://github.com/sqlcipher/sqlcipher-android/tree/v4.19.1"
+  },
+  {
+    "pattern": "org.brotli:dec:0.1.2",
+    "license": "MIT",
+    "textFile": "legal/native-license-texts/brotli-1.0.3.txt",
+    "sourceUrl": "https://github.com/google/brotli/tree/v1.0.3"
+  },
+  {
+    "pattern": "org.brotli:dec:0.1.2",
+    "license": "MIT",
+    "textFile": "legal/native-license-texts/dec-0.1.2-source-copyrights.txt",
+    "sourceUrl": "https://repo.maven.apache.org/maven2/org/brotli/dec/0.1.2/dec-0.1.2-sources.jar"
+  },
+  {
+    "pattern": "javax.inject:javax.inject:1",
+    "license": "Apache-2.0",
+    "textFile": "legal/native-license-texts/javax.inject-1-source-copyrights.txt",
+    "sourceUrl": "https://repo.maven.apache.org/maven2/javax/inject/javax.inject/1/javax.inject-1-sources.jar"
+  },
+  {
+    "pattern": "javax.inject:javax.inject:1",
+    "license": "Apache-2.0",
+    "textFile": "legal/native-license-texts/apache-2.0.txt",
+    "sourceUrl": "https://www.apache.org/licenses/LICENSE-2.0.txt"
+  },
+  {
+    "pattern": "com.facebook.fbjni:fbjni:0.7.0",
+    "license": "Apache-2.0",
+    "textFile": "legal/native-license-texts/fbjni-0.7.0.txt",
+    "sourceUrl": "https://github.com/facebookincubator/fbjni/tree/v0.7.0"
+  },
+  {
+    "pattern": "com.facebook.soloader:*:0.12.1",
+    "license": "Apache-2.0",
+    "textFile": "legal/native-license-texts/soloader-0.12.1.txt",
+    "sourceUrl": "https://github.com/facebook/SoLoader/tree/v0.12.1"
+  },
+  {
+    "pattern": "com.squareup.okhttp3:*:4.9.2",
+    "license": "Apache-2.0",
+    "textFile": "legal/native-license-texts/okhttp-4.9.2.txt",
+    "sourceUrl": "https://github.com/square/okhttp/tree/parent-4.9.2"
+  },
+  {
+    "pattern": "com.squareup.okio:*:3.16.0",
+    "license": "Apache-2.0",
+    "textFile": "legal/native-license-texts/okio-3.16.0.txt",
+    "sourceUrl": "https://github.com/square/okio/tree/parent-3.16.0"
+  }
+]

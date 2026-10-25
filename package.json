@@ -13,7 +13,9 @@
     "typecheck": "tsc --noEmit",
     "test": "node --import tsx --test --test-isolation=none tests/*.test.ts",
     "check": "npm run typecheck && npm test",
-    "export:android": "EXPO_NO_TELEMETRY=1 expo export --platform android"
+    "export:android": "EXPO_NO_TELEMETRY=1 expo export --platform android",
+    "native:build": "EXPO_NO_TELEMETRY=1 node scripts/build-capture-poc.mjs",
+    "native:test": "EXPO_NO_TELEMETRY=1 node scripts/build-capture-poc.mjs --test-only"
   },
   "dependencies": {
     "expo": "~57.0.31",

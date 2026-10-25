@@ -119,3 +119,11 @@ _Evitar_: rendimento apurado, correção silenciosa de saldo
 **Lançamento automático**:
 Confirmação de uma transação por critérios explícitos de segurança dos campos financeiros e da identidade da observação, sem exigir ação individual do usuário.
 _Evitar_: completude do extrato, categoria necessariamente certa
+
+**Backup portátil**:
+Arquivo cifrado com senha independente da chave local, que permite restaurar registros em outra instalação. Na prova nativa, preserva observações e parsing sintéticos, sem payloads brutos.
+_Evitar_: backup automático do Android, cópia da chave do Keystore
+
+**Caixa anterior**:
+Caixa cifrada preservada ao ativar uma restauração. Permanece inativa e não é mesclada à caixa ativa; pode ser reativada se sua chave local estiver disponível ou descartada explicitamente.
+_Evitar_: segundo livro financeiro, backup portátil

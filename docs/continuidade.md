@@ -1,41 +1,72 @@
-# Retomada — 22/10/2026
+# Retomada — prova nativa iniciada em 23/10/2026
 
-Sessão encerrada a pedido do usuário. O usuário aprovou a demonstração no celular e definiu: priorizar funcionalidades, em incrementos pequenos, antes do refinamento de interface/UI/UX.
+O usuário aprovou a demonstração financeira no celular e autorizou a prova nativa seguinte. Prioridade: funcionalidades antes do refinamento UI/UX, em incrementos pequenos.
 
-## Onde paramos
+Em 25/10/2026, confirmou instalação do APK no A36, acesso Android concedido e listener conectado. No teste inicial, a caixa cifrada ficou indisponível, impedindo ativação/publicação. Identificada a chamada incorreta `execSQL` para `PRAGMA secure_delete=ON`, que retorna uma linha e é rejeitada pelo driver. Correção 0.2.1 usa cursor, preserva chave/banco, mostra requisitos pendentes e códigos de falha sem conteúdo sensível. Depois da disponibilização da correção, o usuário relatou que testou o APK e todos os itens do roteiro manual passaram no A36. Essa é evidência de teste manual informado pelo usuário; os testes instrumentados continuam sem execução automatizada. Não foi necessário orientar reset.
 
-- FFortuna: demonstração Android no Expo Go, SDK 57, exclusivamente sintética. Conta, receitas/despesas, resumo mensal, caixinhas, compromissos do cartão, captura simulada, revisão/evidências, reprocessamento e três importações OFX sintéticas implementados.
-- O usuário começou a preparar/testar por SSH. Foi orientado a usar `npm start -- --tunnel`, com Expo Go Android compatível. O usuário informou que olhou a implementação no celular e aprovou; não detalhou aparelho/Android nem o percurso executado.
-- Ainda não existe APK próprio, captura Kotlin, acesso ao Nubank, importação de arquivos pessoais ou banco real cifrado. Não usar dados financeiros reais nos formulários.
-- Correção das dependências preparada no código e lockfile: decoder seguro 0.5.0 com ponte CommonJS; autorização restrita do postinstall do esbuild 0.28.2.
-- **A instalação ativa não foi alterada** para preservar o teste do usuário. Será necessário parar o Metro e executar `npm ci` ao retomar. O banco da demonstração no celular não foi tocado.
-- Audit reduzido de 21 para 18 alertas, todos altos, causados por duas falhas upstream ainda sem patch. Detalhes, fontes e comandos em [dependencias.md](dependencias.md).
+## Incremento 0.3.0 — backup da caixa sintética
 
-## Evidência disponível
+O usuário autorizou backup/restauração e aceitou senha independente, ausência de bruto e restauração em nova caixa com preservação da anterior, sem mesclar. Informou também que desinstalou a prova: sem backup anterior, os exemplos e a chave local foram perdidos; a nova instalação pode gerar fixtures novamente.
 
-- Demonstração original: TypeScript, 27 testes, bundle Android e percurso de interface em Chromium aprovados. Não equivale a teste Android.
-- Correção das dependências: cópia isolada com instalação limpa, TypeScript, 30 testes, compatibilidade de pacotes Expo e bundle Android aprovados. Interoperabilidade da ponte também verificada em bundle JavaScript Android do Metro executado em VM Node.
-- Aprovação de uso no celular foi relatada pelo usuário. Compatibilidade da correção posterior de dependências, persistência após encerramento e cada critério do roteiro não foram documentados individualmente; não afirmar esses resultados por inferência.
-- Licença AGPL-3.0-only. Nenhum código/assets das referências Finan+/PennyWise foi copiado. Avisos de dependências foram regenerados; continuam 53 lacunas de textos a resolver antes de distribuir APK.
+Implementados PBKDF2-HMAC-SHA256/600.000 + AES-256-GCM, formato autenticado/versionado/limitado, seletor SAF sem cache em claro, validação antes da importação, staging SQLCipher recuperável e troca de ponteiro serial/atômica com captura desativada. No máximo uma caixa anterior, com ações explícitas para alternar/descartar. A senha não é persistida; inputs do contrato Android contêm apenas ação/nome público. Os registros sem bruto não entram na fila processável. Backup não inclui o livro financeiro Expo Go nem habilita bancos reais.
 
-## Primeira ação na próxima sessão
+Resultado local: TypeScript + 30 testes TypeScript e 13 testes JVM aprovados. Treze testes instrumentados compilados, não executados (incluem restauração sem chave original, staging interrompido, caixas anteriores, AtomicFile e probes sintéticos em journal/WAL/SHM). APK 0.3.0 gerado, assinado e inspecionado; roteiro físico de backup ainda pendente. Usar o [roteiro 0.3.0](captura-nativa.md#backup-portátil--roteiro-030). A aprovação física anterior é da captura 0.2.1; não atribuir à versão nova.
 
-Após encerrar o Metro anterior, no workspace:
+## Estado atual
+
+- Demonstração Expo Go preservada, exclusivamente sintética; 30 testes TypeScript aprovados após aplicar o lockfile corrigido.
+- Implementado módulo Kotlin/Expo Modules API com listener filtrado para o próprio emissor fictício, gravação durável em SQLCipher 4.19.1, chave encapsulada pelo Keystore, fila de escrita nativa, recuperação, identidade/revisões e tela de diagnóstico.
+- A prova usa `org.ffortuna.capturepoc`, não abre o livro financeiro da demonstração e não aceita bancos ou arquivos pessoais. Dados reais continuam bloqueados, inclusive diagnóstico real, até concluir as condições de segurança.
+- Treze testes JVM Kotlin executados e aprovados. Treze testes instrumentados compilados; execução real ainda pendente. `adb devices -l` não encontrou aparelho conectado; KVM ausente, sem emulador iniciado.
+- Aparelho informado: Samsung Galaxy A36 SM-A366E/DS, Android 16. O roteiro está em [captura-nativa.md](captura-nativa.md).
+- Toolchain local instalada e ignorada em `.local/android-toolchain`: Temurin17.0.21+9, SDK36, BuildTools36/35, NDK27.1.12297006, CMake3.22.1. Chave de assinatura local em `.local/keys`; não apagar, sobrescrever ou enviar ao Git.
+- Houve reinício do PC durante tentativa de compilação; não foi confirmada causa por OOM nos registros consultados. Build foi interrompido e ganhou limite rígido de memória/CPU, checks do Ninja e Metro limitado. Após isso, o usuário autorizou até 12 GiB e 16 CPUs. Manter esses tetos; não aumentar automaticamente. Projetos Gradle seguem sequenciais, C++ limitado a 16 jobs e linker a um.
+- APK release 0.3.0 (versionCode 3) gerado e inspecionado em 25/10/2026: `artifacts/ffortuna-capture-poc-arm64.apk`, SHA-256 `46778d77d2294031697f99f52a736f0f218341564f9859b4732e7779597b42f6`. Assinatura, backup desabilitado, ausência de INTERNET, bundle offline e 23 bibliotecas nativas alinhadas a 16 KB verificados. Os treze testes de dispositivo foram compilados; o APK leva os avisos revisados. A assinatura coincide com a versão 0.2.0. Instalação/acesso/conexão da versão anterior confirmados, mas captura bloqueada pela falha de inicialização; o roteiro de captura 0.2.1 foi aprovado pelo usuário no A36; o novo roteiro 0.3.0 aguarda validação e o aparelho não está conectado ao ADB deste ambiente.
+
+## Executar
 
 ```sh
 cd /home/heise/FFortuna
 nvm use
 npm ci
 npm run check
-npm start -- --tunnel
+npm run native:build
 ```
 
-O túnel usa serviço externo para servir o ambiente de desenvolvimento; o banco fica no aparelho. Se o pacote ngrok ainda não estiver instalado no Node ativo, seguir a orientação do CLI. O fluxo e os saldos esperados estão em [teste-no-celular.md](teste-no-celular.md). Registrar modelo/Android/Expo Go e o resultado, sem alegar execução antes disso.
+O build requer systemd/cgroup e recusa iniciar sem confirmar o limite rígido. O script configura e confere os pools do Ninja antes de compilar; preserve esse check. Android é gerado/ignorado, enquanto o código fonte do módulo fica em `modules/ffortuna-capture`.
 
-Com a demonstração aprovada, o próximo incremento acordado é a prova nativa local: preparar SDK/JDK, gerar build Android próprio, capturar notificações sintéticas com NotificationListenerService e persistir de forma cifrada sem depender do JavaScript. Amostras reais continuam bloqueadas até completar as condições de segurança do [alinhamento aceito](alinhamento-inicial.md).
+Artefato esperado: `artifacts/ffortuna-capture-poc-arm64.apk` com SHA-256 e relatório de inspeção ao lado. Instalação por transferência local/ADB, sem publicar APK automaticamente. O usuário informou aprovação de todos os itens do roteiro manual no A36 após a correção. Não foram fornecidos resultados individuais, logs ou execução instrumentada; não extrapolar esse relato para garantia de captura sem perdas ou suporte a outros aparelhos.
 
-## Git e entrega
+## Pendências preservadas
 
-O primeiro commit em `main`, `913faa0`, reúne o código e a documentação desta entrega. Em 23/10/2026, o usuário informou o remoto `https://github.com/richardheise/FFortuna.git`, configurado como `origin`, e o workspace passou a ser `/home/heise/FFortuna`. O destino da publicação é `origin/main`; a confirmação final deve refletir o resultado efetivo do push. Não criar outro repositório ou alterar sua visibilidade por suposição.
+- 18 alertas altos no npm decorrentes de duas falhas upstream sem patch na auditoria de 22/10; zero moderados após a correção preparada. Ver [dependencias.md](dependencias.md).
+- Revisão técnica de licenças concluída para o APK: 71 pacotes npm, 189 coordenadas Maven, 23 bibliotecas nativas; zero pendências de textos identificadas. Sete lacunas resolvidas; as 46 restantes do inventário npm amplo não pertencem a este APK. Avisos incluídos no APK e na interface. Evidências e condições de distribuição em [revisao-licencas-apk.md](revisao-licencas-apk.md). Pré-release `v0.3.0-alpha.1` preparada; publicação dos anexos pendente de autenticação da API GitHub.
+- Backup portátil cifrado/restauração implementados para a caixa sintética, ainda sem validação física. Segurança dos arquivos auxiliares foi coberta por testes de dispositivo compilados, não executados. Amostras reais e suporte Nubank continuam bloqueados; validar também retenção de caixas inativas e logs/temporários. Não importar dados financeiros reais no Expo Go.
+- Próximo passo: executar o roteiro 0.3.0 no A36, incluindo backup local, senha errada, alternância e restauração após reinstalar sem a chave original. Depois validar instrumentação, retenção de caixas inativas e arquivos/logs antes de diagnóstico real.
 
-Os temporários de validação não são necessários para executar os comandos acima; nenhuma dependência do projeto aponta para `/tmp`.
+## Git
+
+Remoto `origin`: https://github.com/richardheise/FFortuna.git, push por SSH, branch main. O usuário autorizou salvar este checkpoint no Git e avaliar a pré-release do APK. A entrega 0.3.0 é identificada pela tag `v0.3.0-alpha.1`; consultar o commit da tag para o fonte correspondente. O acesso SSH foi conferido; a publicação da release binária fica pendente porque não há credencial utilizável da API do GitHub nem GitHub CLI autenticado neste ambiente. Notas, anexos e comando preparados em [releases/v0.3.0-alpha.1.md](releases/v0.3.0-alpha.1.md). Não colocar o APK, chaves ou dados reais no histórico de código.
+
+Checkpoint de validação: testar o roteiro manual 0.3.0 no A36 e informar resultados de salvar, senha errada, alternância e reinstalação/restauração. Nenhuma amostra real deve ser capturada antes dessas condições. Os artefatos locais estão em `artifacts/`, com recibo e checksums.
+
+## Publicar os anexos preparados
+
+
+O ambiente dispõe de Git por SSH, sem credencial utilizável da API do GitHub. Código e tag podem ser enviados; criar a release e anexar os arquivos exige autenticação adicional. Os arquivos preparados estão em `artifacts/`, ignorados pelo Git.
+
+Depois de autenticar o GitHub CLI com acesso de escrita ao repositório (sem enviar tokens ao chat), a publicação preparada é:
+
+```sh
+gh release create v0.3.0-alpha.1 --repo richardheise/FFortuna --verify-tag \
+  --prerelease --title 'FFortuna v0.3.0-alpha.1 — captura sintética e backup' \
+  --notes-file docs/releases/v0.3.0-alpha.1.md \
+  artifacts/ffortuna-capture-poc-arm64.apk \
+  artifacts/ffortuna-capture-poc-arm64.apk.sha256 \
+  artifacts/ffortuna-capture-poc-source.tar.gz \
+  artifacts/ffortuna-capture-poc-source.tar.gz.sha256 \
+  artifacts/THIRD_PARTY_NOTICES.txt artifacts/LICENSE.txt \
+  artifacts/apk-inspection.json artifacts/license-review.json artifacts/SHA256SUMS
+```
+
+Este comando é uma instrução de publicação; não foi executado neste checkpoint. Autenticar/instalar o CLI fora do APK antes de usá-lo. Não enviar credenciais no chat ou no Git.

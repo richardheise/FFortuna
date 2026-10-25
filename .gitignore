@@ -10,6 +10,7 @@
 *.qif
 *.csv
 *.pdf
+*.ffortuna
 /private-data/
 /local-data/
 /statements/
@@ -34,9 +35,16 @@ local.properties
 node_modules/
 .expo/
 .gradle/
+.kotlin/
+.cxx/
+**/android/build/
 coverage/
 dist/
 *.log
+/.local/
+/artifacts/
+/android/
+/ios/
 
 # Diretórios locais gerenciados pelo ambiente.
 /.agents/

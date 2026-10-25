@@ -2,7 +2,7 @@
 
 Aplicativo Android livre para organização financeira pessoal no Brasil. O primeiro **F** vem de *free*; **Fortuna** homenageia a deusa romana da fortuna.
 
-Esta entrega é uma **demonstração no Expo Go, exclusivamente com dados fictícios**. Inclui conta em BRL, lançamentos manuais, resumo mensal por categoria, caixinhas, compromissos iniciais do cartão, processamento de eventos sintéticos e importação OFX sintética com prévia. Os dados persistem localmente em SQLite.
+O projeto tem uma **demonstração financeira no Expo Go** e uma [prova nativa Android](docs/captura-nativa.md), ambas exclusivamente com dados fictícios. A prova usa APK próprio e caixa SQLCipher/Kotlin, sem gerar lançamentos financeiros. Inclui conta em BRL, lançamentos manuais, resumo mensal por categoria, caixinhas, compromissos iniciais do cartão, processamento de eventos sintéticos e importação OFX sintética com prévia. Os dados persistem localmente em SQLite.
 
 ## Executar no celular
 
@@ -19,7 +19,7 @@ Computador e celular devem estar na mesma rede. Abra o Expo Go e escaneie o QR d
 
 O projeto fixa Expo 57 / React Native 0.86 / React 19.2; foi seguida a [orientação oficial durante a transição do Expo Go](https://docs.expo.dev/get-started/create-a-project/). Se o Expo Go instalado informar incompatibilidade, use uma [versão Android compatível](https://expo.dev/go), sem misturar dependências de SDKs diferentes. A combinação foi conferida com `npx expo install --check`.
 
-Expo Go é o aplicativo hospedeiro desta demonstração. **Ainda não há APK próprio do FFortuna nem módulo Kotlin nesta entrega.** Captura de notificações externas e SQLCipher exigirão um [build Android próprio](https://docs.expo.dev/guides/local-app-development/); Expo Go não executa módulos nativos personalizados.
+Expo Go é o aplicativo hospedeiro desta demonstração. APK da prova disponível em `artifacts/ffortuna-capture-poc-arm64.apk`, versão 0.3.0 gerada e inspecionada localmente. O roteiro de captura 0.2.1 foi aprovado pelo usuário no Galaxy A36/Android 16; o novo roteiro de backup/restauração ainda aguarda teste no aparelho. O módulo Kotlin e o APK da prova sintética usam um [build Android próprio](https://docs.expo.dev/guides/local-app-development/); Expo Go não executa módulos nativos personalizados. Os comandos e critérios estão em [captura-nativa.md](docs/captura-nativa.md). O modo financeiro com dados reais ainda não está habilitado.
 
 ## O que funciona
 
@@ -31,10 +31,11 @@ Expo Go é o aplicativo hospedeiro desta demonstração. **Ainda não há APK pr
 - Reprocessamento idempotente, confirmação repetida sem duplicação, compras iguais independentes e atualização conflitante sem alterar decisão anterior.
 - Três OFX embutidos: período atual, sobreposição e histórico anterior. Prévia, revisão, vínculo assistido e conferência explícita da abertura histórica.
 - Migrações versionadas e persistência local. Licença e avisos disponíveis no botão Sobre e licenças.
+- Na prova nativa 0.3.0: backup da caixa sintética protegido por senha, sem bruto, com restauração em nova caixa e opção de voltar à anterior. O backup não inclui o banco financeiro do Expo Go.
 
 O saldo atual é acumulado; receitas, despesas e categorias seguem o mês selecionado. Alterar a renda prevista não deposita dinheiro. Posições iniciais, transferências, ajustes e pagamentos de dívida não inflam receita ou consumo. Caixinhas são posições informadas; não calculam rentabilidade, impostos ou liquidez. Compromissos iniciais não reconstroem compras antigas nem parcelamentos.
 
-Estado da sessão e próximos passos em [continuidade](docs/continuidade.md). Para acesso por SSH, use `npm start -- --tunnel`; esse modo usa um intermediário de desenvolvimento e dispensa estar na mesma rede.
+Estado da sessão e próximos passos em [continuidade](docs/continuidade.md). O checkpoint experimental `v0.3.0-alpha.1` tem [notas e anexos preparados](docs/releases/v0.3.0-alpha.1.md); a publicação da release binária aguarda autenticação GitHub. Para acesso por SSH, use `npm start -- --tunnel`; esse modo usa um intermediário de desenvolvimento e dispensa estar na mesma rede.
 
 ## Verificação
 
@@ -45,7 +46,7 @@ npm run export:android
 
 Executados na validação mais recente em cópia isolada: TypeScript estrito, **30 testes de comportamento aprovados** e exportação Android pelo Metro/Hermes. Os testes usam SQLite real via `node:sqlite`, incluindo banco em arquivo, reabertura, migrações, restrições do livro, limites monetários, importação atômica e processamento recuperável. A exportação produz um **bundle em `dist/`, não um APK**.
 
-Uma checagem adicional no Chromium, com interface React Native Web e serviço real sobre SQLite em memória, percorreu os formulários, revisão, caixinhas, pagamentos, importações e licenças. Esse harness temporário não é uma plataforma web do produto e não valida módulos nativos, teclado Android ou persistência do Expo Go. O usuário testou e aprovou a demonstração no celular em 22/10/2026; modelo, versão Android e percurso detalhado não foram registrados. A correção posterior das dependências ainda precisa ser instalada e conferida no aparelho. Este ambiente não disponibiliza aparelho, adb ou Android SDK para testes automatizados Android. `expo-doctor` foi interrompido sem resultado; não é um check aprovado. O servidor Metro iniciou, mas a sondagem HTTP local não foi confirmada neste ambiente.
+Uma checagem adicional no Chromium, com interface React Native Web e serviço real sobre SQLite em memória, percorreu os formulários, revisão, caixinhas, pagamentos, importações e licenças. Esse harness temporário não é uma plataforma web do produto e não valida módulos nativos, teclado Android ou persistência do Expo Go. O usuário testou e aprovou a demonstração no celular em 22/10/2026; modelo, versão Android e percurso detalhado não foram registrados. A correção posterior das dependências ainda precisa ser instalada e conferida no aparelho. A toolchain Android e o ADB foram instalados para a prova nativa; nenhum aparelho está conectado e os testes instrumentados ainda não foram executados. `expo-doctor` foi interrompido sem resultado; não é um check aprovado. O servidor Metro iniciou, mas a sondagem HTTP local não foi confirmada neste ambiente.
 
 O ajuste das dependências reduziu o audit de 21 para 18 alertas; os 18 restantes decorrem de duas falhas upstream ainda sem patch. A aprovação do esbuild está limitada à versão instalada. Veja [tratamento e instruções para aplicar](docs/dependencias.md). A instalação ativa foi preservada durante o teste do usuário; execute `npm ci` após parar o Metro.
 
@@ -72,18 +73,16 @@ No modo real planejado, Kotlin será dono do único banco SQLCipher, das migraç
 
 Use **somente informações inventadas** em todos os formulários. O banco `ffortuna-synthetic-v1.db` desta demonstração não é criptografado. Não há seletor de arquivos pessoais nem acesso a notificações. Os três OFX são gerados pelo projeto, sem alegar que reproduzem arquivos Nubank. O parser cobre um subconjunto limitado de OFX; a validação de uma exportação real ficará no modo protegido.
 
-O núcleo não envia dados a terceiros. Downloads de dependências, Expo Go e Metro pertencem ao ambiente de desenvolvimento e podem precisar de rede; os scripts desativam a telemetria do CLI Expo. Isso não transforma o Expo Go em um APK release próprio offline. A prova futura verificará o APK final sem permissão INTERNET, com captura independente do Metro.
+O núcleo não envia dados a terceiros. Downloads de dependências, Expo Go e Metro pertencem ao ambiente de desenvolvimento e podem precisar de rede; os scripts desativam a telemetria do CLI Expo. Isso não transforma o Expo Go em um APK release próprio offline. O APK da prova sintética foi inspecionado sem permissão INTERNET e traz JavaScript embutido; o usuário relatou aprovação do roteiro manual de captura sintética no A36. Os testes instrumentados ainda não foram executados.
 
 Dados reais continuarão bloqueados até validar SQLCipher, Keystore, arquivos auxiliares, política de backup, restauração sem a chave original, retenção e ausência de conteúdo financeiro em logs/temporários em claro. Bloqueio biométrico da interface não substitui criptografia. Nunca adicione extratos, amostras reais, bancos, backups, keystores ou credenciais ao Git.
 
 ## Próximo incremento
 
-Prioridade confirmada pelo usuário: concluir as funcionalidades em incrementos pequenos antes de refinar interface e UI/UX.
-
-Prova de conceito Android local: preparar SDK/JDK, gerar e instalar build próprio, integrar módulo Kotlin e NotificationListenerService, com persistência cifrada de notificações de um emissor sintético enquanto a interface está fechada. Em seguida, validar as condições de segurança e amostras reais locais antes de habilitar qualquer padrão Nubank. Não ampliar dashboards ou importadores antes dessa prova.
+Prioridade confirmada pelo usuário: funcionalidades em incrementos pequenos antes de refinar UI/UX. O roteiro manual da prova sintética no Galaxy A36/Android 16 foi aprovado pelo usuário após a correção 0.2.1. A versão 0.3.0 acrescenta backup portátil criptografado/restauração da caixa sintética. Próximo passo: testar no A36 o [roteiro de backup](docs/captura-nativa.md#backup-portátil--roteiro-030), incluindo reinstalação sem a chave original. Testes instrumentados e política de retenção das caixas inativas seguem pendentes antes de aceitar amostras reais. O suporte Nubank ainda depende dessas condições e de amostras validadas.
 
 ## Licença
 
-Código original sob [GNU AGPL v3](LICENSE), identificador `AGPL-3.0-only`. Dependências e fontes preservam suas licenças: [avisos e lacunas do inventário](THIRD_PARTY_NOTICES.md). Revise as lacunas antes de distribuir APK. Para regenerar após alterar dependências: `node scripts/generate-notices.mjs`.
+Código original sob [GNU AGPL v3](LICENSE), identificador `AGPL-3.0-only`. Dependências e fontes preservam suas licenças: [inventário npm amplo](THIRD_PARTY_NOTICES.md) e [revisão específica do APK](docs/revisao-licencas-apk.md). A revisão identificou zero pendências de textos nos componentes deste APK; avisos e AGPL estão incluídos nele. Uma distribuição deve levar o fonte correspondente à mesma revisão. Para atualizar os inventários e repetir a conferência, siga os comandos do relatório.
 
 Finan+ e PennyWise foram referências conceituais: nenhum código ou asset desses projetos foi incorporado. Não há afiliação com eles ou com o Nubank. Termos do domínio estão em [GLOSSARY.md](GLOSSARY.md).

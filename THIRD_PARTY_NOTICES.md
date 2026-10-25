@@ -2,9 +2,9 @@
 
 O código-fonte do FFortuna está sob AGPL-3.0-only. O texto completo está em `LICENSE` e também no campo `appLicense` de [`src/legal/notices.json`](src/legal/notices.json).
 
-O inventário segue o fechamento de dependências de produção de `package-lock.json`, incluindo dependências opcionais e peers instalados. Ele também inclui ferramentas de build e plataforma; isso não significa que todos os pacotes estarão no APK. O app ainda é distribuído como código-fonte e não como APK.
+O inventário npm segue o fechamento de dependências de produção de `package-lock.json`, incluindo opcionais e peers. Também inclui ferramentas de build; a revisão do APK usa separadamente o source map e o grafo Android release, registrados em [legal/apk-components.json](legal/apk-components.json).
 
-O JSON reúne textos LICENSE/NOTICE disponíveis, agrupados quando são idênticos, além de versões, metadados de licença e origens. Cada texto precisa estar na raiz do próprio pacote. O script não herda licenças de pacotes pais nem reconstrói textos ausentes.
+O JSON reúne textos LICENSE/NOTICE do próprio pacote e suplementos upstream verificados e versionados em [legal/npm-supplements.json](legal/npm-supplements.json). Não há herança automática de licenças de pastas pais. Textos idênticos são deduplicados, preservando origem e avisos de copyright.
 
 | Dependência direta | Versão no lockfile | Metadados de licença | Origem upstream |
 | --- | --- | --- | --- |
@@ -26,7 +26,9 @@ O JSON reúne textos LICENSE/NOTICE disponíveis, agrupados quando são idêntic
 | `react-native-screens` | 4.26.2 | MIT | https://github.com/software-mansion/react-native-screens |
 | `react-native-worklets` | 0.10.1 | MIT | https://github.com/software-mansion/react-native-reanimated |
 
-O inventário contém 570 pacotes de produção. Há 53 lacunas de texto LICENSE/NOTICE, detalhadas ao final do JSON. Feche essas lacunas e confira as licenças antes de distribuir um APK.
+O inventário npm contém 570 entradas e 46 lacunas de texto entre ferramentas/opcionais, detalhadas no JSON. Isso não é a contagem de pendências do APK. A cobertura do binário está no [relatório da revisão](docs/revisao-licencas-apk.md).
+
+A prova Android também inclui [avisos nativos](src/legal/native-notices.json), exibidos na interface junto deste inventário. O inventário npm não é um inventário completo dos artefatos Maven/NDK do APK.
 
 Gere novamente o inventário após mudanças nas dependências:
 
