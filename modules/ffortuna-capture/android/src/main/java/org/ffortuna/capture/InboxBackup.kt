@@ -10,6 +10,20 @@ data class BackupObservation(val id:String, val sourceKey:String, val revision:I
     val publishedAt:String, val capturedAt:String, val state:String, val parserVersion:String?,
     val parsedJson:String?, val source:String, val sourcePackage:String)
 data class InboxBackup(val createdAt:String, val observations:List<BackupObservation>) {
+    /** Stable data identity for automatic local recovery; excludes backup creation time and raw data. */
+    fun contentSignature():String {
+        validate()
+        val digest=java.security.MessageDigest.getInstance("SHA-256")
+        fun field(value:String?) {
+            val bytes=value?.toByteArray(Charsets.UTF_8)
+            digest.update(java.nio.ByteBuffer.allocate(4).putInt(bytes?.size ?: -1).array())
+            if(bytes!=null) { digest.update(bytes);bytes.fill(0) }
+        }
+        field("ffortuna.synthetic-inbox/1");field(observations.size.toString())
+        for(row in observations) for(value in listOf(row.id,row.sourceKey,row.revision.toString(),row.fingerprint,
+            row.publishedAt,row.capturedAt,row.state,row.parserVersion,row.parsedJson,row.source,row.sourcePackage)) field(value)
+        return digest.digest().joinToString("") { "%02x".format(it) }
+    }
     fun validate() {
         fun invalid(): Nothing = throw BackupFailure(BackupProblem.INVALID_DATA)
         fun timestamp(value:String) { if(value.length>40) invalid();try { Instant.parse(value) } catch (_:Exception) { invalid() } }

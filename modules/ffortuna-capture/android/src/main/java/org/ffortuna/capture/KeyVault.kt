@@ -19,6 +19,7 @@ class KeyVault(private val context: Context, private val name: String) {
     private val wrapped = File(context.noBackupFilesDir, "$name.wrapped")
     private val atomic = AtomicFile(wrapped)
     private fun keyStore() = KeyStore.getInstance("AndroidKeyStore").apply { load(null) }
+    fun hasStoredMaterial():Boolean = listOf(wrapped,File(wrapped.path+".bak"),File(wrapped.path+".new")).any { it.exists() } || keyStore().containsAlias(alias)
 
     fun load(databaseExists: Boolean): ByteArray {
         val store = keyStore()

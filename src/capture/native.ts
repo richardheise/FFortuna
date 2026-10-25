@@ -6,10 +6,32 @@ export interface NativeObservation extends Omit<ObservedEvent, 'payload'> {
   payload: string | null; sourcePackage: string;
   state: 'pending' | 'processed'; parserVersion: string | null; parsedJson: string | null;
 }
+export interface BoxRetentionStatus {
+  status: 'ready' | 'blocked' | 'none'; removed?: number; remaining?: number;
+  nextExpiry?: string | null; failureCode?: string | null;
+}
+export interface RetentionStatus {
+  blocked: boolean; active?: BoxRetentionStatus; previous?: BoxRetentionStatus;
+}
+export interface LocalRecoveryStatus {
+  status: 'ready' | 'disabled' | 'blocked'; enabled: boolean; count: number;
+  latestAt: string | null; failureCode: string | null;
+}
+export interface LocalRecoveryEntry { id: string; createdAt: string; count: number }
+export interface SecurityCheckCase {
+  id: string; title: string; status: 'passed' | 'failed' | 'not_verified'; code: string | null;
+}
+export interface SecurityReport {
+  ranAt: string; syntheticOnly: boolean; model: string; sdk: number; scope: string;
+  passed: number; failed: number; notVerified: number; cases: SecurityCheckCase[];
+}
 export interface CaptureSnapshot {
   enabled: boolean; authorized: boolean; connected: boolean; notificationsAllowed: boolean;
   storageReady: boolean; sourcePackage: string; lastError: string | null; syntheticOnly: true;
   previousBoxAvailable: boolean;
+  retention?: RetentionStatus;
+  localRecovery?: LocalRecoveryStatus;
+  securityReport?: SecurityReport | null;
   cipherVersion?: string; schemaVersion?: number; total?: number; pending?: number; unavailablePending?: number;
   observations?: NativeObservation[];
 }
@@ -28,6 +50,12 @@ export interface CaptureModule {
   restoreBackup(password: string): Promise<BackupResult>;
   switchPreviousBox(): Promise<void>;
   discardPreviousBox(): Promise<void>;
+  maintainRetention(): Promise<CaptureSnapshot>;
+  localRecoveryEntries(): Promise<LocalRecoveryEntry[]>;
+  setLocalRecoveryEnabled(value: boolean): Promise<void>;
+  clearLocalRecovery(): Promise<void>;
+  restoreLocalRecovery(id: string): Promise<BackupResult>;
+  runSecurityChecks(): Promise<SecurityReport>;
 }
 
 /** Never look up a custom native module in Expo Go. Only the PoC screen calls this. */

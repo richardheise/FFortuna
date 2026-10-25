@@ -22,7 +22,7 @@ class FFortunaCaptureModule:Module() {
     private suspend fun backupAction(block:suspend () -> Map<String,Any>):Map<String,Any> {
         if(!backupBusy.compareAndSet(false,true)) return mapOf("status" to "error","code" to "BUSY")
         return try { block() }
-        catch(error:Exception) { mapOf("status" to "error","code" to if(error is BackupFailure) error.problem.name else "STORAGE") }
+        catch(error:Exception) { mapOf("status" to "error","code" to when(error) { is BackupFailure -> error.problem.name; is LocalRecoveryFailure -> error.code; else -> "STORAGE" }) }
         finally { backupBusy.set(false) }
     }
     override fun definition() = ModuleDefinition {
@@ -72,6 +72,18 @@ class FFortunaCaptureModule:Module() {
                 }
             } finally { chars.fill('\u0000') }
         } }
+        AsyncFunction("localRecoveryEntries") { CaptureRuntime.localRecoveryEntries(context()) }
+        AsyncFunction("setLocalRecoveryEnabled") { enabled:Boolean -> CaptureRuntime.setLocalRecoveryEnabled(context(),enabled) }
+        AsyncFunction("clearLocalRecovery") { CaptureRuntime.clearLocalRecovery(context()) }
+        AsyncFunction("restoreLocalRecovery") Coroutine { id:String -> backupAction {
+            withContext(Dispatchers.IO) {
+                mapOf("status" to "restored","count" to CaptureRuntime.restoreLocalRecovery(context(),id))
+            }
+        } }
+        AsyncFunction("maintainRetention") {
+            CaptureRuntime.maintainRetention(context());CaptureRuntime.state(context())
+        }
+        AsyncFunction("runSecurityChecks") { CaptureRuntime.runSecurityChecks(context()) }
         AsyncFunction("switchPreviousBox") { CaptureRuntime.switchPrevious(context()) }
         AsyncFunction("discardPreviousBox") { CaptureRuntime.discardPrevious(context()) }
         AsyncFunction("snapshot") { CaptureRuntime.state(context()) }

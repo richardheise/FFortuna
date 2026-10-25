@@ -1,6 +1,6 @@
 # Revisão de licenças — APK de captura sintética
 
-Revisão técnica concluída em 23/10/2026 e reconferida em 25/10/2026 na versão 0.3.0 para o APK `capture-poc`, release, arm64-v8a. Não foram encontradas pendências de textos de licença ou de atribuição no inventário identificado abaixo. Isso não equivale a validar o funcionamento no celular ou a certificar juridicamente qualquer distribuição futura.
+Revisão técnica concluída em 23/10/2026 e reconferida em 25/10/2026 na versão 0.4.0 para o APK `capture-poc`, release, arm64-v8a. Não foram encontradas pendências de textos de licença ou de atribuição no inventário identificado abaixo. Isso não equivale a validar o funcionamento no celular ou a certificar juridicamente qualquer distribuição futura.
 
 ## Escopo e evidências
 
@@ -57,3 +57,9 @@ Os artefatos locais incluem os avisos separados, um arquivo com o fonte atual e 
 A versão 0.3.0 usa somente APIs criptográficas JCA do Android e os contratos de atividade do Expo já instalado, sem novas dependências distribuídas. O inventário e os avisos foram reconferidos e permanecem sem pendências identificadas.
 
 A revisão de licenças não havia publicado release/tag. No checkpoint posterior, o usuário autorizou commit/push e avaliação da pré-release `v0.3.0-alpha.1`. A [pré-release](https://github.com/richardheise/FFortuna/releases/tag/v0.3.0-alpha.1) foi publicada após autenticar o GitHub CLI, com nove anexos e seus hashes remotos conferidos. O fonte corresponde ao commit `11174020cc5df9236041674fd44783b2f3225a2c` da tag `v0.3.0-alpha.1`; atualizações posteriores de documentação não mudam esse snapshot. Se houver mudança de código após este checkpoint, recompilar e atualizar fonte/checksums antes de anexar. O nome e as notas devem explicitar **captura exclusivamente sintética**, sem suporte Nubank ou dados financeiros reais.
+
+## Reconferência 0.4.0
+
+APK 0.4.0 (versionCode 4), 46.207.716 bytes, SHA-256 `0ef198733e42f5e227a7b7bba4e7a22096da3d76603f618d801142fd68977085`. A recuperação automática/retenção e a bateria isolada usam APIs existentes Android/JCA; não foram adicionadas dependências. Inventário reconferido durante a inspeção final: 71 pacotes npm, 189 coordenadas Maven, 23 bibliotecas nativas, 24 suplementos C/C++ e zero pendências identificadas. Avisos dentro do APK coincidem com os arquivos revisados. Assinatura igual à 0.3.0; pacote e requisitos Android mantidos. Também foi verificada a ausência de READ_LOGS e permissões amplas de armazenamento.
+
+TypeScript estrito, 30 testes TypeScript e 22 JVM aprovados; 28 testes de dispositivo compilados, não executados. A aprovação manual anterior refere-se à 0.3.0; os novos resultados Android ainda dependem do roteiro 0.4.0. A nova distribuição usa `v0.4.0-alpha.1`, sem mover tags ou substituir anexos anteriores. Fonte exato, recibo, licenças e checksums acompanham o APK.

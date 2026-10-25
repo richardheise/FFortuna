@@ -20,6 +20,7 @@ badging=run([tools/'aapt','dump','badging',apk])
 manifest=run([tools/'aapt','dump','xmltree',apk,'AndroidManifest.xml'])
 permissions=re.findall(r"uses-permission: name='([^']+)'",badging)
 assert 'android.permission.INTERNET' not in permissions, 'APK still requests INTERNET'
+assert not set(permissions) & {'android.permission.READ_LOGS', 'android.permission.READ_EXTERNAL_STORAGE', 'android.permission.WRITE_EXTERNAL_STORAGE', 'android.permission.MANAGE_EXTERNAL_STORAGE'}, 'Broad logs/storage permissions are forbidden'
 assert 'android.permission.POST_NOTIFICATIONS' in permissions
 assert "name='org.ffortuna.capturepoc'" in badging
 assert 'application-debuggable' not in badging

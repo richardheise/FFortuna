@@ -1,17 +1,17 @@
 package org.ffortuna.capture
 
 import android.content.Context
-import net.zetetic.database.Logger
-import net.zetetic.database.NoopTarget
 import net.zetetic.database.sqlcipher.SQLiteDatabase
 import org.json.JSONObject
 import java.io.File
 import java.time.LocalDate
 import java.time.Instant
+import java.time.Clock
 import java.util.UUID
 
 /** Owned solely by the native serial executor. This proof contains no financial ledger. */
-class CaptureStore(private val context: Context, private val name: String = "ffortuna-capture-poc") : AutoCloseable {
+class CaptureStore(private val context: Context, private val name: String = "ffortuna-capture-poc",
+    private val clock:Clock=Clock.systemUTC(), private val allowCreate:Boolean=true) : AutoCloseable {
     private val file = context.getDatabasePath("$name.db")
     private val vault = KeyVault(context, name)
     private val db: SQLiteDatabase
@@ -20,18 +20,19 @@ class CaptureStore(private val context: Context, private val name: String = "ffo
         var stage = CaptureStorageStage.LIBRARY
         var opened: SQLiteDatabase? = null
         try {
-            System.loadLibrary("sqlcipher")
-            Logger.setTarget(NoopTarget())
+            SqlCipherPolicy.initialize()
             stage = CaptureStorageStage.KEY
             check(file.parentFile!!.isDirectory || file.parentFile!!.mkdirs()) { "Database directory unavailable" }
+            if(!file.exists()) check(allowCreate && !vault.hasStoredMaterial()) { "MISSING_DATABASE_PRESERVED_KEY" }
+            else check(file.isFile && file.length()>=16) { "INVALID_DATABASE_FILE" }
             val key = vault.load(file.exists())
             stage = CaptureStorageStage.OPEN
-            try { db = SQLiteDatabase.openOrCreateDatabase(file, key, null, null); opened = db }
+            try { db = SQLiteDatabase.openOrCreateDatabase(file, key, null, SqlCipherPolicy.failClosed, SqlCipherPolicy.hook); opened = db }
             finally { key.fill(0) }
             stage = CaptureStorageStage.SECURITY
             cipherVersion = db.rawQuery("PRAGMA cipher_version", null).use { check(it.moveToFirst()); it.getString(0) }
             check(cipherVersion.isNotBlank()) { "SQLCipher indisponível; captura bloqueada." }
-            db.execSQL("PRAGMA foreign_keys=ON")
+            db.setForeignKeyConstraintsEnabled(true)
             db.execSQL("PRAGMA cipher_memory_security=ON")
             // This setter returns a row; execSQL rejects SQLITE_ROW in the Android driver.
             db.rawQuery("PRAGMA secure_delete=ON", null).use { check(it.moveToFirst() && it.getInt(0) == 1) }
@@ -57,8 +58,6 @@ class CaptureStore(private val context: Context, private val name: String = "ffo
                 }
                 db.setTransactionSuccessful()
             } finally { db.endTransaction() }
-            stage = CaptureStorageStage.RETENTION
-            db.execSQL("UPDATE observations SET payload=NULL WHERE captured_at < ?", arrayOf(Instant.now().minusSeconds(30L * 86400).toString()))
         } catch (error: Exception) {
             try { opened?.close() } catch (_: Exception) { }
             throw CaptureStorageFailure(stage, error)
@@ -69,7 +68,9 @@ class CaptureStore(private val context: Context, private val name: String = "ffo
     }
 
     /** First commit the observation, then do the recoverable parsing in another transaction. */
-    fun observe(sourceKey: String, payload: String, publishedAt: Long, capturedAt: String = Instant.now().toString()): String {
+    fun observe(sourceKey: String, payload: String, publishedAt: Long, capturedAt: String = clock.instant().toString()): String {
+        Instant.parse(capturedAt)
+        expireRaw()
         val hash = CaptureIdentity.fingerprint(payload, publishedAt)
         db.beginTransaction()
         val id: String
@@ -88,6 +89,7 @@ class CaptureStore(private val context: Context, private val name: String = "ffo
     }
 
     fun processPending(): Int {
+        expireRaw()
         val pending = mutableListOf<Pair<String,String>>()
         db.rawQuery("SELECT id,payload FROM observations WHERE state='pending' AND payload IS NOT NULL ORDER BY captured_at", null).use { while(it.moveToNext()) pending.add(it.getString(0) to it.getString(1)) }
         for ((id, payload) in pending) {
@@ -121,6 +123,7 @@ class CaptureStore(private val context: Context, private val name: String = "ffo
     }
 
     fun snapshot(): Map<String, Any?> {
+        expireRaw()
         val rows = mutableListOf<Map<String,Any?>>()
         db.rawQuery("SELECT id,source_key,revision,published_at,captured_at,state,parser_version,parsed_json,payload,source,source_package FROM observations ORDER BY captured_at DESC,rowid DESC LIMIT 30", null).use {
             while(it.moveToNext()) rows.add(mapOf("id" to it.getString(0),"sourceKey" to it.getString(1),"revision" to it.getInt(2),"publishedAt" to it.getString(3),"capturedAt" to it.getString(4),"state" to it.getString(5),"parserVersion" to it.getString(6),"parsedJson" to it.getString(7),"payload" to it.getString(8),"source" to it.getString(9),"sourcePackage" to it.getString(10)))
@@ -130,6 +133,7 @@ class CaptureStore(private val context: Context, private val name: String = "ffo
         return mapOf("unavailablePending" to unavailablePending,"cipherVersion" to cipherVersion,"schemaVersion" to db.version,"total" to count.first,"pending" to count.second,"observations" to rows)
     }
     fun exportBackup(): InboxBackup {
+        expireRaw()
         val rows=mutableListOf<BackupObservation>()
         var characters=0L
         db.rawQuery("SELECT id,source_key,revision,fingerprint,published_at,captured_at,state,parser_version,parsed_json,source,source_package FROM observations ORDER BY rowid",null).use {
@@ -140,7 +144,7 @@ class CaptureStore(private val context: Context, private val name: String = "ffo
                 rows.add(row)
             }
         }
-        return InboxBackup(Instant.now().toString(),rows).also { it.validate() }
+        return InboxBackup(clock.instant().toString(),rows).also { it.validate() }
     }
     /** Only used on a fresh, inactive encrypted box. Uniqueness failures roll back the entire import. */
     fun importBackup(backup:InboxBackup) {
@@ -149,11 +153,12 @@ class CaptureStore(private val context: Context, private val name: String = "ffo
         try {
             db.rawQuery("SELECT COUNT(*) FROM observations",null).use { check(it.moveToFirst() && it.getInt(0)==0) }
             for(row in backup.observations) db.execSQL("INSERT INTO observations (id,source_key,revision,fingerprint,published_at,captured_at,payload,state,parser_version,parsed_json,source,source_package) VALUES (?,?,?,?,?,?,NULL,?,?,?,?,?)",
-                arrayOf(row.id,row.sourceKey,row.revision,row.fingerprint,row.publishedAt,row.capturedAt,row.state,row.parserVersion,row.parsedJson,row.source,row.sourcePackage))
+                arrayOf<Any?>(row.id,row.sourceKey,row.revision,row.fingerprint,row.publishedAt,row.capturedAt,row.state,row.parserVersion,row.parsedJson,row.source,row.sourcePackage))
             db.setTransactionSuccessful()
         } finally { db.endTransaction() }
     }
     fun verifyEncrypted(): Boolean {
+        expireRaw()
         db.rawQuery("PRAGMA cipher_integrity_check",null).use { check(!it.moveToFirst()) { "Falha de integridade cifrada." } }
         check(file.inputStream().use { input ->
             val header = ByteArray(16)
@@ -161,6 +166,15 @@ class CaptureStore(private val context: Context, private val name: String = "ffo
             String(header, Charsets.US_ASCII)
         } != "SQLite format 3\u0000")
         return true
+    }
+    fun expireRaw():RawRetentionSummary = try { RawRetention.purge(db,clock.instant()) }
+        catch(error:Exception) { throw CaptureStorageFailure(CaptureStorageStage.RETENTION,error) }
+    fun securityConfiguration():Map<String,Any> {
+        expireRaw()
+        fun integer(sql:String)=db.rawQuery(sql,null).use { check(it.moveToFirst());it.getInt(0) }
+        val level=db.rawQuery("PRAGMA cipher_log_level",null).use { check(it.moveToFirst());it.getString(0) }
+        return mapOf("tempStore" to integer("PRAGMA temp_store"),"secureDelete" to integer("PRAGMA secure_delete"),
+            "foreignKeys" to integer("PRAGMA foreign_keys"),"synchronous" to integer("PRAGMA synchronous"),"coreLogLevel" to level)
     }
     override fun close() { db.close() }
     fun reset() { close(); check(context.deleteDatabase(file.name)); vault.erase() }

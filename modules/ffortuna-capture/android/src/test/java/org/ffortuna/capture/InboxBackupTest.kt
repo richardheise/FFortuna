@@ -19,4 +19,9 @@ class InboxBackupTest {
             valid.copy(capturedAt="yesterday"),valid.copy(state="processed"),valid.copy(parserVersion="future/2")))
             assertThrows(BackupFailure::class.java) { backup(invalid).validate() }
     }
+    @Test fun recoverySignatureIgnoresExportTimeButDetectsChangedObservations() {
+        val row=row();val one=backup(row)
+        assertEquals(one.contentSignature(),one.copy(createdAt="2026-10-26T00:00:00Z").contentSignature())
+        assertNotEquals(one.contentSignature(),backup(row.copy(sourceKey="updated-source")).contentSignature())
+    }
 }

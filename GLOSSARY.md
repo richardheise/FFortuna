@@ -127,3 +127,11 @@ _Evitar_: backup automático do Android, cópia da chave do Keystore
 **Caixa anterior**:
 Caixa cifrada preservada ao ativar uma restauração. Permanece inativa e não é mesclada à caixa ativa; pode ser reativada se sua chave local estiver disponível ou descartada explicitamente.
 _Evitar_: segundo livro financeiro, backup portátil
+
+**Recuperação local automática**:
+Até três cópias cifradas privadas dos registros e parsing, sem bruto, criadas pelo núcleo em dias de uso com alterações, no máximo uma por 24 horas. Permitem restaurar pela interface e dependem da instalação e de sua chave local.
+_Evitar_: backup portátil, proteção contra desinstalação
+
+**Retenção de bruto**:
+Prazo para remover somente os payloads originais das evidências, preservando os registros e resultados de parsing. Na prova, são 30 dias desde a captura, aplicados quando o núcleo executa também à caixa anterior.
+_Evitar_: apagar transações, prazo garantido com aplicativo encerrado

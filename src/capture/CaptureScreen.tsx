@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Alert, AppState, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Action, Card, ErrorBox, Field, ScreenScroll, styles } from '../ui/common';
-import { captureModule, type CaptureSnapshot } from './native';
+import { captureModule, type CaptureSnapshot, type LocalRecoveryEntry, type SecurityReport } from './native';
 import { LegalNotices } from '../legal/LegalNotices';
 
 export function CaptureScreen() {
@@ -14,7 +14,16 @@ export function CaptureScreen() {
   const [legalOpen, setLegalOpen] = useState(false);
   const [password, setPassword] = useState('');
   const [confirmation, setConfirmation] = useState('');
-  const refresh = useCallback(async () => { if(native) setState(await native.snapshot()); }, []);
+  const [advancedOpen, setAdvancedOpen] = useState(false);
+  const [localEntries, setLocalEntries] = useState<LocalRecoveryEntry[]>([]);
+  const refresh = useCallback(async () => {
+    if(!native) return;
+    setState(await native.snapshot());
+    if(advancedOpen) {
+      try { setLocalEntries(await native.localRecoveryEntries()); }
+      catch { setLocalEntries([]); }
+    }
+  }, [native, advancedOpen]);
   useEffect(() => {
     void refresh().catch(() => setError('Não foi possível abrir o diagnóstico nativo.'));
     const subscription = AppState.addEventListener('change', s => {
@@ -26,7 +35,10 @@ export function CaptureScreen() {
   async function run(task: () => Promise<unknown> | unknown) {
     if(busy) return; setBusy(true); setError(null); setMessage(null);
     try { await task(); await refresh(); }
-    catch { setError('Operação não concluída. Confira autorização, armazenamento e conexão abaixo. Nenhum reset foi feito.'); }
+    catch {
+      setError('Operação não concluída. Confira autorização e armazenamento abaixo.');
+      try { await refresh(); } catch { /* Keep the last available state. */ }
+    }
     finally { setBusy(false); }
   }
   function backup(mode: 'export' | 'restore') {
@@ -52,8 +64,10 @@ export function CaptureScreen() {
       else setMessage('Seleção cancelada. Nenhuma caixa foi alterada.');
     });
   }
+  const retentionBlocked = state?.retention?.blocked ?? true;
   const blockers = state ? [
     !state.storageReady && 'A caixa cifrada está indisponível. Confira a mensagem de erro acima.',
+    retentionBlocked && 'A retenção de dados brutos está bloqueada. A captura permanece pausada até a limpeza ser verificada.',
     !state.enabled && 'Toque em “Concordo: ativar captura somente sintética” na seção 1.',
     !state.authorized && 'Toque em “Abrir acesso às notificações no Android” e conceda o acesso ao FFortuna.',
     !state.notificationsAllowed && 'Toque em “Permitir notificações do emissor fictício” e autorize a publicação.',
@@ -67,7 +81,11 @@ export function CaptureScreen() {
         <Text style={styles.body}>O Android concede acesso amplo ao serviço, mas este APK filtra o próprio pacote antes de ler conteúdo e aceita só exemplos marcados. Fonte permitida: {state?.sourcePackage ?? 'carregando'}.</Text>
         <Text style={styles.body}>Caixa cifrada: {!state ? 'verificando' : state.storageReady ? `pronta · SQLCipher ${state.cipherVersion}` : 'indisponível'}</Text>
         <Text style={styles.body}>Consentimento local: {state?.enabled ? 'ativo' : 'desativado'} · acesso Android: {state?.authorized ? 'concedido' : 'não concedido'} · conexão: {state?.connected ? 'conectado' : 'desconectado'}</Text>
-        <Action title={state?.enabled ? 'Desativar captura sintética' : 'Concordo: ativar captura somente sintética'} disabled={busy || (!state?.storageReady && !state?.enabled)} onPress={() => void run(() => native.setEnabled(!state?.enabled))} />
+        <Action title={state?.enabled ? 'Desativar captura sintética' : 'Concordo: ativar captura somente sintética'} disabled={busy || (!state?.storageReady && !state?.enabled) || (!state?.enabled && retentionBlocked)} onPress={() => void run(() => native.setEnabled(!state?.enabled))} />
+        {state?.retention && <Text style={state.retention.blocked ? styles.warning : styles.small}>
+          Retenção do bruto: ativa {state.retention.active?.status ?? 'indisponível'}{state.retention.active?.remaining === undefined ? '' : ` · ${state.retention.active.remaining} com bruto`}; anterior {state.retention.previous?.status ?? 'indisponível'}{state.retention.previous?.remaining === undefined ? '' : ` · ${state.retention.previous.remaining} com bruto`}{state.retention.blocked ? ' · captura bloqueada até a limpeza ser verificada.' : ''}
+        </Text>}
+        {state && !state.retention && <Text style={styles.warning}>Estado da retenção indisponível. A ativação da captura está bloqueada até a verificação carregar.</Text>}
         <Action title="Abrir acesso às notificações no Android" secondary disabled={busy} onPress={() => void run(() => native.openSettings())} />
         <Action title="Permitir notificações do emissor fictício" secondary disabled={busy} onPress={() => void run(() => native.requestPostPermission())} />
         <Text style={styles.small}>Emissor: {state?.notificationsAllowed ? 'autorizado' : 'sem permissão'}. A permissão de publicar exemplos e o acesso para ler notificações são autorizações diferentes. O consentimento local também precisa estar ativo.</Text>
@@ -94,8 +112,16 @@ export function CaptureScreen() {
         <Text style={styles.small}>Publicação, captura e data efetiva são campos separados. Exibindo as últimas 30 observações; dispensar uma notificação não apaga seu registro.</Text>
       </Card>
       {message && <Card><Text style={styles.body}>{message}</Text></Card>}
-      <Card><Text style={styles.heading}>4. Backup e restauração</Text>
-        <Text style={styles.body}>Salva registros e resultados de parsing, sem os payloads brutos. Escolha uma pasta neste aparelho. O arquivo é cifrado com sua senha, independente da chave local. A senha não é salva e não tem recuperação.</Text>
+      <Card><Text style={styles.heading}>Recuperação local automática</Text>
+        <Text style={styles.body}>O app mantém até 3 cópias cifradas dos registros sintéticos, no máximo uma a cada 24 horas quando os dados mudam. Não inclui conteúdo bruto. As cópias usam uma chave deste aparelho e são perdidas se o app for desinstalado.</Text>
+        <Text style={state?.localRecovery?.status === 'blocked' ? styles.warning : styles.small}>
+          Estado: {state?.localRecovery?.status ?? 'verificando'} · cópias: {state?.localRecovery?.count ?? 0}{state?.localRecovery?.latestAt ? ` · mais recente ${new Date(state.localRecovery.latestAt).toLocaleString()}` : ''}{state?.localRecovery?.failureCode ? ` · código ${state.localRecovery.failureCode}` : ''}
+        </Text>
+      </Card>
+      <Action title={advancedOpen ? 'Fechar configurações avançadas' : 'Configurações avançadas'} secondary disabled={busy} onPress={() => { setPassword('');setConfirmation('');setAdvancedOpen(value => !value); }} />
+      {advancedOpen && <>
+      <Card><Text style={styles.heading}>Backup portátil e caixas</Text>
+        <Text style={styles.body}>Salva registros e resultados de parsing, sem os payloads brutos. Escolha uma pasta neste aparelho. O arquivo é cifrado com sua senha, independente da chave local. A senha não é salva e não tem recuperação. Salvo fora do app, este backup pode ser restaurado após desinstalação ou em outro aparelho.</Text>
         <Field label="Senha do backup (12 a 128 caracteres)" value={password} onChangeText={setPassword} secureTextEntry autoCapitalize="none" autoCorrect={false} autoComplete="off" importantForAutofill="no" maxLength={128} />
         <Field label="Repita a senha para criar um backup" value={confirmation} onChangeText={setConfirmation} secureTextEntry autoCapitalize="none" autoCorrect={false} autoComplete="off" importantForAutofill="no" maxLength={128} />
         <Action title="Criar backup cifrado" disabled={busy || !state?.storageReady || password.length < 12 || password !== confirmation} onPress={() => backup('export')} />
@@ -106,8 +132,42 @@ export function CaptureScreen() {
           <Action title="Descartar caixa anterior" secondary disabled={busy} onPress={() => Alert.alert('Descartar caixa anterior?', 'Apaga definitivamente apenas a caixa anterior e sua chave. A caixa ativa e os backups externos permanecem.', [{ text:'Cancelar',style:'cancel' },{ text:'Descartar',style:'destructive',onPress:() => void run(() => native.discardPreviousBox()) }])} />
         </>}
       </Card>
+      <Card><Text style={styles.heading}>Gerenciar recuperação local</Text>
+        <Text style={styles.body}>Ativar ou desativar a criação automática não apaga as cópias já existentes.</Text>
+        <Action title={state?.localRecovery?.enabled ? 'Desativar cópias automáticas' : 'Ativar cópias automáticas'} secondary disabled={busy || !state?.localRecovery || (state.localRecovery.status === 'blocked' && !state.localRecovery.enabled)} onPress={() => void run(() => native.setLocalRecoveryEnabled(!state?.localRecovery?.enabled))} />
+        {localEntries.length === 0 ? <Text style={state?.localRecovery?.status === 'blocked' ? styles.warning : styles.small}>{state?.localRecovery?.status === 'blocked' ? 'Lista indisponível enquanto a recuperação estiver bloqueada.' : 'Nenhuma cópia local disponível.'}</Text> : localEntries.map(entry => <View key={entry.id}>
+          <Text style={styles.small}>{new Date(entry.createdAt).toLocaleString()} · {entry.count} observações</Text>
+          <Action title="Restaurar esta cópia local" secondary disabled={busy || !!state?.previousBoxAvailable} onPress={() => Alert.alert('Restaurar cópia local?', 'A cópia será verificada antes de ativar uma nova caixa. A caixa atual será preservada e a captura será desativada.', [{ text: 'Cancelar', style: 'cancel' }, { text: 'Restaurar', onPress: () => void run(async () => {
+            const result = await native.restoreLocalRecovery(entry.id);
+            if(result.status === 'restored') setMessage(`Cópia restaurada: ${result.count ?? entry.count} observações. A captura está desativada; ative-a quando quiser.`);
+            else if(result.status === 'error') setError('A cópia local não pôde ser restaurada. A caixa ativa foi preservada.');
+          }) }])} />
+        </View>)}
+        <Action title="Apagar cópias locais e desativar" secondary disabled={busy || ((state?.localRecovery?.count ?? 0) === 0 && state?.localRecovery?.status !== 'blocked')} onPress={() => Alert.alert('Apagar cópias locais?', 'Apaga somente as cópias cifradas desta instalação e desativa a recuperação automática. As caixas ativa/anterior e os backups portáteis não serão apagados.', [{ text: 'Cancelar', style: 'cancel' }, { text: 'Apagar cópias', style: 'destructive', onPress: () => void run(() => native.clearLocalRecovery()) }])} />
+      </Card>
+      <Card><Text style={styles.heading}>Retenção e diagnóstico de segurança</Text>
+        <Text style={state?.retention?.blocked ? styles.warning : styles.body}>
+          Caixa ativa: {state?.retention?.active?.status ?? 'indisponível'} · anterior: {state?.retention?.previous?.status ?? 'indisponível'}{state?.retention?.active?.failureCode ? ` · ativa: ${state.retention.active.failureCode}` : ''}{state?.retention?.previous?.failureCode ? ` · anterior: ${state.retention.previous.failureCode}` : ''}{state?.retention?.blocked ? ' · limpeza bloqueada; captura pausada. Se a chave anterior estiver indisponível, o descarte explícito fica acima.' : ''}
+        </Text>
+        <Action title="Verificar retenção agora" secondary disabled={busy} onPress={() => void run(() => native.maintainRetention())} />
+        <Text style={styles.small}>A bateria usa dados isolados. A checagem de logs cobre apenas uma janela do próprio processo; indisponibilidade fica como não verificado. Não habilita dados reais.</Text>
+        <Action title="Executar verificações nativas isoladas" secondary disabled={busy} onPress={() => Alert.alert('Executar diagnóstico?', 'A captura será pausada. As verificações usam somente dados sintéticos isolados e não alteram a caixa ativa.', [{ text: 'Cancelar', style: 'cancel' }, { text: 'Executar', onPress: () => void run(async () => {
+          const report: SecurityReport = await native.runSecurityChecks();
+          setMessage(`Diagnóstico concluído: ${report.passed} aprovadas, ${report.failed} falhas e ${report.notVerified} não verificadas. A captura permanece pausada.`);
+        }) }])} />
+        {state?.securityReport && <>
+          <Text style={styles.body}>Última execução: {new Date(state.securityReport.ranAt).toLocaleString()} · Android API {state.securityReport.sdk} · {state.securityReport.passed} aprovadas · {state.securityReport.failed} falhas · {state.securityReport.notVerified} não verificadas.</Text>
+          {state.securityReport.cases.map(testCase => <Text key={testCase.id} style={testCase.status === 'failed' ? styles.warning : styles.small}>
+            {testCase.status === 'passed' ? 'Aprovado' : testCase.status === 'failed' ? 'Falhou' : 'Não verificado'} · {testCase.title} ({testCase.id}){testCase.code ? ` · ${testCase.code}` : ''}
+          </Text>)}
+        </>}
+      </Card>
+      <Card><Text style={styles.heading}>Apagar caixa sintética ativa</Text>
+        <Text style={styles.body}>Apaga a caixa ativa e sua chave. A caixa anterior, as cópias locais e os backups portáteis permanecem.</Text>
+        <Action title="Apagar caixa ativa" secondary disabled={busy} onPress={() => Alert.alert('Apagar a caixa ativa?', 'Apaga a caixa ativa e sua chave. A caixa anterior, as cópias locais e os backups portáteis permanecem. Sem uma cópia disponível, os dados apagados não podem ser recuperados.', [{ text:'Cancelar',style:'cancel' },{ text:'Apagar',style:'destructive',onPress:() => void run(() => native.reset()) }])} />
+      </Card>
+      </>}
       {state?.observations?.map(item => <Card key={item.id}><Text style={styles.heading}>Revisão {item.revision} · {item.state === 'processed' ? 'interpretada' : item.payload === null ? 'sem bruto' : 'pendente'}</Text><Text selectable style={styles.small}>ID: {item.id}{'\n'}Fonte: {item.sourceKey}{'\n'}Publicada: {item.publishedAt}{'\n'}Capturada: {item.capturedAt}{'\n'}Parser: {item.parserVersion ?? 'sem resultado'}</Text><Text selectable style={styles.small}>{item.parsedJson}</Text></Card>)}
-      <Action title="Apagar caixa sintética ativa" secondary disabled={busy} onPress={() => Alert.alert('Apagar a caixa ativa?', 'Apaga a caixa ativa e sua chave. A caixa anterior, se houver, e os backups externos permanecem. Sem um deles, os dados apagados não podem ser recuperados.', [{ text:'Cancelar',style:'cancel' },{ text:'Apagar',style:'destructive',onPress:() => void run(() => native.reset()) }])} />
     </>}
     <Action title="Sobre e licenças" secondary onPress={() => setLegalOpen(true)} />
   </ScreenScroll><LegalNotices visible={legalOpen} onClose={() => setLegalOpen(false)} /></SafeAreaView>;
