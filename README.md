@@ -4,6 +4,8 @@ Aplicativo Android livre para organização financeira pessoal no Brasil. O prim
 
 O projeto tem uma **demonstração financeira no Expo Go** e uma [prova nativa Android](docs/captura-nativa.md), ambas exclusivamente com dados fictícios. A prova usa APK próprio e caixa SQLCipher/Kotlin, sem gerar lançamentos financeiros. Inclui conta em BRL, lançamentos manuais, resumo mensal por categoria, caixinhas, compromissos iniciais do cartão, processamento de eventos sintéticos e importação OFX sintética com prévia. Os dados persistem localmente em SQLite.
 
+Pré-release experimental: [baixar APK Android 0.3.0](https://github.com/richardheise/FFortuna/releases/download/v0.3.0-alpha.1/ffortuna-capture-poc-arm64.apk) · [fonte, checksums e avisos](https://github.com/richardheise/FFortuna/releases/tag/v0.3.0-alpha.1). O roteiro de backup/restauração ainda aguarda validação no A36.
+
 ## Executar no celular
 
 Use Node 24, npm e Expo Go para Android compatível com SDK 57. Com nvm instalado:
@@ -35,7 +37,7 @@ Expo Go é o aplicativo hospedeiro desta demonstração. APK da prova disponíve
 
 O saldo atual é acumulado; receitas, despesas e categorias seguem o mês selecionado. Alterar a renda prevista não deposita dinheiro. Posições iniciais, transferências, ajustes e pagamentos de dívida não inflam receita ou consumo. Caixinhas são posições informadas; não calculam rentabilidade, impostos ou liquidez. Compromissos iniciais não reconstroem compras antigas nem parcelamentos.
 
-Estado da sessão e próximos passos em [continuidade](docs/continuidade.md). O checkpoint experimental `v0.3.0-alpha.1` tem [notas e anexos preparados](docs/releases/v0.3.0-alpha.1.md); a publicação da release binária aguarda autenticação GitHub. Para acesso por SSH, use `npm start -- --tunnel`; esse modo usa um intermediário de desenvolvimento e dispensa estar na mesma rede.
+Estado da sessão e próximos passos em [continuidade](docs/continuidade.md). O checkpoint experimental [`v0.3.0-alpha.1`](https://github.com/richardheise/FFortuna/releases/tag/v0.3.0-alpha.1) está publicado com nove anexos, incluindo APK, fonte correspondente e checksums. As [notas](docs/releases/v0.3.0-alpha.1.md) registram o escopo e as validações pendentes. Para acesso por SSH, use `npm start -- --tunnel`; esse modo usa um intermediário de desenvolvimento e dispensa estar na mesma rede.
 
 ## Verificação
 

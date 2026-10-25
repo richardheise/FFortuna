@@ -40,33 +40,25 @@ Artefato esperado: `artifacts/ffortuna-capture-poc-arm64.apk` com SHA-256 e rela
 ## Pendências preservadas
 
 - 18 alertas altos no npm decorrentes de duas falhas upstream sem patch na auditoria de 22/10; zero moderados após a correção preparada. Ver [dependencias.md](dependencias.md).
-- Revisão técnica de licenças concluída para o APK: 71 pacotes npm, 189 coordenadas Maven, 23 bibliotecas nativas; zero pendências de textos identificadas. Sete lacunas resolvidas; as 46 restantes do inventário npm amplo não pertencem a este APK. Avisos incluídos no APK e na interface. Evidências e condições de distribuição em [revisao-licencas-apk.md](revisao-licencas-apk.md). Pré-release `v0.3.0-alpha.1` preparada; publicação dos anexos pendente de autenticação da API GitHub.
+- Revisão técnica de licenças concluída para o APK: 71 pacotes npm, 189 coordenadas Maven, 23 bibliotecas nativas; zero pendências de textos identificadas. Sete lacunas resolvidas; as 46 restantes do inventário npm amplo não pertencem a este APK. Avisos incluídos no APK e na interface. Evidências e condições de distribuição em [revisao-licencas-apk.md](revisao-licencas-apk.md). Pré-release [`v0.3.0-alpha.1`](https://github.com/richardheise/FFortuna/releases/tag/v0.3.0-alpha.1) publicada em 25/10/2026 com nove anexos. Os hashes informados pelo GitHub foram comparados com os arquivos locais.
 - Backup portátil cifrado/restauração implementados para a caixa sintética, ainda sem validação física. Segurança dos arquivos auxiliares foi coberta por testes de dispositivo compilados, não executados. Amostras reais e suporte Nubank continuam bloqueados; validar também retenção de caixas inativas e logs/temporários. Não importar dados financeiros reais no Expo Go.
 - Próximo passo: executar o roteiro 0.3.0 no A36, incluindo backup local, senha errada, alternância e restauração após reinstalar sem a chave original. Depois validar instrumentação, retenção de caixas inativas e arquivos/logs antes de diagnóstico real.
 
 ## Git
 
-Remoto `origin`: https://github.com/richardheise/FFortuna.git, push por SSH, branch main. O usuário autorizou salvar este checkpoint no Git e avaliar a pré-release do APK. A entrega 0.3.0 é identificada pela tag `v0.3.0-alpha.1`; consultar o commit da tag para o fonte correspondente. O acesso SSH foi conferido; a publicação da release binária fica pendente porque não há credencial utilizável da API do GitHub nem GitHub CLI autenticado neste ambiente. Notas, anexos e comando preparados em [releases/v0.3.0-alpha.1.md](releases/v0.3.0-alpha.1.md). Não colocar o APK, chaves ou dados reais no histórico de código.
+Remoto `origin`: https://github.com/richardheise/FFortuna.git, push por SSH, branch main. Checkpoint de código `11174020cc5df9236041674fd44783b2f3225a2c`, tag imutável `v0.3.0-alpha.1`. O código foi enviado e a pré-release foi publicada em 25/10/2026 após autenticar o GitHub CLI como `richardheise`. A publicação contém nove anexos, incluindo APK, fonte correspondente, licenças, recibo e checksums; a consulta pública confirmou que é pré-release, não rascunho, com digest correto do APK. As atualizações posteriores desta documentação não alteram o APK nem a tag do fonte.
+
+O CLI fica em `.local/github-cli/gh`; sua configuração separada usa `GH_CONFIG_DIR=/home/heise/FFortuna/.local/github-cli/config`, com acesso restrito e ignorada pelo Git. Essa autenticação é independente das contas Codex. Não copiar credenciais para o repositório. As notas públicas estão em [releases/v0.3.0-alpha.1.md](releases/v0.3.0-alpha.1.md).
 
 Checkpoint de validação: testar o roteiro manual 0.3.0 no A36 e informar resultados de salvar, senha errada, alternância e reinstalação/restauração. Nenhuma amostra real deve ser capturada antes dessas condições. Os artefatos locais estão em `artifacts/`, com recibo e checksums.
 
-## Publicar os anexos preparados
+## Conferir a publicação
 
-
-O ambiente dispõe de Git por SSH, sem credencial utilizável da API do GitHub. Código e tag podem ser enviados; criar a release e anexar os arquivos exige autenticação adicional. Os arquivos preparados estão em `artifacts/`, ignorados pelo Git.
-
-Depois de autenticar o GitHub CLI com acesso de escrita ao repositório (sem enviar tokens ao chat), a publicação preparada é:
+[Pré-release](https://github.com/richardheise/FFortuna/releases/tag/v0.3.0-alpha.1) · [download direto do APK](https://github.com/richardheise/FFortuna/releases/download/v0.3.0-alpha.1/ffortuna-capture-poc-arm64.apk).
 
 ```sh
-gh release create v0.3.0-alpha.1 --repo richardheise/FFortuna --verify-tag \
-  --prerelease --title 'FFortuna v0.3.0-alpha.1 — captura sintética e backup' \
-  --notes-file docs/releases/v0.3.0-alpha.1.md \
-  artifacts/ffortuna-capture-poc-arm64.apk \
-  artifacts/ffortuna-capture-poc-arm64.apk.sha256 \
-  artifacts/ffortuna-capture-poc-source.tar.gz \
-  artifacts/ffortuna-capture-poc-source.tar.gz.sha256 \
-  artifacts/THIRD_PARTY_NOTICES.txt artifacts/LICENSE.txt \
-  artifacts/apk-inspection.json artifacts/license-review.json artifacts/SHA256SUMS
+GH_CONFIG_DIR=/home/heise/FFortuna/.local/github-cli/config .local/github-cli/gh release view v0.3.0-alpha.1 --repo richardheise/FFortuna
+(cd artifacts && sha256sum -c SHA256SUMS)
 ```
 
-Este comando é uma instrução de publicação; não foi executado neste checkpoint. Autenticar/instalar o CLI fora do APK antes de usá-lo. Não enviar credenciais no chat ou no Git.
+Os nove anexos foram conferidos por tamanho e digest SHA-256 antes da publicação. O acesso público também foi verificado após publicar. Para uma versão nova, gerar novos fonte/checksums e usar outra tag; não mover a tag desta distribuição.
