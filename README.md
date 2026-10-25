@@ -4,7 +4,7 @@ Aplicativo Android livre para organização financeira pessoal no Brasil. O prim
 
 O projeto tem uma **demonstração financeira no Expo Go** e uma [prova nativa Android](docs/captura-nativa.md), ambas exclusivamente com dados fictícios. A prova usa APK próprio e caixa SQLCipher/Kotlin, sem gerar lançamentos financeiros. Inclui conta em BRL, lançamentos manuais, resumo mensal por categoria, caixinhas, compromissos iniciais do cartão, processamento de eventos sintéticos e importação OFX sintética com prévia. Os dados persistem localmente em SQLite.
 
-Pré-release experimental: [baixar APK Android 0.3.0](https://github.com/richardheise/FFortuna/releases/download/v0.3.0-alpha.1/ffortuna-capture-poc-arm64.apk) · [fonte, checksums e avisos](https://github.com/richardheise/FFortuna/releases/tag/v0.3.0-alpha.1). O roteiro de backup/restauração ainda aguarda validação no A36.
+Pré-release experimental: [baixar APK Android 0.3.0](https://github.com/richardheise/FFortuna/releases/download/v0.3.0-alpha.1/ffortuna-capture-poc-arm64.apk) · [fonte, checksums e avisos](https://github.com/richardheise/FFortuna/releases/tag/v0.3.0-alpha.1). O usuário aprovou o roteiro manual de backup/restauração no A36/Android 16 em 25/10/2026, incluindo reinstalação.
 
 ## Executar no celular
 
@@ -21,7 +21,7 @@ Computador e celular devem estar na mesma rede. Abra o Expo Go e escaneie o QR d
 
 O projeto fixa Expo 57 / React Native 0.86 / React 19.2; foi seguida a [orientação oficial durante a transição do Expo Go](https://docs.expo.dev/get-started/create-a-project/). Se o Expo Go instalado informar incompatibilidade, use uma [versão Android compatível](https://expo.dev/go), sem misturar dependências de SDKs diferentes. A combinação foi conferida com `npx expo install --check`.
 
-Expo Go é o aplicativo hospedeiro desta demonstração. APK da prova disponível em `artifacts/ffortuna-capture-poc-arm64.apk`, versão 0.3.0 gerada e inspecionada localmente. O roteiro de captura 0.2.1 foi aprovado pelo usuário no Galaxy A36/Android 16; o novo roteiro de backup/restauração ainda aguarda teste no aparelho. O módulo Kotlin e o APK da prova sintética usam um [build Android próprio](https://docs.expo.dev/guides/local-app-development/); Expo Go não executa módulos nativos personalizados. Os comandos e critérios estão em [captura-nativa.md](docs/captura-nativa.md). O modo financeiro com dados reais ainda não está habilitado.
+Expo Go é o aplicativo hospedeiro desta demonstração. APK da prova disponível em `artifacts/ffortuna-capture-poc-arm64.apk`, versão 0.3.0 gerada e inspecionada localmente. O roteiro de captura 0.2.1 foi aprovado pelo usuário no Galaxy A36/Android 16; o roteiro de backup/restauração 0.3.0 também foi aprovado em 25/10/2026. O módulo Kotlin e o APK da prova sintética usam um [build Android próprio](https://docs.expo.dev/guides/local-app-development/); Expo Go não executa módulos nativos personalizados. Os comandos e critérios estão em [captura-nativa.md](docs/captura-nativa.md). O modo financeiro com dados reais ainda não está habilitado.
 
 ## O que funciona
 
@@ -81,7 +81,7 @@ Dados reais continuarão bloqueados até validar SQLCipher, Keystore, arquivos a
 
 ## Próximo incremento
 
-Prioridade confirmada pelo usuário: funcionalidades em incrementos pequenos antes de refinar UI/UX. O roteiro manual da prova sintética no Galaxy A36/Android 16 foi aprovado pelo usuário após a correção 0.2.1. A versão 0.3.0 acrescenta backup portátil criptografado/restauração da caixa sintética. Próximo passo: testar no A36 o [roteiro de backup](docs/captura-nativa.md#backup-portátil--roteiro-030), incluindo reinstalação sem a chave original. Testes instrumentados e política de retenção das caixas inativas seguem pendentes antes de aceitar amostras reais. O suporte Nubank ainda depende dessas condições e de amostras validadas.
+Prioridade confirmada pelo usuário: funcionalidades em incrementos pequenos antes de refinar UI/UX. O roteiro manual da prova sintética no Galaxy A36/Android 16 foi aprovado pelo usuário após a correção 0.2.1. A versão 0.3.0 acrescenta backup portátil criptografado/restauração da caixa sintética. O usuário aprovou todos os oito passos do [roteiro de backup](docs/captura-nativa.md#backup-portátil--roteiro-030), incluindo senha errada, alternância, reinstalação e persistência. Próximo incremento proposto: fechar a retenção das caixas inativas e a verificação de segurança nativa antes do diagnóstico protegido de notificações reais. Testes instrumentados e política de retenção das caixas inativas seguem pendentes antes de aceitar amostras reais. O suporte Nubank ainda depende dessas condições e de amostras validadas.
 
 ## Licença
 

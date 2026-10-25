@@ -50,7 +50,7 @@ Depois de mudar dependências, primeiro obtenha o novo source map/grafo release.
 
 APK 0.3.0 recompilado com os avisos, backup e restauração: `artifacts/ffortuna-capture-poc-arm64.apk`, 46.147.788 bytes, SHA-256 `46778d77d2294031697f99f52a736f0f218341564f9859b4732e7779597b42f6`.
 
-Verificados: TypeScript, inventário sem pendências identificadas, avisos dentro do APK, assinatura, backup desabilitado, bundle offline, ausência de INTERNET e alinhamento ELF/ZIP a 16 KB das 23 bibliotecas. Após a correção 0.2.1, o usuário relatou aprovação do roteiro manual no Galaxy A36/Android 16 em 25/10/2026. A prova 0.3.0 ainda aguarda teste físico; os testes instrumentados continuam não executados.
+Verificados: TypeScript, inventário sem pendências identificadas, avisos dentro do APK, assinatura, backup desabilitado, bundle offline, ausência de INTERNET e alinhamento ELF/ZIP a 16 KB das 23 bibliotecas. Após a correção 0.2.1, o usuário relatou aprovação do roteiro manual no Galaxy A36/Android 16 em 25/10/2026. Também em 25/10/2026, o usuário aprovou os oito passos do roteiro manual 0.3.0 de backup/restauração no mesmo aparelho, incluindo reinstalação. Os testes instrumentados continuam não executados.
 
 Os artefatos locais incluem os avisos separados, um arquivo com o fonte atual e recibo com hashes em `artifacts/license-review.json`. O arquivo de fonte exclui ferramentas locais, bancos, chaves, credenciais e saídas de compilação. As dependências são fixadas pelo lockfile e pelos arquivos de build; não se afirma reprodução binária byte a byte.
 

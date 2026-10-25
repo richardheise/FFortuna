@@ -10,7 +10,7 @@ O usuário autorizou backup/restauração e aceitou senha independente, ausênci
 
 Implementados PBKDF2-HMAC-SHA256/600.000 + AES-256-GCM, formato autenticado/versionado/limitado, seletor SAF sem cache em claro, validação antes da importação, staging SQLCipher recuperável e troca de ponteiro serial/atômica com captura desativada. No máximo uma caixa anterior, com ações explícitas para alternar/descartar. A senha não é persistida; inputs do contrato Android contêm apenas ação/nome público. Os registros sem bruto não entram na fila processável. Backup não inclui o livro financeiro Expo Go nem habilita bancos reais.
 
-Resultado local: TypeScript + 30 testes TypeScript e 13 testes JVM aprovados. Treze testes instrumentados compilados, não executados (incluem restauração sem chave original, staging interrompido, caixas anteriores, AtomicFile e probes sintéticos em journal/WAL/SHM). APK 0.3.0 gerado, assinado e inspecionado; roteiro físico de backup ainda pendente. Usar o [roteiro 0.3.0](captura-nativa.md#backup-portátil--roteiro-030). A aprovação física anterior é da captura 0.2.1; não atribuir à versão nova.
+Resultado local: TypeScript + 30 testes TypeScript e 13 testes JVM aprovados. Treze testes instrumentados compilados, não executados (incluem restauração sem chave original, staging interrompido, caixas anteriores, AtomicFile e probes sintéticos em journal/WAL/SHM). APK 0.3.0 gerado, assinado e inspecionado. Em 25/10/2026, o usuário aprovou todos os oito passos do [roteiro 0.3.0](captura-nativa.md#backup-portátil--roteiro-030) no A36/Android 16, incluindo senha errada, alternância, reinstalação sem a chave anterior e persistência/integridade. Isso é evidência manual informada pelo usuário; não equivale à execução dos testes instrumentados.
 
 ## Estado atual
 
@@ -21,7 +21,7 @@ Resultado local: TypeScript + 30 testes TypeScript e 13 testes JVM aprovados. Tr
 - Aparelho informado: Samsung Galaxy A36 SM-A366E/DS, Android 16. O roteiro está em [captura-nativa.md](captura-nativa.md).
 - Toolchain local instalada e ignorada em `.local/android-toolchain`: Temurin17.0.21+9, SDK36, BuildTools36/35, NDK27.1.12297006, CMake3.22.1. Chave de assinatura local em `.local/keys`; não apagar, sobrescrever ou enviar ao Git.
 - Houve reinício do PC durante tentativa de compilação; não foi confirmada causa por OOM nos registros consultados. Build foi interrompido e ganhou limite rígido de memória/CPU, checks do Ninja e Metro limitado. Após isso, o usuário autorizou até 12 GiB e 16 CPUs. Manter esses tetos; não aumentar automaticamente. Projetos Gradle seguem sequenciais, C++ limitado a 16 jobs e linker a um.
-- APK release 0.3.0 (versionCode 3) gerado e inspecionado em 25/10/2026: `artifacts/ffortuna-capture-poc-arm64.apk`, SHA-256 `46778d77d2294031697f99f52a736f0f218341564f9859b4732e7779597b42f6`. Assinatura, backup desabilitado, ausência de INTERNET, bundle offline e 23 bibliotecas nativas alinhadas a 16 KB verificados. Os treze testes de dispositivo foram compilados; o APK leva os avisos revisados. A assinatura coincide com a versão 0.2.0. Instalação/acesso/conexão da versão anterior confirmados, mas captura bloqueada pela falha de inicialização; o roteiro de captura 0.2.1 foi aprovado pelo usuário no A36; o novo roteiro 0.3.0 aguarda validação e o aparelho não está conectado ao ADB deste ambiente.
+- APK release 0.3.0 (versionCode 3) gerado e inspecionado em 25/10/2026: `artifacts/ffortuna-capture-poc-arm64.apk`, SHA-256 `46778d77d2294031697f99f52a736f0f218341564f9859b4732e7779597b42f6`. Assinatura, backup desabilitado, ausência de INTERNET, bundle offline e 23 bibliotecas nativas alinhadas a 16 KB verificados. Os treze testes de dispositivo foram compilados; o APK leva os avisos revisados. A assinatura coincide com a versão 0.2.0. Instalação/acesso/conexão da versão anterior confirmados, mas captura bloqueada pela falha de inicialização; o roteiro de captura 0.2.1 foi aprovado pelo usuário no A36; o roteiro manual 0.3.0 também foi aprovado. O aparelho não está conectado ao ADB deste ambiente.
 
 ## Executar
 
@@ -41,8 +41,8 @@ Artefato esperado: `artifacts/ffortuna-capture-poc-arm64.apk` com SHA-256 e rela
 
 - 18 alertas altos no npm decorrentes de duas falhas upstream sem patch na auditoria de 22/10; zero moderados após a correção preparada. Ver [dependencias.md](dependencias.md).
 - Revisão técnica de licenças concluída para o APK: 71 pacotes npm, 189 coordenadas Maven, 23 bibliotecas nativas; zero pendências de textos identificadas. Sete lacunas resolvidas; as 46 restantes do inventário npm amplo não pertencem a este APK. Avisos incluídos no APK e na interface. Evidências e condições de distribuição em [revisao-licencas-apk.md](revisao-licencas-apk.md). Pré-release [`v0.3.0-alpha.1`](https://github.com/richardheise/FFortuna/releases/tag/v0.3.0-alpha.1) publicada em 25/10/2026 com nove anexos. Os hashes informados pelo GitHub foram comparados com os arquivos locais.
-- Backup portátil cifrado/restauração implementados para a caixa sintética, ainda sem validação física. Segurança dos arquivos auxiliares foi coberta por testes de dispositivo compilados, não executados. Amostras reais e suporte Nubank continuam bloqueados; validar também retenção de caixas inativas e logs/temporários. Não importar dados financeiros reais no Expo Go.
-- Próximo passo: executar o roteiro 0.3.0 no A36, incluindo backup local, senha errada, alternância e restauração após reinstalar sem a chave original. Depois validar instrumentação, retenção de caixas inativas e arquivos/logs antes de diagnóstico real.
+- Backup portátil cifrado/restauração implementados para a caixa sintética e aprovados manualmente no A36, inclusive após reinstalação. Segurança dos arquivos auxiliares foi coberta por testes de dispositivo compilados, não executados. Amostras reais e suporte Nubank continuam bloqueados; validar também retenção de caixas inativas e logs/temporários. Não importar dados financeiros reais no Expo Go.
+- Próximo incremento proposto: fechar retenção de caixas inativas e validar instrumentação/arquivos/logs antes de diagnóstico real. O roteiro manual de backup/restauração já foi aprovado; não pedir sua repetição sem falha nova ou mudança relevante.
 
 ## Git
 
@@ -50,7 +50,7 @@ Remoto `origin`: https://github.com/richardheise/FFortuna.git, push por SSH, bra
 
 O CLI fica em `.local/github-cli/gh`; sua configuração separada usa `GH_CONFIG_DIR=/home/heise/FFortuna/.local/github-cli/config`, com acesso restrito e ignorada pelo Git. Essa autenticação é independente das contas Codex. Não copiar credenciais para o repositório. As notas públicas estão em [releases/v0.3.0-alpha.1.md](releases/v0.3.0-alpha.1.md).
 
-Checkpoint de validação: testar o roteiro manual 0.3.0 no A36 e informar resultados de salvar, senha errada, alternância e reinstalação/restauração. Nenhuma amostra real deve ser capturada antes dessas condições. Os artefatos locais estão em `artifacts/`, com recibo e checksums.
+Checkpoint manual 0.3.0 aprovado pelo usuário no A36: todos os oito passos funcionaram. Os 13 testes instrumentados, a retenção de caixas inativas e a revisão de arquivos/logs ainda precisam ser concluídos antes de amostras reais. Os artefatos em `artifacts/`, incluindo recibo e checksums, permanecem como snapshot da publicação; este registro e as notas da release recebem a aprovação posterior.
 
 ## Conferir a publicação
 

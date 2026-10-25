@@ -2,7 +2,7 @@
 
 Esta entrega acrescenta um APK de prova exclusivamente sintético. A demonstração financeira continua no Expo Go. O APK usa `org.ffortuna.capturepoc`, com tela de diagnóstico própria; não cria outro livro financeiro nem aceita notificações bancárias ou arquivos pessoais.
 
-Aparelho informado pelo usuário: Samsung Galaxy A36, SM-A366E/DS, Android 16. O usuário instalou a versão 0.2.0 e encontrou a falha descrita abaixo. Após a correção 0.2.1 disponibilizada, o usuário relatou em 25/10/2026 que testou o APK e todos os itens do roteiro manual passaram. Esse relato é da prova nativa, separado da aprovação anterior da demonstração Expo Go.
+Aparelho informado pelo usuário: Samsung Galaxy A36, SM-A366E/DS, Android 16. O usuário instalou a versão 0.2.0 e encontrou a falha descrita abaixo. Após a correção 0.2.1 disponibilizada, o usuário relatou em 25/10/2026 que testou o APK e todos os itens do roteiro manual passaram. Esse relato é da prova nativa, separado da aprovação anterior da demonstração Expo Go. Também em 25/10/2026, após instalar a versão 0.3.0, relatou sucesso em todos os oito passos do roteiro de backup/restauração, incluindo reinstalação e persistência.
 
 ## Funcionamento
 
@@ -20,7 +20,7 @@ SQLCipher Community 4.19.1 abre a caixa nativa; `cipher_version` não vazio é o
 
 Não exigir biometria por operação permite usar a chave com a tela bloqueada depois do primeiro desbloqueio. A caixa usa armazenamento CE e serviço sem Direct Boot; não promete captura antes desse desbloqueio. Esta prova não implementa bloqueio biométrico da interface.
 
-Ausência/invalidação da chave, autenticação GCM incorreta ou banco de versão futura bloqueiam a operação sem gerar uma chave substituta sobre o banco. Reset exige confirmação explícita e apaga apenas a caixa ativa e sua chave, preservando uma eventual caixa anterior e os backups externos. A versão 0.3.0 acrescenta backup portátil com senha, sem payloads brutos. A restauração cria outra chave local e não precisa da chave da instalação original. Dados reais continuam proibidos até a validação de segurança no aparelho.
+Ausência/invalidação da chave, autenticação GCM incorreta ou banco de versão futura bloqueiam a operação sem gerar uma chave substituta sobre o banco. Reset exige confirmação explícita e apaga apenas a caixa ativa e sua chave, preservando uma eventual caixa anterior e os backups externos. A versão 0.3.0 acrescenta backup portátil com senha, sem payloads brutos. A restauração cria outra chave local e não precisa da chave da instalação original. O roteiro manual de backup foi aprovado no A36; dados reais continuam bloqueados até concluir também os testes instrumentados, a verificação de arquivos/logs e a retenção das caixas inativas.
 
 Backup automático é desabilitado e regras de extração excluem banco, arquivos e preferências de cloud/device-transfer. A configuração final do APK precisa ser inspecionada; o comportamento de fabricantes ainda exige teste. Não há logs de conteúdo emitidos pelo código. O logger Java do SQLCipher é desativado; isso não comprova por si a ausência de todos os logs das dependências.
 
@@ -98,6 +98,8 @@ Teste também revogação e reconcessão do acesso, desativação do consentimen
 
 ## Testes e limites de evidência
 
+- Em 25/10/2026, o usuário relatou que todos os oito passos do roteiro 0.3.0 funcionaram perfeitamente no A36/Android 16: backup local, rejeição de senha errada, restauração em nova caixa, alternância, reinstalação sem a chave antiga e persistência/integridade após reabrir. É validação manual do usuário, separada da execução instrumentada.
+
 - Em 25/10/2026, o usuário relatou aprovação de todos os itens do roteiro manual no Samsung Galaxy A36 SM-A366E/DS, Android 16, após receber a correção 0.2.1. Não forneceu resultados individuais ou logs; não se atribui esse relato à execução dos testes instrumentados.
 
 - TypeScript e 30 testes da demonstração/URLs passaram após aplicar o lockfile corrigido.
@@ -108,7 +110,7 @@ Teste também revogação e reconcessão do acesso, desativação do consentimen
 
 Para repetir só os testes JVM: `npm run native:test`. Os testes de dispositivo estão em `modules/ffortuna-capture/android/src/androidTest`. Os resultados locais do JUnit ficam em `modules/ffortuna-capture/android/build/test-results/`.
 
-A prova não aceita dados reais e não valida o pacote/conteúdo Nubank. O backup portátil cobre somente esta caixa sintética, não o banco financeiro da demonstração Expo Go. Antes de amostras reais, completar as condições do alinhamento de segurança, incluindo restauração sem a chave original, perda de chave, logs/temporários, retenção e verificação de todos os arquivos. Próximo incremento pequeno: executar o roteiro 0.3.0 abaixo no A36, incluindo restauração após reinstalar. Os testes instrumentados e a retenção das caixas inativas ainda precisam de validação antes de diagnóstico protegido com amostras reais; o relato da versão 0.2.1 não valida a versão 0.3.0 nem parsing Nubank.
+A prova não aceita dados reais e não valida o pacote/conteúdo Nubank. O backup portátil cobre somente esta caixa sintética, não o banco financeiro da demonstração Expo Go. Antes de amostras reais, completar as condições do alinhamento de segurança, incluindo restauração sem a chave original, perda de chave, logs/temporários, retenção e verificação de todos os arquivos. O roteiro 0.3.0 abaixo foi aprovado manualmente pelo usuário no A36. Próximo incremento proposto: fechar retenção de caixas inativas e a bateria de segurança nativa. Os testes instrumentados e a inspeção de arquivos/logs ainda precisam de validação antes de diagnóstico protegido com amostras reais; o teste sintético não valida parsing Nubank.
 
 A [revisão de licenças do APK](revisao-licencas-apk.md) registra componentes, textos e fonte correspondente para distribuição.
 
@@ -130,7 +132,7 @@ Use uma frase de teste com 12 a 128 caracteres. Não há recuperação de senha 
 
 A restauração autentica o arquivo completo, valida o formato sintético e importa em transação numa caixa SQLCipher nova. Um marcador durável permite limpar staging interrompido na próxima abertura. Somente depois da verificação de integridade são publicados o novo ponteiro ativo, a caixa anterior e o consentimento desativado, numa gravação de preferências. Não há processamento concorrente pelo JavaScript. A caixa anterior também é cifrada, mas depende da chave local antiga; se ela foi perdida, ainda será possível descartar a caixa antiga e manter a restauração.
 
-O roteiro **0.3.0 ainda não foi executado neste ambiente nem relatado pelo usuário**. Os 13 testes instrumentados compilaram; não foram executados. Eles usam um sandbox próprio de testes da biblioteca (não os dados da instalação do usuário). A aprovação manual anterior corresponde ao roteiro de captura 0.2.1.
+O usuário aprovou **todos os oito passos do roteiro manual 0.3.0 no A36/Android 16 em 25/10/2026**, após receber as instruções nesta conversa. Não foram medidos tempos nem executados os testes instrumentados pelo agente. Os 13 testes instrumentados compilaram e usam um sandbox próprio da biblioteca; sua execução segue pendente. Os anexos da pré-release e seus checksums preservam o snapshot original de publicação; a aprovação posterior é registrada nesta documentação e nas notas públicas.
 
 ## Fontes técnicas
 
