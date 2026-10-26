@@ -1,6 +1,6 @@
 # Continuidade — checkpoint 0.4.0
 
-Atualizado em 25/10/2026. Prioridade do usuário: funcionalidades em incrementos pequenos, depois refinamento UI/UX. A demonstração financeira e a prova nativa são exclusivamente sintéticas; dados reais continuam bloqueados.
+Atualizado em 26/10/2026. Prioridade do usuário: funcionalidades em incrementos pequenos, depois refinamento UI/UX. A demonstração financeira e a prova nativa são exclusivamente sintéticas; dados reais continuam bloqueados.
 
 ## Entrega disponível
 
@@ -22,9 +22,11 @@ O usuário também aprovou retenção de bruto de 30 dias desde a captura na cai
 - Inventário reconferido: 71 pacotes npm, 189 coordenadas Maven e 24 suplementos C/C++; zero pendências de textos identificadas. [Revisão](revisao-licencas-apk.md).
 - Fonte do arquivo corresponde aos 169 arquivos da tag, conferidos byte a byte. Nove anexos com checksums, incluindo APK, fonte, licenças e recibo; não há chaves, credenciais ou dados reais.
 
-**Checkpoint necessário: executar o [roteiro 0.4.0](captura-nativa.md#recuperação-automática-e-segurança--roteiro-040) no Samsung Galaxy A36 SM-A366E/DS, Android 16.** Testar a recuperação pela interface e executar a bateria isolada, informando contadores/códigos. São 30 verificações: 28 callbacks compartilhados com a suíte instrumentada, limpeza de sandbox interrompido e janela dos logs próprios. Sem logs/controles positivos, o resultado deve ser “não verificado”. Mesmo aprovado, o log cobre apenas essa janela e as sondas testadas; não é garantia universal. O relatório fica em memória, sem arquivo financeiro/exportação automática.
+**Checkpoint 0.4.0 aprovado pelo usuário em 26/10/2026 no Samsung Galaxy A36 SM-A366E/DS, Android 16.** Relatou **30 verificações aprovadas, zero falhas e zero não verificadas** na bateria da interface e confirmou que o restante do roteiro também funcionou. É evidência informada pelo usuário; não foram fornecidos logs, relatório exportado, resultados individuais ou tempos. Não inferir testes adicionais além desse roteiro.
 
-Não há aparelho ADB conectado neste servidor nem KVM; nenhum emulador foi iniciado. A execução Android 0.4.0 permanece pendente. Depois de avaliar os resultados, próximo incremento pequeno: diagnóstico real temporário e cifrado com consentimento, pacote Nubank verificado no aparelho, retenção, exportação explícita e anonimização. Não habilitar captura bancária ou alegar suporte Nubank antes dessas condições e de amostras validadas.
+As 30 verificações incluem 28 callbacks compartilhados com a suíte instrumentada, limpeza de sandbox interrompido e janela de logs próprios. O resultado de logs cobre a janela e as sondas daquele processo; não certifica ausência universal de logs. O relatório fica em memória. O runner JUnit Android continua sem execução neste servidor, sem aparelho ADB/KVM; não reclassificar a execução da interface como instrumentação JUnit.
+
+Próximo incremento pequeno: diagnóstico real temporário e cifrado com consentimento explícito, seleção da fonte e pacote Nubank verificado no aparelho, retenção limitada e exportação explícita anonimizada. Amostras reais devem permanecer locais e fora do Git. A aprovação atual fecha o checkpoint sintético; não habilita automaticamente captura bancária nem comprova parsing Nubank.
 
 ## Execução e limites
 

@@ -4,7 +4,7 @@ Aplicativo Android livre para organização financeira pessoal no Brasil. O prim
 
 O projeto tem uma **demonstração financeira no Expo Go** e uma [prova nativa Android](docs/captura-nativa.md), ambas exclusivamente com dados fictícios. A prova usa APK próprio e caixa SQLCipher/Kotlin, sem gerar lançamentos financeiros. Inclui conta em BRL, lançamentos manuais, resumo mensal por categoria, caixinhas, compromissos iniciais do cartão, processamento de eventos sintéticos e importação OFX sintética com prévia. Os dados persistem localmente em SQLite.
 
-Pré-release experimental: [baixar APK Android 0.4.0](https://github.com/richardheise/FFortuna/releases/download/v0.4.0-alpha.1/ffortuna-capture-poc-arm64.apk) · [fonte, checksums e avisos](https://github.com/richardheise/FFortuna/releases/tag/v0.4.0-alpha.1). O roteiro 0.3.0 foi aprovado no A36/Android 16. A versão 0.4.0 acrescenta recuperação automática e verificações nativas; sua validação no aparelho está pendente.
+Pré-release experimental: [baixar APK Android 0.4.0](https://github.com/richardheise/FFortuna/releases/download/v0.4.0-alpha.1/ffortuna-capture-poc-arm64.apk) · [fonte, checksums e avisos](https://github.com/richardheise/FFortuna/releases/tag/v0.4.0-alpha.1). O roteiro 0.3.0 foi aprovado no A36/Android 16. A versão 0.4.0 acrescenta recuperação automática e verificações nativas; em 26/10/2026, o usuário aprovou o roteiro no A36/Android 16 e informou 30 verificações nativas aprovadas, zero falhas e zero não verificadas.
 
 ## Executar no celular
 
@@ -82,7 +82,7 @@ Dados reais continuarão bloqueados até validar SQLCipher, Keystore, arquivos a
 
 ## Próximo incremento
 
-Prioridade confirmada: funcionalidades em incrementos pequenos antes do refinamento UI/UX. Valide o [roteiro 0.4.0](docs/captura-nativa.md#recuperação-automática-e-segurança--roteiro-040) no A36, principalmente recuperação pela interface e contadores/códigos da bateria de segurança. Os 28 cenários de dispositivo foram compilados; sua execução Android ainda está pendente. A bateria da interface compartilha os callbacks, mas não substitui o runner JUnit. O passo seguinte depende desses resultados: diagnóstico real temporário e cifrado, com consentimento, pacote verificado no aparelho e exportação explícita anonimizada. Captura Nubank ainda não está habilitada nem validada.
+Prioridade confirmada: funcionalidades em incrementos pequenos antes do refinamento UI/UX. O usuário aprovou o [roteiro 0.4.0](docs/captura-nativa.md#recuperação-automática-e-segurança--roteiro-040) no A36/Android 16 em 26/10/2026: 30 verificações da interface aprovadas, nenhuma falha ou não verificada, e funcionamento geral aprovado. A bateria compartilha 28 callbacks com a suíte instrumentada; o runner JUnit não foi executado. Próximo incremento: diagnóstico real temporário e cifrado, com consentimento, pacote verificado no aparelho e exportação explícita anonimizada. Captura Nubank ainda não está habilitada nem validada.
 
 ## Licença
 
