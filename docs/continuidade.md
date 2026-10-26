@@ -16,7 +16,7 @@ Roteiro de validação no A36 em [diagnostico-local.md](diagnostico-local.md). P
 
 Verificações locais finais: TypeScript estrito, 30 testes TypeScript e 34 testes JVM aprovados. 38 testes instrumentados compilados, sem runner Android. APK interno 0.5.0/versionCode 5 gerado/inspecionado com a mesma assinatura: 46.266.508 bytes, SHA-256 `45e1132681c0335b2b1112e16a215bada3fcfc26fcc99026c5b8986da1d44a38`. Sem INTERNET/SMS/READ_LOGS/QUERY_ALL_PACKAGES/permissões amplas de armazenamento; avisos, 23 bibliotecas alinhadas a 16 KB, consulta restrita e configuração FLAG_SECURE conferidos. Logs locais `.local/diagnostic-js-final-check.log` e `.local/diagnostic-release-build.log`. Não há aparelho ADB; nenhum emulador iniciado.
 
-Pré-release preparada: `v0.5.0-alpha.1`, com novo fonte/checksums. Documentar publicação efetiva somente depois de conferir os nove anexos e o download público. Preservar releases anteriores.
+[Pré-release v0.5.0-alpha.1](https://github.com/richardheise/FFortuna/releases/tag/v0.5.0-alpha.1) publicada com nove anexos conferidos por tamanho/digest remoto. [Download público do APK](https://github.com/richardheise/FFortuna/releases/download/v0.5.0-alpha.1/ffortuna-capture-poc-arm64.apk) confirmado HTTP 200, 46.266.508 bytes. Fonte exato dos 184 arquivos da tag no commit `72b1491203e081f56fb3d75cdc5db4e82671a4f6`, com licenças/recibo/checksums; sem amostras reais ou credenciais. Tags e anexos anteriores preservados. Snapshot local em `artifacts/releases/v0.5.0-alpha.1/`. Atualizações posteriores desta documentação não alteram o APK/fonte da tag.
 
 ## Entrega anterior disponível (0.4.0)
 
@@ -30,7 +30,7 @@ A política aparece na tela normal. “Configurações avançadas”, fechadas p
 
 O usuário também aprovou retenção de bruto de 30 dias desde a captura na caixa ativa e na anterior inativa. Limpeza compara Instants, preserva IDs/parsing e verifica truncamento de WAL quando aplicável. Se a chave anterior estiver indisponível, mostra “limpeza bloqueada”, pausa captura e exige recuperação do acesso ou descarte explícito da caixa anterior. Não recriar bancos ausentes sobre material existente. Detalhes/alternativas no [ADR 0007](adr/0007-recuperacao-local-e-retencao.md).
 
-## Validação e próximo checkpoint
+## Validação anterior (0.4.0)
 
 - TypeScript estrito e 30 testes TypeScript aprovados.
 - 22 testes JVM aprovados. 28 testes instrumentados compilados, não executados pelo runner Android.
@@ -60,14 +60,14 @@ Toolchain ignorada em `.local/android-toolchain`: Temurin 17.0.21+9, SDK 36, Bui
 
 ```sh
 (cd artifacts && sha256sum -c SHA256SUMS)
-GH_CONFIG_DIR=/home/heise/FFortuna/.local/github-cli/config .local/github-cli/gh release view v0.4.0-alpha.1 --repo richardheise/FFortuna
+GH_CONFIG_DIR=/home/heise/FFortuna/.local/github-cli/config .local/github-cli/gh release view v0.5.0-alpha.1 --repo richardheise/FFortuna
 ```
 
 ## Git e publicação
 
-Branch main, origin fetch HTTPS e push SSH `git@github.com:richardheise/FFortuna.git`. Fonte/nota/roteiro enviados e tag `v0.4.0-alpha.1` publicada. Atualizações posteriores da documentação não mudam a tag ou o fonte do APK. Usar outra tag para nova compilação distribuída; não mover tags/substituir anexos anteriores.
+Branch main, origin fetch HTTPS e push SSH `git@github.com:richardheise/FFortuna.git`. Fonte/nota/roteiro enviados e tag `v0.5.0-alpha.1` publicada. Atualizações posteriores da documentação não mudam a tag ou o fonte do APK. Usar outra tag para nova compilação distribuída; não mover tags/substituir anexos anteriores.
 
-GitHub CLI autenticado como `richardheise`: `.local/github-cli/gh`, sempre com `GH_CONFIG_DIR=/home/heise/FFortuna/.local/github-cli/config`. Configuração restrita/ignorada; não imprimir/copiar credenciais. Essa autenticação é independente das contas Codex. Notas em [releases/v0.4.0-alpha.1.md](releases/v0.4.0-alpha.1.md). Artefatos permanentes em `artifacts/`, com snapshots por versão em `artifacts/releases/`.
+GitHub CLI autenticado como `richardheise`: `.local/github-cli/gh`, sempre com `GH_CONFIG_DIR=/home/heise/FFortuna/.local/github-cli/config`. Configuração restrita/ignorada; não imprimir/copiar credenciais. Essa autenticação é independente das contas Codex. Notas atuais em [releases/v0.5.0-alpha.1.md](releases/v0.5.0-alpha.1.md). Artefatos permanentes em `artifacts/`, com snapshots por versão em `artifacts/releases/`.
 
 ## Histórico e pendências preservadas
 
