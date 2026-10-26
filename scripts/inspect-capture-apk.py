@@ -20,13 +20,16 @@ badging=run([tools/'aapt','dump','badging',apk])
 manifest=run([tools/'aapt','dump','xmltree',apk,'AndroidManifest.xml'])
 permissions=re.findall(r"uses-permission: name='([^']+)'",badging)
 assert 'android.permission.INTERNET' not in permissions, 'APK still requests INTERNET'
-assert not set(permissions) & {'android.permission.READ_LOGS', 'android.permission.READ_EXTERNAL_STORAGE', 'android.permission.WRITE_EXTERNAL_STORAGE', 'android.permission.MANAGE_EXTERNAL_STORAGE'}, 'Broad logs/storage permissions are forbidden'
+assert not set(permissions) & {'android.permission.READ_LOGS', 'android.permission.READ_EXTERNAL_STORAGE', 'android.permission.WRITE_EXTERNAL_STORAGE', 'android.permission.MANAGE_EXTERNAL_STORAGE', 'android.permission.QUERY_ALL_PACKAGES', 'android.permission.READ_SMS', 'android.permission.RECEIVE_SMS'}, 'Broad logs/storage permissions are forbidden'
 assert 'android.permission.POST_NOTIFICATIONS' in permissions
 assert "name='org.ffortuna.capturepoc'" in badging
 assert 'application-debuggable' not in badging
 assert re.search(r'android:allowBackup[^\n]*0x0\s*$',manifest,re.M), 'Backup must be disabled'
 assert 'android:dataExtractionRules' in manifest and 'android:fullBackupContent' in manifest
 assert 'org.ffortuna.capture.SyntheticNotificationListener' in manifest
+assert 'com.nu.production' in manifest, 'Narrow Nubank package query missing'
+activity=Path('android/app/src/main/java/org/ffortuna/capturepoc/MainActivity.kt').read_text()
+assert 'window.addFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE)' in activity, 'Secure window flag missing from generated activity'
 assert 'android.permission.BIND_NOTIFICATION_LISTENER_SERVICE' in manifest
 libraries=[]
 notice_asset=Path('modules/ffortuna-capture/android/src/main/assets/ffortuna-legal/THIRD_PARTY_NOTICES.txt')
@@ -50,7 +53,7 @@ with zipfile.ZipFile(apk) as archive:
         libraries.append({'name':name,'loadAlignments':alignments})
 assert any(item['name'].endswith('/libsqlcipher.so') for item in libraries), 'SQLCipher missing'
 report={'apk':apk.name,'signatureVerified':True,'zipAligned16KB':True,'elfAligned16KB':True,
-        'noticeAssetsVerified':True,'internetPermission':False,'allowBackup':False,'offlineBundle':True,
+        'noticeAssetsVerified':True,'internetPermission':False,'allowBackup':False,'offlineBundle':True,'secureWindowConfigured':True,'narrowSourceQuery':True,
         'permissions':permissions,'nativeLibraries':libraries,
         'deviceExecutionVerified':False}
 output=Path('artifacts/apk-inspection.json')

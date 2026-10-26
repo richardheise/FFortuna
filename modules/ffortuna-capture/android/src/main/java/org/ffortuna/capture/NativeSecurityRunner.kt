@@ -14,6 +14,11 @@ import java.util.concurrent.atomic.AtomicBoolean
 open class SecurityCheckFailure(val safeCode:String):IllegalStateException(safeCode)
 
 object NativeSecurityRunner {
+    const val SCOPE="isolated-native-checks/v2"
+    const val REQUIRED_CHECKS=40
+    fun approved(report:Map<String,Any?>?):Boolean=report?.let {
+        it["scope"]==SCOPE && it["passed"]==REQUIRED_CHECKS && it["failed"]==0 && it["notVerified"]==0
+    } ?: false
     fun run(context:Context):Map<String,Any?> {
         val results=mutableListOf<Map<String,Any?>>()
         val probes=mutableListOf<String>()
@@ -31,13 +36,13 @@ object NativeSecurityRunner {
         execute("abandoned-check-cleanup","Limpeza de verificações interrompidas") { SecuritySandbox.recoverAbandoned(context) }
         val specific=RetentionSecurityScenarios(context) { probes.add(it) }.cases()
         val policy=specific.first { it.id=="policy-settings" }
-        val cases=listOf(policy)+NativeSecurityScenarios(context).cases()+specific.filter { it.id!=policy.id }
+        val cases=listOf(policy)+NativeSecurityScenarios(context).cases()+specific.filter { it.id!=policy.id }+DiagnosticSecurityScenarios(context) { probes.add(it) }.cases()
         for(case in cases) execute(case.id,case.title,case.run)
         Log.i("FFortunaSecurityCheck",end)
         results.add(logWindow(start,end,probes))
         probes.clear()
         return mapOf("ranAt" to Instant.now().toString(),"syntheticOnly" to true,
-            "model" to Build.MODEL,"sdk" to Build.VERSION.SDK_INT,"scope" to "isolated-native-checks/v1",
+            "model" to Build.MODEL,"sdk" to Build.VERSION.SDK_INT,"scope" to SCOPE,
             "passed" to results.count { it["status"]=="passed" },"failed" to results.count { it["status"]=="failed" },
             "notVerified" to results.count { it["status"]=="not_verified" },"cases" to results)
     }

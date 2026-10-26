@@ -11,6 +11,7 @@
 *.csv
 *.pdf
 *.ffortuna
+*.ffortuna-samples
 /private-data/
 /local-data/
 /statements/

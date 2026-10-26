@@ -12,6 +12,8 @@ import java.util.concurrent.Executors
 object CaptureRuntime {
     private const val RETENTION_WARNING="Limpeza de bruto bloqueada; captura pausada. Confira a retenção abaixo."
     private val executor = Executors.newSingleThreadExecutor { task -> Thread(task, "ffortuna-capture") }
+    private var diagnostic:DiagnosticCapture?=null
+    private fun diagnostic(context:Context)=diagnostic ?: DiagnosticCapture(context.applicationContext).also { diagnostic=it }
     private var boxes: CaptureBoxes? = null
     private var recovery:LocalRecoveryStore?=null
     private var recoveryError:String?=null
@@ -67,7 +69,7 @@ object CaptureRuntime {
             "notificationsAllowed" to manager.areNotificationsEnabled(),"sourcePackage" to context.packageName,
             "lastError" to lastError,"syntheticOnly" to true,
             "previousBoxAvailable" to (preferences(context).getString("previous-box",null)!=null),"retention" to maintenance,
-            "securityReport" to securityReport)
+            "securityReport" to securityReport,"diagnostic" to diagnosticStatus(context))
         try {
             val db=database(context); db.processPending()
             automaticRecovery(context,db)
@@ -109,7 +111,45 @@ object CaptureRuntime {
     fun runSecurityChecks(context:Context):Map<String,Any?> = call {
         check(preferences(context).edit().putBoolean("enabled",false).commit())
         SyntheticEmitter.cancel(context)
+        diagnostic(context).stop()
         NativeSecurityRunner.run(context).also { securityReport=it }
+    }
+    private fun authorized(context:Context):Boolean {
+        val manager=context.getSystemService(NotificationManager::class.java)
+        val component=ComponentName(context,SyntheticNotificationListener::class.java)
+        return if(Build.VERSION.SDK_INT>=27) manager.isNotificationListenerAccessGranted(component)
+            else Settings.Secure.getString(context.contentResolver,"enabled_notification_listeners")?.split(":")?.contains(component.flattenToString())==true
+    }
+    private fun diagnosticStatus(context:Context):Map<String,Any?> {
+        val source=DiagnosticSource.inspect(context)
+        val allowed=authorized(context)
+        if(!allowed) try { diagnostic(context).stop() } catch (_:Exception) { }
+        return diagnostic(context).status(DiagnosticSource.moment(context),source)+mapOf("source" to source,"authorized" to allowed,"connected" to connected,"securityChecksPassed" to NativeSecurityRunner.approved(securityReport))
+    }
+    fun diagnosticSnapshot(context:Context)=call { diagnosticStatus(context) }
+    fun startDiagnostic(context:Context,signer:String)=call {
+        if(!NativeSecurityRunner.approved(securityReport)) throw DiagnosticFailure("SECURITY_CHECKS_REQUIRED")
+        if(!authorized(context) || !connected) throw DiagnosticFailure("ACCESS_REQUIRED")
+        if(retention(context).blocked) throw DiagnosticFailure("RETENTION_BLOCKED")
+        diagnostic(context).start(signer,DiagnosticSource.inspect(context),DiagnosticSource.moment(context))
+    }
+    fun stopDiagnostic(context:Context)=call { diagnostic(context).stop() }
+    fun clearDiagnostic(context:Context)=call { diagnostic(context).clear() }
+    fun diagnosticSamples(context:Context)=call { diagnostic(context).samples(DiagnosticSource.moment(context)) }
+    fun diagnosticSample(context:Context,id:String)=call { diagnostic(context).sample(id,DiagnosticSource.moment(context)) }
+    fun reviewDiagnostic(context:Context,id:String,json:String,confirmed:Boolean)=call { diagnostic(context).review(id,json,confirmed,DiagnosticSource.moment(context)) }
+    fun excludeDiagnosticReview(context:Context,id:String)=call { diagnostic(context).excludeReview(id) }
+    fun exportDiagnostic(context:Context)=call { diagnostic(context).exportReviewed(DiagnosticSource.moment(context)) }
+    fun observeDiagnostic(context:Context,sbn:android.service.notification.StatusBarNotification,received:DiagnosticMoment) {
+        if(sbn.packageName!=DiagnosticPolicy.PACKAGE || sbn.user!=android.os.Process.myUserHandle()) return
+        executor.execute {
+            try {
+                if(!authorized(context)) { diagnostic(context).stop();return@execute }
+                val maintenance=retention(context,false)
+                if(maintenance.blocked) { diagnostic(context).stop();return@execute }
+                diagnostic(context).observe(sbn,received,DiagnosticSource.moment(context))
+            } catch (_:Exception) { try { diagnostic(context).stop() } catch (_:Exception) { } }
+        }
     }
     fun reset(context:Context) {
         call {

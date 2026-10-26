@@ -3,6 +3,7 @@ import { Alert, AppState, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Action, Card, ErrorBox, Field, ScreenScroll, styles } from '../ui/common';
 import { captureModule, type CaptureSnapshot, type LocalRecoveryEntry, type SecurityReport } from './native';
+import { DiagnosticPanel } from './DiagnosticPanel';
 import { LegalNotices } from '../legal/LegalNotices';
 
 export function CaptureScreen() {
@@ -74,11 +75,12 @@ export function CaptureScreen() {
   ].filter((reason): reason is string => typeof reason === 'string') : ['Aguardando o diagnóstico. Se não carregar, toque em “Atualizar estado” na seção 1.'];
   return <SafeAreaView style={styles.page}><ScreenScroll>
     <Text style={styles.title}>FFortuna · Captura nativa</Text>
-    <Text style={styles.warning}>PROVA SINTÉTICA · Não monitora bancos. Não informe dados reais.</Text>
+    <Text style={styles.warning}>PROVA DE CAPTURA · Exemplos são sintéticos. Diagnóstico real somente mediante ativação explícita nas configurações avançadas.</Text>
+    {state?.diagnostic?.active && <Text style={styles.warning}>Diagnóstico real ativo até {state.diagnostic.expiresAt ? new Date(state.diagnostic.expiresAt).toLocaleString() : "expirar"}. Fonte: Nubank. Pare a coleta nas configurações avançadas.</Text>}
     <ErrorBox message={error ?? state?.lastError ?? null} />
     {!native ? <Card><Text style={styles.body}>Este diagnóstico exige o APK próprio. A demonstração financeira continua disponível no Expo Go.</Text></Card> : <>
       <Card><Text style={styles.heading}>1. Preparar e autorizar</Text>
-        <Text style={styles.body}>O Android concede acesso amplo ao serviço, mas este APK filtra o próprio pacote antes de ler conteúdo e aceita só exemplos marcados. Fonte permitida: {state?.sourcePackage ?? 'carregando'}.</Text>
+        <Text style={styles.body}>O Android concede acesso amplo ao serviço. Para os exemplos abaixo, o app filtra o próprio pacote antes de ler conteúdo e aceita só fixtures marcadas. O diagnóstico real tem consentimento separado nas configurações avançadas. Fonte dos exemplos: {state?.sourcePackage ?? 'carregando'}.</Text>
         <Text style={styles.body}>Caixa cifrada: {!state ? 'verificando' : state.storageReady ? `pronta · SQLCipher ${state.cipherVersion}` : 'indisponível'}</Text>
         <Text style={styles.body}>Consentimento local: {state?.enabled ? 'ativo' : 'desativado'} · acesso Android: {state?.authorized ? 'concedido' : 'não concedido'} · conexão: {state?.connected ? 'conectado' : 'desconectado'}</Text>
         <Action title={state?.enabled ? 'Desativar captura sintética' : 'Concordo: ativar captura somente sintética'} disabled={busy || (!state?.storageReady && !state?.enabled) || (!state?.enabled && retentionBlocked)} onPress={() => void run(() => native.setEnabled(!state?.enabled))} />
@@ -120,6 +122,7 @@ export function CaptureScreen() {
       </Card>
       <Action title={advancedOpen ? 'Fechar configurações avançadas' : 'Configurações avançadas'} secondary disabled={busy} onPress={() => { setPassword('');setConfirmation('');setAdvancedOpen(value => !value); }} />
       {advancedOpen && <>
+      <DiagnosticPanel native={native} busy={busy} run={run} />
       <Card><Text style={styles.heading}>Backup portátil e caixas</Text>
         <Text style={styles.body}>Salva registros e resultados de parsing, sem os payloads brutos. Escolha uma pasta neste aparelho. O arquivo é cifrado com sua senha, independente da chave local. A senha não é salva e não tem recuperação. Salvo fora do app, este backup pode ser restaurado após desinstalação ou em outro aparelho.</Text>
         <Field label="Senha do backup (12 a 128 caracteres)" value={password} onChangeText={setPassword} secureTextEntry autoCapitalize="none" autoCorrect={false} autoComplete="off" importantForAutofill="no" maxLength={128} />

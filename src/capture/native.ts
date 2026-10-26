@@ -28,7 +28,7 @@ export interface SecurityReport {
 export interface CaptureSnapshot {
   enabled: boolean; authorized: boolean; connected: boolean; notificationsAllowed: boolean;
   storageReady: boolean; sourcePackage: string; lastError: string | null; syntheticOnly: true;
-  previousBoxAvailable: boolean;
+  previousBoxAvailable: boolean; diagnostic?: DiagnosticStatus;
   retention?: RetentionStatus;
   localRecovery?: LocalRecoveryStatus;
   securityReport?: SecurityReport | null;
@@ -56,10 +56,41 @@ export interface CaptureModule {
   clearLocalRecovery(): Promise<void>;
   restoreLocalRecovery(id: string): Promise<BackupResult>;
   runSecurityChecks(): Promise<SecurityReport>;
+  diagnosticSnapshot(): Promise<DiagnosticStatus>;
+  startDiagnostic(expectedSigner: string): Promise<DiagnosticResult>;
+  stopDiagnostic(): Promise<DiagnosticResult>;
+  clearDiagnostic(): Promise<DiagnosticResult>;
+  diagnosticSamples(): Promise<DiagnosticResult>;
+  diagnosticSample(id: string): Promise<DiagnosticResult>;
+  reviewDiagnostic(id: string, fieldsJson: string, confirmed: boolean): Promise<DiagnosticResult>;
+  excludeDiagnosticReview(id: string): Promise<DiagnosticResult>;
+  verifyDiagnosticExport(password: string): Promise<DiagnosticResult>;
+  exportDiagnostic(password: string): Promise<DiagnosticResult>;
 }
 
 /** Never look up a custom native module in Expo Go. Only the PoC screen calls this. */
 export function captureModule(): CaptureModule | null {
   if (Constants.executionEnvironment === 'storeClient') return null;
   return requireOptionalNativeModule<CaptureModule>('FFortunaCapture');
+}
+
+export interface DiagnosticSource {
+  installed: boolean; enabled: boolean; packageName: string; label: string;
+  versionName: string | null; signer: string | null;
+}
+export interface DiagnosticStatus {
+  status: 'absent' | 'ready' | 'blocked'; active: boolean; securityChecksPassed: boolean;
+  authorized: boolean; connected: boolean; source: DiagnosticSource;
+  startedAt: string | null; expiresAt: string | null;
+  count: number; reviewedCount: number; limitReached: boolean; failureCode: string | null;
+}
+export interface DiagnosticFields { title: string; text: string; bigText: string; subText: string; textLines: string[] }
+export interface DiagnosticSampleInfo {
+  id: string; revision: number; publishedAt: string; capturedAt: string;
+  isSummary: boolean; truncated: boolean; hasText: boolean; hasReview: boolean;
+}
+export interface DiagnosticSample extends DiagnosticSampleInfo { original: DiagnosticFields; suggestion: DiagnosticFields }
+export interface DiagnosticResult {
+  status: 'ok' | 'error' | 'saved' | 'cancelled' | 'verified'; code?: string; count?: number;
+  samples?: DiagnosticSampleInfo[]; sample?: DiagnosticSample;
 }

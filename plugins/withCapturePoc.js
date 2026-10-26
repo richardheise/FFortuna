@@ -1,10 +1,18 @@
-const { withAndroidManifest, withAppBuildGradle, withProjectBuildGradle } = require('expo/config-plugins');
+const { withAndroidManifest, withAppBuildGradle, withProjectBuildGradle, withMainActivity } = require('expo/config-plugins');
 module.exports = function withCapturePoc(config) {
   config = withAndroidManifest(config, (mod) => {
     const application = mod.modResults.manifest.application[0].$;
     application['android:allowBackup'] = 'false';
     application['android:fullBackupContent'] = '@xml/ffortuna_backup_rules';
     application['android:dataExtractionRules'] = '@xml/ffortuna_data_extraction_rules';
+    return mod;
+  });
+  config = withMainActivity(config, (mod) => {
+    if (!mod.modResults.contents.includes('WindowManager.LayoutParams.FLAG_SECURE')) {
+      const marker = 'super.onCreate(null)';
+      if (!mod.modResults.contents.includes(marker)) throw new Error('MainActivity creation hook missing; secure window is required.');
+      mod.modResults.contents = mod.modResults.contents.replace(marker, `${marker}\n    window.addFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE)`);
+    }
     return mod;
   });
   config = withProjectBuildGradle(config, (mod) => {

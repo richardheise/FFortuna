@@ -1,6 +1,6 @@
 # Revisão de licenças — APK de captura sintética
 
-Revisão técnica concluída em 23/10/2026 e reconferida em 25/10/2026 na versão 0.4.0 para o APK `capture-poc`, release, arm64-v8a. Não foram encontradas pendências de textos de licença ou de atribuição no inventário identificado abaixo. Isso não equivale a validar o funcionamento no celular ou a certificar juridicamente qualquer distribuição futura.
+Revisão técnica concluída em 23/10/2026 e reconferida em 25/10/2026 na versão 0.5.0 para o APK `capture-poc`, release, arm64-v8a. Não foram encontradas pendências de textos de licença ou de atribuição no inventário identificado abaixo. Isso não equivale a validar o funcionamento no celular ou a certificar juridicamente qualquer distribuição futura.
 
 ## Escopo e evidências
 
@@ -65,3 +65,9 @@ APK 0.4.0 (versionCode 4), 46.207.716 bytes, SHA-256 `0ef198733e42f5e227a7b7bba4
 TypeScript estrito, 30 testes TypeScript e 22 JVM aprovados; 28 testes de dispositivo compilados, não executados. Em 26/10/2026, o usuário aprovou o roteiro 0.4.0 no A36/Android 16 e relatou 30 verificações da interface aprovadas, zero falhas e zero não verificadas. É execução dos callbacks pela interface, informada pelo usuário, sem logs; o runner JUnit não foi executado. A nova distribuição usa `v0.4.0-alpha.1`, sem mover tags ou substituir anexos anteriores. Fonte exato, recibo, licenças e checksums acompanham o APK.
 
 A [pré-release v0.4.0-alpha.1](https://github.com/richardheise/FFortuna/releases/tag/v0.4.0-alpha.1) foi publicada com nove anexos, conferidos por tamanho e digest remoto. Fonte correspondente ao commit `697fee04fa083de77c5903c18258986ca3ff1a47`; download público do APK confirmado HTTP 200. A tag e os anexos 0.3.0 permanecem intactos.
+
+## Reconferência 0.5.0
+
+APK 0.5.0/versionCode 5: 46.266.508 bytes, SHA-256 `45e1132681c0335b2b1112e16a215bada3fcfc26fcc99026c5b8986da1d44a38`. Diagnóstico local usa APIs Android/JCA já presentes, sem dependências novas. O inventário foi reconferido na inspeção final: 71 pacotes npm, 189 coordenadas Maven, 23 bibliotecas nativas e 24 suplementos C/C++, sem pendências identificadas. Avisos/AGPL no APK coincidem byte a byte com os textos revisados. Fonte, licenças, recibo e checksums devem acompanhar a nova tag.
+
+TypeScript estrito, 30 testes TypeScript e 34 JVM aprovados; 38 testes de dispositivo compilados, sem execução pelo runner neste servidor. A 0.4.0 foi aprovada pelo usuário; 0.5.0 aguarda a bateria de 40 verificações e validação física do diagnóstico. Trata-se de coleta real opcional e consentida, sem parser/lançamentos: não rotular o APK inteiro como exclusivamente sintético. Nenhum dado real foi coletado no ambiente de desenvolvimento ou adicionado aos anexos.

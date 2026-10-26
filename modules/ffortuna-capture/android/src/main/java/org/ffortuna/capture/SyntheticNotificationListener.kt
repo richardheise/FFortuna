@@ -25,6 +25,11 @@ class SyntheticNotificationListener : NotificationListenerService() {
     // Dismissing a notification deliberately has no effect on persistent observations.
     override fun onNotificationRemoved(sbn:StatusBarNotification) { }
     private fun observe(sbn:StatusBarNotification) {
+        // The real diagnostic allowlist is separate from the synthetic capture switch.
+        if(sbn.packageName==DiagnosticPolicy.PACKAGE) {
+            if(sbn.user!=android.os.Process.myUserHandle()) return
+            CaptureRuntime.observeDiagnostic(this,sbn,DiagnosticSource.moment(this));return
+        }
         if(!CaptureIdentity.accepts(sbn.packageName,packageName,
             sbn.notification.flags and Notification.FLAG_GROUP_SUMMARY != 0,CaptureRuntime.enabled(this))) return
         // Source and summary are filtered BEFORE reading notification content/extras.

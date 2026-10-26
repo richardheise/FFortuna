@@ -22,9 +22,11 @@ class FFortunaCaptureModule:Module() {
     private suspend fun backupAction(block:suspend () -> Map<String,Any>):Map<String,Any> {
         if(!backupBusy.compareAndSet(false,true)) return mapOf("status" to "error","code" to "BUSY")
         return try { block() }
-        catch(error:Exception) { mapOf("status" to "error","code" to when(error) { is BackupFailure -> error.problem.name; is LocalRecoveryFailure -> error.code; else -> "STORAGE" }) }
+        catch(error:Exception) { mapOf("status" to "error","code" to when(error) { is BackupFailure -> error.problem.name; is LocalRecoveryFailure -> error.code; is DiagnosticFailure -> error.code; else -> "STORAGE" }) }
         finally { backupBusy.set(false) }
     }
+    private fun diagnosticAction(block:()->Map<String,Any?>):Map<String,Any?> = try { block() }
+        catch(error:Exception) { mapOf("status" to "error","code" to DiagnosticCapture.safeCode(error)) }
     override fun definition() = ModuleDefinition {
         Name("FFortunaCapture")
         RegisterActivityContracts {
@@ -71,6 +73,57 @@ class FFortunaCaptureModule:Module() {
                         "unavailable" to backup.observations.count { it.state=="pending" })
                 }
             } finally { chars.fill('\u0000') }
+        } }
+        AsyncFunction("diagnosticSnapshot") { CaptureRuntime.diagnosticSnapshot(context()) }
+        AsyncFunction("startDiagnostic") { signer:String -> diagnosticAction { CaptureRuntime.startDiagnostic(context(),signer);mapOf("status" to "ok") } }
+        AsyncFunction("stopDiagnostic") { diagnosticAction { CaptureRuntime.stopDiagnostic(context());mapOf("status" to "ok") } }
+        AsyncFunction("clearDiagnostic") { diagnosticAction { CaptureRuntime.clearDiagnostic(context());mapOf("status" to "ok") } }
+        AsyncFunction("diagnosticSamples") { diagnosticAction { mapOf("status" to "ok","samples" to CaptureRuntime.diagnosticSamples(context())) } }
+        AsyncFunction("diagnosticSample") { id:String -> diagnosticAction { mapOf("status" to "ok","sample" to CaptureRuntime.diagnosticSample(context(),id)) } }
+        AsyncFunction("reviewDiagnostic") { id:String,json:String,confirmed:Boolean -> diagnosticAction {
+            CaptureRuntime.reviewDiagnostic(context(),id,json,confirmed);mapOf("status" to "ok")
+        } }
+        AsyncFunction("excludeDiagnosticReview") { id:String -> diagnosticAction {
+            CaptureRuntime.excludeDiagnosticReview(context(),id);mapOf("status" to "ok")
+        } }
+        AsyncFunction("verifyDiagnosticExport") Coroutine { password:String -> backupAction {
+            val chars=password.toCharArray()
+            try {
+                BackupCodec.validatePassword(chars)
+                val uri=withContext(Dispatchers.Main) { openBackup.launch("open") }
+                if(uri==null) mapOf("status" to "cancelled")
+                else withContext(Dispatchers.IO) {
+                    val bytes=try { context().contentResolver.openInputStream(uri)?.use(BackupCodec::readBounded)
+                        ?: throw BackupFailure(BackupProblem.IO) } catch(error:BackupFailure) { throw error }
+                        catch (_:Exception) { throw BackupFailure(BackupProblem.IO) }
+                    val plain=try { BackupCodec.decrypt(bytes,chars) } finally { bytes.fill(0) }
+                    val count=try { DiagnosticBundle.validate(plain) } finally { plain.fill(0) }
+                    mapOf("status" to "verified","count" to count)
+                }
+            } finally { chars.fill('\u0000') }
+        } }
+        AsyncFunction("exportDiagnostic") Coroutine { password:String -> backupAction {
+            val chars=password.toCharArray()
+            val bytes=try { withContext(Dispatchers.IO) {
+                BackupCodec.validatePassword(chars)
+                val plain=try { CaptureRuntime.exportDiagnostic(context()) }
+                    catch(error:Exception) { throw DiagnosticFailure(DiagnosticCapture.safeCode(error)) }
+                try { BackupCodec.encrypt(plain,chars) } finally { plain.fill(0) }
+            } } finally { chars.fill('\u0000') }
+            try {
+                val uri=withContext(Dispatchers.Main) { createBackup.launch("FFortuna-amostras-revisadas.ffortuna-samples") }
+                if(uri==null) mapOf("status" to "cancelled")
+                else withContext(Dispatchers.IO) {
+                    try {
+                        context().contentResolver.openOutputStream(uri,"w")?.use { it.write(bytes);it.flush() }
+                            ?: throw BackupFailure(BackupProblem.IO)
+                    } catch (_:Exception) {
+                        try { DocumentsContract.deleteDocument(context().contentResolver,uri) } catch (_:Exception) { }
+                        throw BackupFailure(BackupProblem.IO)
+                    }
+                    mapOf("status" to "saved")
+                }
+            } finally { bytes.fill(0) }
         } }
         AsyncFunction("localRecoveryEntries") { CaptureRuntime.localRecoveryEntries(context()) }
         AsyncFunction("setLocalRecoveryEnabled") { enabled:Boolean -> CaptureRuntime.setLocalRecoveryEnabled(context(),enabled) }

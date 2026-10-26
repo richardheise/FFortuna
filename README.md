@@ -2,9 +2,9 @@
 
 Aplicativo Android livre para organização financeira pessoal no Brasil. O primeiro **F** vem de *free*; **Fortuna** homenageia a deusa romana da fortuna.
 
-O projeto tem uma **demonstração financeira no Expo Go** e uma [prova nativa Android](docs/captura-nativa.md), ambas exclusivamente com dados fictícios. A prova usa APK próprio e caixa SQLCipher/Kotlin, sem gerar lançamentos financeiros. Inclui conta em BRL, lançamentos manuais, resumo mensal por categoria, caixinhas, compromissos iniciais do cartão, processamento de eventos sintéticos e importação OFX sintética com prévia. Os dados persistem localmente em SQLite.
+O projeto tem uma **demonstração financeira no Expo Go** e uma [prova nativa Android](docs/captura-nativa.md), com demonstração e exemplos exclusivamente fictícios. O APK próprio usa SQLCipher/Kotlin e oferece diagnóstico real temporário opcional, separado e desativado até consentimento, sem gerar lançamentos financeiros. Inclui conta em BRL, lançamentos manuais, resumo mensal por categoria, caixinhas, compromissos iniciais do cartão, processamento de eventos sintéticos e importação OFX sintética com prévia. Os dados persistem localmente em SQLite.
 
-Pré-release experimental: [baixar APK Android 0.4.0](https://github.com/richardheise/FFortuna/releases/download/v0.4.0-alpha.1/ffortuna-capture-poc-arm64.apk) · [fonte, checksums e avisos](https://github.com/richardheise/FFortuna/releases/tag/v0.4.0-alpha.1). O roteiro 0.3.0 foi aprovado no A36/Android 16. A versão 0.4.0 acrescenta recuperação automática e verificações nativas; em 26/10/2026, o usuário aprovou o roteiro no A36/Android 16 e informou 30 verificações nativas aprovadas, zero falhas e zero não verificadas.
+Pré-release experimental: [baixar APK Android 0.5.0](https://github.com/richardheise/FFortuna/releases/download/v0.5.0-alpha.1/ffortuna-capture-poc-arm64.apk) · [fonte, checksums e avisos](https://github.com/richardheise/FFortuna/releases/tag/v0.5.0-alpha.1). O roteiro 0.3.0 foi aprovado no A36/Android 16. A versão 0.4.0 foi aprovada pelo usuário no A36/Android 16 (30 verificações). A versão 0.5.0 acrescenta o diagnóstico real opcional; validação física ainda pendente.
 
 ## Executar no celular
 
@@ -21,7 +21,7 @@ Computador e celular devem estar na mesma rede. Abra o Expo Go e escaneie o QR d
 
 O projeto fixa Expo 57 / React Native 0.86 / React 19.2; foi seguida a [orientação oficial durante a transição do Expo Go](https://docs.expo.dev/get-started/create-a-project/). Se o Expo Go instalado informar incompatibilidade, use uma [versão Android compatível](https://expo.dev/go), sem misturar dependências de SDKs diferentes. A combinação foi conferida com `npx expo install --check`.
 
-Expo Go é o aplicativo hospedeiro desta demonstração. APK da prova disponível em `artifacts/ffortuna-capture-poc-arm64.apk`, versão 0.4.0 gerada e inspecionada localmente. O roteiro de captura 0.2.1 foi aprovado pelo usuário no Galaxy A36/Android 16; o roteiro de backup/restauração 0.3.0 também foi aprovado em 25/10/2026. O módulo Kotlin e o APK da prova sintética usam um [build Android próprio](https://docs.expo.dev/guides/local-app-development/); Expo Go não executa módulos nativos personalizados. Os comandos e critérios estão em [captura-nativa.md](docs/captura-nativa.md). O modo financeiro com dados reais ainda não está habilitado.
+Expo Go é o aplicativo hospedeiro desta demonstração. APK da prova disponível em `artifacts/ffortuna-capture-poc-arm64.apk`, versão 0.5.0 gerada e inspecionada localmente. O roteiro de captura 0.2.1 foi aprovado pelo usuário no Galaxy A36/Android 16; o roteiro de backup/restauração 0.3.0 também foi aprovado em 25/10/2026. O módulo Kotlin e o APK da prova sintética usam um [build Android próprio](https://docs.expo.dev/guides/local-app-development/); Expo Go não executa módulos nativos personalizados. Os comandos e critérios estão em [captura-nativa.md](docs/captura-nativa.md). O modo financeiro com dados reais ainda não está habilitado.
 
 ## O que funciona
 
@@ -33,12 +33,13 @@ Expo Go é o aplicativo hospedeiro desta demonstração. APK da prova disponíve
 - Reprocessamento idempotente, confirmação repetida sem duplicação, compras iguais independentes e atualização conflitante sem alterar decisão anterior.
 - Três OFX embutidos: período atual, sobreposição e histórico anterior. Prévia, revisão, vínculo assistido e conferência explícita da abertura histórica.
 - Migrações versionadas e persistência local. Licença e avisos disponíveis no botão Sobre e licenças.
-- Na prova nativa 0.4.0: recuperação local automática com até três cópias cifradas, sem bruto, no máximo uma a cada 24 horas com alterações. Gerenciamento pela interface em configurações avançadas, junto ao backup portátil com senha, caixas anteriores e verificações isoladas de segurança. As cópias internas são perdidas ao desinstalar; não incluem o livro Expo Go.
+- Na prova nativa: recuperação local automática com até três cópias cifradas, sem bruto, no máximo uma a cada 24 horas com alterações. Gerenciamento pela interface em configurações avançadas, junto ao backup portátil com senha, caixas anteriores e verificações isoladas de segurança. As cópias internas são perdidas ao desinstalar; não incluem o livro Expo Go.
+- Diagnóstico real opcional: origem instalada verificada, sessão de até 24 horas/200 observações, caixa cifrada separada e retenção de 7 dias. Revisão assistida obrigatória, exportação com senha somente dos campos confirmados e conferência local do arquivo. Sem parser/lançamentos. [Política e roteiro](docs/diagnostico-local.md).
 - Retenção nativa de bruto por 30 dias desde a captura, também na caixa anterior, com limpeza bloqueada explícita em caso de chave indisponível.
 
 O saldo atual é acumulado; receitas, despesas e categorias seguem o mês selecionado. Alterar a renda prevista não deposita dinheiro. Posições iniciais, transferências, ajustes e pagamentos de dívida não inflam receita ou consumo. Caixinhas são posições informadas; não calculam rentabilidade, impostos ou liquidez. Compromissos iniciais não reconstroem compras antigas nem parcelamentos.
 
-Estado da sessão e próximos passos em [continuidade](docs/continuidade.md). O checkpoint experimental [`v0.4.0-alpha.1`](https://github.com/richardheise/FFortuna/releases/tag/v0.4.0-alpha.1) está publicado com nove anexos, incluindo APK, fonte correspondente e checksums. As [notas](docs/releases/v0.4.0-alpha.1.md) registram o escopo e as validações pendentes. Para acesso por SSH, use `npm start -- --tunnel`; esse modo usa um intermediário de desenvolvimento e dispensa estar na mesma rede.
+Estado da sessão e próximos passos em [continuidade](docs/continuidade.md). O checkpoint experimental [`v0.5.0-alpha.1`](https://github.com/richardheise/FFortuna/releases/tag/v0.5.0-alpha.1) está publicado com nove anexos, incluindo APK, fonte correspondente e checksums. As [notas](docs/releases/v0.5.0-alpha.1.md) registram o escopo e as validações pendentes. Para acesso por SSH, use `npm start -- --tunnel`; esse modo usa um intermediário de desenvolvimento e dispensa estar na mesma rede.
 
 ## Verificação
 
@@ -74,15 +75,15 @@ No modo real planejado, Kotlin será dono do único banco SQLCipher, das migraç
 
 ## Privacidade e limites desta entrega
 
-Use **somente informações inventadas** em todos os formulários. O banco `ffortuna-synthetic-v1.db` desta demonstração não é criptografado. Não há seletor de arquivos pessoais nem acesso a notificações. Os três OFX são gerados pelo projeto, sem alegar que reproduzem arquivos Nubank. O parser cobre um subconjunto limitado de OFX; a validação de uma exportação real ficará no modo protegido.
+Use **somente informações inventadas** na demonstração financeira e nos exemplos sintéticos. O banco `ffortuna-synthetic-v1.db` desta demonstração não é criptografado. Não há seletor de arquivos pessoais nem acesso a notificações. Os três OFX são gerados pelo projeto, sem alegar que reproduzem arquivos Nubank. O parser cobre um subconjunto limitado de OFX; a validação de uma exportação real ficará no modo protegido.
 
 O núcleo não envia dados a terceiros. Downloads de dependências, Expo Go e Metro pertencem ao ambiente de desenvolvimento e podem precisar de rede; os scripts desativam a telemetria do CLI Expo. Isso não transforma o Expo Go em um APK release próprio offline. O APK da prova sintética foi inspecionado sem permissão INTERNET e traz JavaScript embutido; o usuário relatou aprovação do roteiro manual de captura sintética no A36. Os testes instrumentados ainda não foram executados.
 
-Dados reais continuarão bloqueados até validar SQLCipher, Keystore, arquivos auxiliares, política de backup, restauração sem a chave original, retenção e ausência de conteúdo financeiro em logs/temporários em claro. Bloqueio biométrico da interface não substitui criptografia. Nunca adicione extratos, amostras reais, bancos, backups, keystores ou credenciais ao Git.
+O núcleo financeiro e as importações reais continuam bloqueados. O diagnóstico de notificações é uma exceção limitada e separada: antes de iniciar, exige 40 verificações sintéticas aprovadas no processo atual e consentimento explícito. A coleta, revisão e exportação ainda precisam de validação física na 0.5.0; não há parser Nubank validado. Bloqueio biométrico da interface não substitui criptografia. Nunca adicione extratos, amostras reais, bancos, backups, keystores ou credenciais ao Git.
 
 ## Próximo incremento
 
-Prioridade confirmada: funcionalidades em incrementos pequenos antes do refinamento UI/UX. O usuário aprovou o [roteiro 0.4.0](docs/captura-nativa.md#recuperação-automática-e-segurança--roteiro-040) no A36/Android 16 em 26/10/2026: 30 verificações da interface aprovadas, nenhuma falha ou não verificada, e funcionamento geral aprovado. A bateria compartilha 28 callbacks com a suíte instrumentada; o runner JUnit não foi executado. Próximo incremento: diagnóstico real temporário e cifrado, com consentimento, pacote verificado no aparelho e exportação explícita anonimizada. Captura Nubank ainda não está habilitada nem validada.
+Prioridade confirmada: funcionalidades em incrementos pequenos antes do refinamento UI/UX. O usuário aprovou o roteiro 0.4.0 no A36/Android 16 em 26/10/2026: 30 verificações da interface aprovadas, nenhuma falha ou não verificada. O [roteiro 0.5.0](docs/diagnostico-local.md#testar-no-a36) valida os dez cenários sintéticos novos, a identificação da origem e o diagnóstico real consentido. A bateria passa a ter 40 verificações; o runner JUnit Android permanece sem execução neste servidor. Depois de validar a coleta e revisar amostras, o próximo incremento será o primeiro parser determinístico com testes de processamento, preservando revisão e sem presumir que toda notificação financeira está disponível.
 
 ## Licença
 

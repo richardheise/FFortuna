@@ -1,5 +1,7 @@
 # Prova de captura nativa — Android
 
+A prova sintética e seus roteiros históricos estão abaixo. A partir da 0.5.0, o mesmo APK inclui [diagnóstico real temporário opcional](diagnostico-local.md), com consentimento separado, caixa cifrada própria e sem parser/lançamentos. As restrições de dados fictícios continuam valendo para os exemplos e o livro Expo Go.
+
 Esta entrega acrescenta um APK de prova exclusivamente sintético. A demonstração financeira continua no Expo Go. O APK usa `org.ffortuna.capturepoc`, com tela de diagnóstico própria; não cria outro livro financeiro nem aceita notificações bancárias ou arquivos pessoais.
 
 Aparelho informado pelo usuário: Samsung Galaxy A36, SM-A366E/DS, Android 16. O usuário instalou a versão 0.2.0 e encontrou a falha descrita abaixo. Após a correção 0.2.1 disponibilizada, o usuário relatou em 25/10/2026 que testou o APK e todos os itens do roteiro manual passaram. Esse relato é da prova nativa, separado da aprovação anterior da demonstração Expo Go. Também em 25/10/2026, após instalar a versão 0.3.0, relatou sucesso em todos os oito passos do roteiro de backup/restauração, incluindo reinstalação e persistência.

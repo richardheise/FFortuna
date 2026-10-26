@@ -135,3 +135,11 @@ _Evitar_: backup portátil, proteção contra desinstalação
 **Retenção de bruto**:
 Prazo para remover somente os payloads originais das evidências, preservando os registros e resultados de parsing. Na prova, são 30 dias desde a captura, aplicados quando o núcleo executa também à caixa anterior.
 _Evitar_: apagar transações, prazo garantido com aplicativo encerrado
+
+**Diagnóstico temporário de notificações**:
+Coleta local com consentimento explícito e prazo limitado, para examinar a evidência realmente entregue pelo Android. Preserva dados numa caixa cifrada separada e não interpreta nem lança transações.
+_Evitar_: captura bancária validada, extrato completo, acesso à conta bancária
+
+**Amostra revisada**:
+Campos textuais selecionados de uma observação de diagnóstico, com sugestões de remoção de dados pessoais e confirmação manual antes da exportação cifrada. As regras automáticas não garantem anonimização de texto livre.
+_Evitar_: payload bruto, transação confirmada, anonimização garantida

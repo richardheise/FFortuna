@@ -1,8 +1,24 @@
-# Continuidade — checkpoint 0.4.0
+# Continuidade — checkpoint 0.5.0
 
-Atualizado em 26/10/2026. Prioridade do usuário: funcionalidades em incrementos pequenos, depois refinamento UI/UX. A demonstração financeira e a prova nativa são exclusivamente sintéticas; dados reais continuam bloqueados.
+Atualizado em 26/10/2026. Prioridade do usuário: funcionalidades em incrementos pequenos, depois refinamento UI/UX. A demonstração financeira e os exemplos nativos são sintéticos. A 0.5.0 implementa diagnóstico real temporário opcional, sem parser ou lançamentos; o núcleo financeiro real continua bloqueado.
 
-## Entrega disponível
+## Incremento 0.5.0
+
+Autorizado pelo usuário em 26/10/2026 (“manda a ver”), depois da aprovação integral do checkpoint 0.4.0. Implementados diagnóstico com consentimento explícito, verificação local de pacote/versão/assinatura instalada, coleta nativa sem JavaScript, caixa SQLCipher/Keystore separada, identidade/revisões e resumo de grupo só com metadados. Não é um segundo livro financeiro. Nenhum parser/lançamento bancário nesta entrega.
+
+Padrões: 24 horas por sessão, limite total de 200 observações retidas, até 20 revisões e retenção de 7 dias quando o núcleo executar. Somente notificações novas do pacote `com.nu.production` no mesmo perfil Android. BOOT_COUNT/relógio monotônico impedem continuar após reinício ou ampliar a janela atrasando o relógio. A assinatura é observada no aparelho, sem alegar certificado oficial. Filtro/consentimento/prazo/assinatura precedem leitura de texto; só cinco campos textuais limitados são serializados.
+
+As 40 verificações desta versão devem passar antes de iniciar uma sessão real. O resultado não é autorização persistente: iniciar outra sessão após encerrar o processo exige repetir a bateria. Sessão já consentida pode continuar no mesmo boot dentro do prazo original. Captura real continua inicialmente desativada. Relatório 0.4.0 não vale como aprovação da 0.5.0.
+
+Revisão com sugestões determinísticas para identificadores/valores; confirmação manual obrigatória porque nomes/locais/texto livre não são anonimizáveis por garantia. Exporta somente campos revisados com senha (mesmo envelope PBKDF2/GCM já testado), sem IDs/horários/assinatura/grupos/originais. Conferir arquivo decifra/valida em memória sem importar. Sem temporário em claro, envio, novas dependências ou permissões amplas. FLAG_SECURE na janela e limpeza de campos ao background. Diagnóstico não integra os backups sintéticos; originais efêmeros não têm restauração portátil.
+
+Roteiro de validação no A36 em [diagnostico-local.md](diagnostico-local.md). Próxima validação necessária: 40 cenários da interface, origem identificada, consentimento/coleta ao fundo, revisão, exportação/conferência com senha e parar/apagar sem afetar a caixa sintética. **0.5.0 ainda não testada no aparelho.** Não solicitar que o usuário envie originais ou dados reais nesta conversa. A política detalhada está no [ADR 0008](adr/0008-diagnostico-real-temporario.md).
+
+Verificações locais finais: TypeScript estrito, 30 testes TypeScript e 34 testes JVM aprovados. 38 testes instrumentados compilados, sem runner Android. APK interno 0.5.0/versionCode 5 gerado/inspecionado com a mesma assinatura: 46.266.508 bytes, SHA-256 `45e1132681c0335b2b1112e16a215bada3fcfc26fcc99026c5b8986da1d44a38`. Sem INTERNET/SMS/READ_LOGS/QUERY_ALL_PACKAGES/permissões amplas de armazenamento; avisos, 23 bibliotecas alinhadas a 16 KB, consulta restrita e configuração FLAG_SECURE conferidos. Logs locais `.local/diagnostic-js-final-check.log` e `.local/diagnostic-release-build.log`. Não há aparelho ADB; nenhum emulador iniciado.
+
+Pré-release preparada: `v0.5.0-alpha.1`, com novo fonte/checksums. Documentar publicação efetiva somente depois de conferir os nove anexos e o download público. Preservar releases anteriores.
+
+## Entrega anterior disponível (0.4.0)
 
 [Pré-release v0.4.0-alpha.1](https://github.com/richardheise/FFortuna/releases/tag/v0.4.0-alpha.1) · [APK direto](https://github.com/richardheise/FFortuna/releases/download/v0.4.0-alpha.1/ffortuna-capture-poc-arm64.apk).
 
@@ -26,7 +42,7 @@ O usuário também aprovou retenção de bruto de 30 dias desde a captura na cai
 
 As 30 verificações incluem 28 callbacks compartilhados com a suíte instrumentada, limpeza de sandbox interrompido e janela de logs próprios. O resultado de logs cobre a janela e as sondas daquele processo; não certifica ausência universal de logs. O relatório fica em memória. O runner JUnit Android continua sem execução neste servidor, sem aparelho ADB/KVM; não reclassificar a execução da interface como instrumentação JUnit.
 
-Próximo incremento pequeno: diagnóstico real temporário e cifrado com consentimento explícito, seleção da fonte e pacote Nubank verificado no aparelho, retenção limitada e exportação explícita anonimizada. Amostras reais devem permanecer locais e fora do Git. A aprovação atual fecha o checkpoint sintético; não habilita automaticamente captura bancária nem comprova parsing Nubank.
+Esse checkpoint autorizou a implementação do diagnóstico 0.5.0 descrito acima. Não habilita automaticamente coleta bancária nem comprova parsing Nubank.
 
 ## Execução e limites
 
