@@ -10,7 +10,7 @@ module.exports = ({ config }) => {
     android: {
       ...config.android,
       package: 'org.ffortuna.capturepoc',
-      versionCode: 10,
+      versionCode: 11,
       allowBackup: false,
       blockedPermissions: [
         'android.permission.INTERNET', 'android.permission.SYSTEM_ALERT_WINDOW',

@@ -81,6 +81,7 @@ function failure(code?: string) { return code ? `${errorMessages[code] ?? 'Opera
 export function FinancePanel({ native, busy, run }: Props) {
   const [month, setMonth] = useState(currentMonthLocal);
   const [visibleCount, setVisibleCount] = useState(50);
+  const [catalogEpoch, setCatalogEpoch] = useState(0);
   const [snapshot, setSnapshot] = useState<FinanceSnapshot | null>(null);
   const [loading, setLoading] = useState(true);
   const [localBusy, setLocalBusy] = useState(false);
@@ -181,6 +182,15 @@ export function FinancePanel({ native, busy, run }: Props) {
   function editKind(value: 'income' | 'expense') { edited(); setKind(value); }
   function editEffectiveDate(value: string) { edited(); setEffectiveDate(value); }
 
+  function resetAfterBoxChange() {
+    commandId.current = null;
+    setAmount('');setDescription('');setEffectiveDate(todayLocal());
+    setClassification({ categoryId: null, category: 'A classificar', tagIds: [] });
+    setCancellationId(null);setCancellationReason('');setBalanceAmount('');setBalanceDate(todayLocal());
+    setOpeningBalance('0,00');setOpeningDate(todayLocal());setVisibleCount(50);
+    setCatalogEpoch(value => value + 1);
+  }
+
   async function perform<T extends FinanceResult | BackupResult | void>(task: () => Promise<T>, after?: (result: T) => void, success?: string) {
     if (!mounted.current || !active.current || busy || localBusy) return;
     const request = generation.current;
@@ -192,7 +202,10 @@ export function FinancePanel({ native, busy, run }: Props) {
           const result = await task();
           if (!mounted.current || !active.current || generation.current !== request) return;
           if (result && 'status' in result && result.status === 'error') setError(failure(result.code));
-          else { if (after) after(result); if (success) setMessage(success); }
+          else {
+            if(result && 'status' in result && result.status === 'restored') resetAfterBoxChange();
+            if (after) after(result); if (success) setMessage(success);
+          }
         } catch {
           if (mounted.current && active.current && generation.current === request) setError('Não foi possível concluir a operação financeira.');
         }
@@ -319,7 +332,7 @@ export function FinancePanel({ native, busy, run }: Props) {
   function switchPrevious() {
     Alert.alert('Voltar à caixa financeira anterior?', 'A caixa anterior será ativada e a atual ficará preservada. Registros não serão mesclados.', [
       { text: 'Cancelar', style: 'cancel' },
-      { text: 'Alternar caixas', style: 'destructive', onPress: () => void perform(() => nativeRef.current.switchPreviousFinance(), undefined, 'Caixas alternadas sem mesclar registros.') },
+      { text: 'Alternar caixas', style: 'destructive', onPress: () => void perform(() => nativeRef.current.switchPreviousFinance(), result => { if(result.status === 'ok') resetAfterBoxChange(); }, 'Caixas alternadas sem mesclar registros.') },
     ]);
   }
 
@@ -333,7 +346,7 @@ export function FinancePanel({ native, busy, run }: Props) {
   function restartBook() {
     Alert.alert('Recomeçar livro financeiro?', 'Será criada uma caixa vazia para configurar o saldo de abertura novamente. O catálogo e a caixa atual serão preservados; os registros não serão mesclados. A captura de diagnóstico será pausada.', [
       { text: 'Cancelar', style: 'cancel' },
-      { text: 'Criar livro vazio', style: 'destructive', onPress: () => void perform(() => nativeRef.current.restartFinance(), undefined, 'Novo livro vazio criado; configure o saldo de abertura.') },
+      { text: 'Criar livro vazio', style: 'destructive', onPress: () => void perform(() => nativeRef.current.restartFinance(), result => { if(result.status === 'ok') resetAfterBoxChange(); }, 'Novo livro vazio criado; configure o saldo de abertura.') },
     ]);
   }
 
@@ -397,7 +410,7 @@ export function FinancePanel({ native, busy, run }: Props) {
         <Field label="Valor em BRL" value={amount} onChangeText={editAmount} editable={!blocked} keyboardType="decimal-pad" maxLength={32} autoCorrect={false} autoComplete="off" importantForAutofill="no" placeholder="12,34" />
         <Field label="Data efetiva (AAAA-MM-DD)" value={effectiveDate} onChangeText={editEffectiveDate} editable={!blocked} maxLength={10} autoCorrect={false} autoComplete="off" importantForAutofill="no" />
         <Field label="Descrição" value={description} onChangeText={editDescription} editable={!blocked} maxLength={500} autoCorrect={false} autoComplete="off" importantForAutofill="no" />
-        <ClassificationPanel native={native} busy={blocked} run={run} selection={classification} onChange={editClassification} />
+        <ClassificationPanel key={catalogEpoch} native={native} busy={blocked} run={run} selection={classification} onChange={editClassification} />
         <Action title="Salvar movimento" disabled={blocked || !amount.trim() || !description.trim() || !validDate(effectiveDate)} onPress={submitTransaction} />
       </Card>
 
