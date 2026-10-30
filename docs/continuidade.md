@@ -2,6 +2,10 @@
 
 Atualizado em 30/10/2026. Prioridade do usuário: funcionalidades em incrementos pequenos, depois refinamento UI/UX. A demonstração financeira e os exemplos nativos são sintéticos. A captura diagnóstica é temporária e opcional; a 0.8.0 implementa um livro permanente cifrado de uma conta, com confirmação manual e recuperação.
 
+## Proposta de interface — aguardando avaliação
+
+Usuário pediu começar o dashboard enquanto valida a 0.8.0 e depois orientou: primeiro propor estilo e menus, usando referências de finanças e paleta preto/ouro/ciano claro. Nenhum código do dashboard ou nova release foi implementado nesta rodada. [Proposta e referências](design/tique-interface-proposta.md), SVG autoral e preview PNG apresentam Início, Movimentos e Revisão com dados fictícios. Navegação sugerida: Início, Movimentos, ação central +, Revisão e Mais. Paleta solicitada registrada; composição/menus ainda aguardam aval. Não marcar o livro 0.8.0 como aprovado: o usuário disse que ainda vai validar no celular.
+
 ## Incremento 0.8.0 — livro permanente, conferência e recuperação
 
 Antes de publicar, foi corrigida a atualização do catálogo/formulário após restaurar ou alternar a caixa financeira. O candidato `v0.8.0-alpha.1` (fonte `c3cad62a214ff55d7f4b34f7a1d1048a372cca8e`, release rascunho `429505865`) permanece não publicado e com snapshot local preservado. O candidato final é `v0.8.0-alpha.2`, versionCode 11; o source map do bundle foi comparado com `FinancePanel.tsx` atual e os checks 30 TS/54 JVM passaram novamente; tags e anexos do candidato anterior não foram movidos ou substituídos.
