@@ -1,0 +1,259 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="1080" viewBox="0 0 1440 1080">
+  <g font-family="Noto Sans,DejaVu Sans,sans-serif">
+    <rect x="0" y="0" width="1440" height="1080" rx="0" fill="#0C1119" />
+    <polygon points="59.0,35.0 69.0,35.0 75.0,41.0 75.0,51.0 69.0,57.0 59.0,57.0 53.0,51.0 53.0,41.0" fill="none" stroke="#FFB020" />
+    <polygon points="64.0,43.0 67.0,46.0 64.0,49.0 61.0,46.0" fill="#FFB020" />
+    <path d="M70.0 46.0 L75.0 46.0" stroke="#FFB020" stroke-width="1" fill="none" stroke-linecap="square" />
+    <path d="M68.24 50.24 L71.78 53.78" stroke="#FFB020" stroke-width="1" fill="none" stroke-linecap="square" />
+    <path d="M64.0 52.0 L64.0 57.0" stroke="#FFB020" stroke-width="1" fill="none" stroke-linecap="square" />
+    <path d="M59.76 50.24 L56.22 53.78" stroke="#FFB020" stroke-width="1" fill="none" stroke-linecap="square" />
+    <path d="M58.0 46.0 L53.0 46.0" stroke="#FFB020" stroke-width="1" fill="none" stroke-linecap="square" />
+    <path d="M59.76 41.76 L56.22 38.22" stroke="#FFB020" stroke-width="1" fill="none" stroke-linecap="square" />
+    <path d="M64.0 40.0 L64.0 35.0" stroke="#FFB020" stroke-width="1" fill="none" stroke-linecap="square" />
+    <path d="M68.24 41.76 L71.78 38.22" stroke="#FFB020" stroke-width="1" fill="none" stroke-linecap="square" />
+    <text x="89" y="55" font-size="31" fill="#FFB020" font-weight="700" text-anchor="start">tique</text>
+    <text x="211" y="53" font-size="25" fill="#F3EFE6" font-weight="500" text-anchor="start">Seu dinheiro, com clareza.</text>
+    <text x="50" y="85" font-size="11" fill="#A2AEBE" font-weight="500" text-anchor="start" letter-spacing="1.2">PROPOSTA VISUAL 02 · ANDROID · DADOS FICTÍCIOS · TELAS AINDA NÃO IMPLEMENTADAS</text>
+    <g transform="translate(50 126)">
+      <rect x="0" y="0" width="390" height="844" rx="12" fill="#080B10" stroke="#263240" />
+      <text x="24" y="27" font-size="11" fill="#F3EFE6" font-weight="600" text-anchor="start">10:24</text>
+      <text x="367" y="27" font-size="10" fill="#A2AEBE" font-weight="400" text-anchor="end">LTE  ▰</text>
+      <circle cx="195" cy="20" r="5" fill="#030507" />
+      <text x="22" y="-18" font-size="14" fill="#A2AEBE" font-weight="600" text-anchor="start">01 / INÍCIO</text>
+      <polygon points="29.0,50.0 39.0,50.0 45.0,56.0 45.0,66.0 39.0,72.0 29.0,72.0 23.0,66.0 23.0,56.0" fill="none" stroke="#FFB020" />
+      <polygon points="34.0,58.0 37.0,61.0 34.0,64.0 31.0,61.0" fill="#FFB020" />
+      <path d="M40.0 61.0 L45.0 61.0" stroke="#FFB020" stroke-width="1" fill="none" stroke-linecap="square" />
+      <path d="M38.24 65.24 L41.78 68.78" stroke="#FFB020" stroke-width="1" fill="none" stroke-linecap="square" />
+      <path d="M34.0 67.0 L34.0 72.0" stroke="#FFB020" stroke-width="1" fill="none" stroke-linecap="square" />
+      <path d="M29.76 65.24 L26.22 68.78" stroke="#FFB020" stroke-width="1" fill="none" stroke-linecap="square" />
+      <path d="M28.0 61.0 L23.0 61.0" stroke="#FFB020" stroke-width="1" fill="none" stroke-linecap="square" />
+      <path d="M29.76 56.76 L26.22 53.22" stroke="#FFB020" stroke-width="1" fill="none" stroke-linecap="square" />
+      <path d="M34.0 55.0 L34.0 50.0" stroke="#FFB020" stroke-width="1" fill="none" stroke-linecap="square" />
+      <path d="M38.24 56.76 L41.78 53.22" stroke="#FFB020" stroke-width="1" fill="none" stroke-linecap="square" />
+      <text x="55" y="70" font-size="25" fill="#F3EFE6" font-weight="700" text-anchor="start">tique</text>
+      <g fill="none" stroke="#A2AEBE" stroke-width="1.5">
+        <path d="M333 61q11-14 22 0-11 14-22 0z" />
+        <circle cx="344" cy="61" r="3" />
+      </g>
+      <rect x="22" y="89" width="346" height="43" rx="4" fill="#121820" />
+      <text x="43" y="117" font-size="25" fill="#FFB020" font-weight="400" text-anchor="middle">‹</text>
+      <text x="195" y="116" font-size="14" fill="#F3EFE6" font-weight="500" text-anchor="middle">Outubro de 2026</text>
+      <text x="347" y="117" font-size="25" fill="#FFB020" font-weight="400" text-anchor="middle">›</text>
+      <rect x="22" y="151" width="346" height="153" rx="4" fill="#121820" stroke="#554128" />
+      <rect x="22" y="167" width="3" height="120" fill="#FFB020" />
+      <text x="40" y="180" font-size="11" fill="#FFB020" font-weight="600" text-anchor="start" letter-spacing="1">SALDO CALCULADO</text>
+      <text x="40" y="225" font-size="35" fill="#F3EFE6" font-weight="700" text-anchor="start">R$ 4.700,80</text>
+      <text x="40" y="250" font-size="11.5" fill="#A2AEBE" font-weight="400" text-anchor="start">Conta disponível · registros confirmados</text>
+      <circle cx="45" cy="279" r="3" fill="#9DECF4" />
+      <text x="55" y="283" font-size="11" fill="#9DECF4" font-weight="500" text-anchor="start">Conferido em 30 out</text>
+      <rect x="22" y="322" width="164" height="93" rx="4" fill="#121820" />
+      <text x="38" y="350" font-size="12" fill="#9DECF4" font-weight="500" text-anchor="start">↗  Receitas</text>
+      <text x="38" y="386" font-size="20" fill="#F3EFE6" font-weight="650" text-anchor="start">R$ 5.800,00</text>
+      <rect x="204" y="322" width="164" height="93" rx="4" fill="#121820" />
+      <text x="220" y="350" font-size="12" fill="#FFB020" font-weight="500" text-anchor="start">↙  Despesas</text>
+      <text x="220" y="386" font-size="20" fill="#F3EFE6" font-weight="650" text-anchor="start">R$ 2.349,20</text>
+      <rect x="22" y="432" width="346" height="47" rx="4" fill="#121820" />
+      <text x="37" y="452" font-size="11.5" fill="#A2AEBE" font-weight="400" text-anchor="start">Resultado do mês</text>
+      <text x="37" y="468" font-size="9.5" fill="#A2AEBE" font-weight="400" text-anchor="start">Receitas menos despesas</text>
+      <text x="352" y="462" font-size="17" fill="#9DECF4" font-weight="600" text-anchor="end">+ R$ 3.450,80</text>
+      <text x="22" y="514" font-size="18" fill="#F3EFE6" font-weight="650" text-anchor="start">Gastos por categoria</text>
+      <text x="368" y="513" font-size="11" fill="#9DECF4" font-weight="500" text-anchor="end">Ver todas</text>
+      <text x="22" y="547" font-size="13" fill="#F3EFE6" font-weight="500" text-anchor="start">Comida</text>
+      <text x="368" y="547" font-size="13" fill="#F3EFE6" font-weight="500" text-anchor="end">R$ 920,00</text>
+      <rect x="22" y="560" width="346" height="6" rx="0" fill="#1B2430" />
+      <rect x="22" y="560" width="135.63" height="6" rx="0" fill="#FFB020" />
+      <text x="368" y="580" font-size="9.5" fill="#A2AEBE" font-weight="400" text-anchor="end">39,2%</text>
+      <text x="22" y="600" font-size="13" fill="#F3EFE6" font-weight="500" text-anchor="start">Contas</text>
+      <text x="368" y="600" font-size="13" fill="#F3EFE6" font-weight="500" text-anchor="end">R$ 760,00</text>
+      <rect x="22" y="613" width="346" height="6" rx="0" fill="#1B2430" />
+      <rect x="22" y="613" width="112.1" height="6" rx="0" fill="#FFB020" />
+      <text x="368" y="633" font-size="9.5" fill="#A2AEBE" font-weight="400" text-anchor="end">32,4%</text>
+      <text x="22" y="653" font-size="13" fill="#F3EFE6" font-weight="500" text-anchor="start">Transporte</text>
+      <text x="368" y="653" font-size="13" fill="#F3EFE6" font-weight="500" text-anchor="end">R$ 365,20</text>
+      <rect x="22" y="666" width="346" height="6" rx="0" fill="#1B2430" />
+      <rect x="22" y="666" width="53.63" height="6" rx="0" fill="#9DECF4" />
+      <text x="368" y="686" font-size="9.5" fill="#A2AEBE" font-weight="400" text-anchor="end">15,5%</text>
+      <text x="22" y="706" font-size="13" fill="#F3EFE6" font-weight="500" text-anchor="start">Lazer</text>
+      <text x="368" y="706" font-size="13" fill="#F3EFE6" font-weight="500" text-anchor="end">R$ 304,00</text>
+      <rect x="22" y="719" width="346" height="6" rx="0" fill="#1B2430" />
+      <rect x="22" y="719" width="44.63" height="6" rx="0" fill="#9DECF4" />
+      <text x="368" y="739" font-size="9.5" fill="#A2AEBE" font-weight="400" text-anchor="end">12,9%</text>
+      <text x="22" y="752" font-size="9.5" fill="#A2AEBE" font-weight="400" text-anchor="start">Toque em uma categoria para ver os movimentos</text>
+      <rect x="1" y="766" width="388" height="77" rx="0" fill="#080B10" />
+      <path d="M18 766 L372 766" stroke="#263240" stroke-width="1" fill="none" stroke-linecap="square" />
+      <g transform="translate(29 780)" fill="none" stroke="#FFB020" stroke-width="1.7" stroke-linecap="square" stroke-linejoin="miter">
+        <path d="M1 9L10 2l9 7v10h-6v-6H7v6H1z" />
+      </g>
+      <text x="39" y="817" font-size="10.5" fill="#FFB020" font-weight="600" text-anchor="middle">Início</text>
+      <g transform="translate(107 780)" fill="none" stroke="#A2AEBE" stroke-width="1.7" stroke-linecap="square" stroke-linejoin="miter">
+        <rect x="2" y="2" width="16" height="17" rx="2" />
+        <path d="M6 7h8M6 11h8M6 15h5" />
+      </g>
+      <text x="117" y="817" font-size="10.5" fill="#A2AEBE" font-weight="400" text-anchor="middle">Movimentos</text>
+      <g transform="translate(263 780)" fill="none" stroke="#A2AEBE" stroke-width="1.7" stroke-linecap="square" stroke-linejoin="miter">
+        <path d="M3 3h14l3 12v4H0v-4zM1 14h5l2 3h4l2-3h5M7 8l2 2 4-4" />
+      </g>
+      <text x="273" y="817" font-size="10.5" fill="#A2AEBE" font-weight="400" text-anchor="middle">Revisão</text>
+      <g transform="translate(341 780)" fill="none" stroke="#A2AEBE" stroke-width="1.7" stroke-linecap="square" stroke-linejoin="miter">
+        <circle cx="3" cy="10" r="1.4" />
+        <circle cx="10" cy="10" r="1.4" />
+        <circle cx="17" cy="10" r="1.4" />
+      </g>
+      <text x="351" y="817" font-size="10.5" fill="#A2AEBE" font-weight="400" text-anchor="middle">Mais</text>
+      <rect x="172.0" y="767.0" width="46.0" height="46.0" rx="4" fill="#FFB020" />
+      <path d="M186 790 L204 790" stroke="#080B10" stroke-width="2.3" fill="none" stroke-linecap="square" />
+      <path d="M195 781 L195 799" stroke="#080B10" stroke-width="2.3" fill="none" stroke-linecap="square" />
+      <text x="195" y="826" font-size="10.5" fill="#FFB020" font-weight="600" text-anchor="middle">Novo</text>
+      <rect x="165" y="835" width="60" height="3" rx="0" fill="#5B6879" />
+    </g>
+    <g transform="translate(525 126)">
+      <rect x="0" y="0" width="390" height="844" rx="12" fill="#080B10" stroke="#263240" />
+      <text x="24" y="27" font-size="11" fill="#F3EFE6" font-weight="600" text-anchor="start">10:24</text>
+      <text x="367" y="27" font-size="10" fill="#A2AEBE" font-weight="400" text-anchor="end">LTE  ▰</text>
+      <circle cx="195" cy="20" r="5" fill="#030507" />
+      <text x="22" y="-18" font-size="14" fill="#A2AEBE" font-weight="600" text-anchor="start">02 / MOVIMENTOS</text>
+      <text x="22" y="71" font-size="25" fill="#F3EFE6" font-weight="700" text-anchor="start">Movimentos</text>
+      <text x="22" y="94" font-size="12" fill="#A2AEBE" font-weight="400" text-anchor="start">Histórico de receitas e despesas</text>
+      <rect x="22" y="112" width="346" height="43" rx="4" fill="#121820" />
+      <text x="43" y="140" font-size="25" fill="#FFB020" font-weight="400" text-anchor="middle">‹</text>
+      <text x="195" y="139" font-size="14" fill="#F3EFE6" font-weight="500" text-anchor="middle">Outubro de 2026</text>
+      <text x="347" y="140" font-size="25" fill="#FFB020" font-weight="400" text-anchor="middle">›</text>
+      <rect x="22" y="174" width="346" height="43" rx="4" fill="#121820" />
+      <circle cx="43" cy="193" r="6" fill="none" stroke="#A2AEBE" />
+      <path d="M47 197 L52 202" stroke="#A2AEBE" stroke-width="1.5" fill="none" stroke-linecap="square" />
+      <text x="64" y="200" font-size="11.3" fill="#A2AEBE" font-weight="400" text-anchor="start">Buscar descrição, categoria ou tag</text>
+      <rect x="22" y="234" width="83" height="34" rx="4" fill="#FFB020" />
+      <text x="63.5" y="256" font-size="12" fill="#080B10" font-weight="650" text-anchor="middle">Tudo</text>
+      <rect x="115" y="234" width="111" height="34" rx="4" fill="#121820" />
+      <text x="170.5" y="256" font-size="12" fill="#A2AEBE" font-weight="500" text-anchor="middle">Despesas</text>
+      <rect x="236" y="234" width="109" height="34" rx="4" fill="#121820" />
+      <text x="290.5" y="256" font-size="12" fill="#A2AEBE" font-weight="500" text-anchor="middle">Receitas</text>
+      <text x="22" y="299" font-size="10.5" fill="#A2AEBE" font-weight="600" text-anchor="start" letter-spacing="1">HOJE, 30 OUT</text>
+      <rect x="22" y="315" width="346" height="75" rx="4" fill="#121820" />
+      <rect x="33.0" y="335.0" width="32.0" height="32.0" rx="3" fill="#29271D" />
+      <text x="49" y="357" font-size="18" fill="#FFB020" font-weight="500" text-anchor="middle">↙</text>
+      <text x="78" y="344" font-size="13.5" fill="#F3EFE6" font-weight="600" text-anchor="start">Mercado</text>
+      <text x="78" y="366" font-size="10.2" fill="#A2AEBE" font-weight="400" text-anchor="start">Comida · Dia a dia</text>
+      <text x="352" y="346" font-size="13" fill="#F3EFE6" font-weight="550" text-anchor="end">− R$ 84,90</text>
+      <rect x="22" y="400" width="346" height="75" rx="4" fill="#121820" />
+      <rect x="33.0" y="420.0" width="32.0" height="32.0" rx="3" fill="#29271D" />
+      <text x="49" y="442" font-size="18" fill="#FFB020" font-weight="500" text-anchor="middle">↙</text>
+      <text x="78" y="429" font-size="13.5" fill="#F3EFE6" font-weight="600" text-anchor="start">Cinema</text>
+      <text x="78" y="451" font-size="10.2" fill="#A2AEBE" font-weight="400" text-anchor="start">Lazer</text>
+      <text x="352" y="431" font-size="13" fill="#F3EFE6" font-weight="550" text-anchor="end">− R$ 42,00</text>
+      <text x="22" y="506" font-size="10.5" fill="#A2AEBE" font-weight="600" text-anchor="start" letter-spacing="1">ONTEM, 29 OUT</text>
+      <rect x="22" y="523" width="346" height="75" rx="4" fill="#121820" />
+      <rect x="33.0" y="543.0" width="32.0" height="32.0" rx="3" fill="#25302E" />
+      <text x="49" y="565" font-size="18" fill="#9DECF4" font-weight="500" text-anchor="middle">↗</text>
+      <text x="78" y="552" font-size="13.5" fill="#F3EFE6" font-weight="600" text-anchor="start">Salário</text>
+      <text x="78" y="574" font-size="10.2" fill="#A2AEBE" font-weight="400" text-anchor="start">Receita · Conta principal</text>
+      <text x="352" y="554" font-size="13" fill="#9DECF4" font-weight="550" text-anchor="end">+ R$ 5.800</text>
+      <rect x="22" y="608" width="346" height="75" rx="4" fill="#121820" />
+      <rect x="33.0" y="628.0" width="32.0" height="32.0" rx="3" fill="#29271D" />
+      <text x="49" y="650" font-size="18" fill="#FFB020" font-weight="500" text-anchor="middle">↙</text>
+      <text x="78" y="637" font-size="13.5" fill="#F3EFE6" font-weight="600" text-anchor="start">Transporte</text>
+      <text x="78" y="659" font-size="10.2" fill="#A2AEBE" font-weight="400" text-anchor="start">Transporte</text>
+      <text x="352" y="639" font-size="13" fill="#F3EFE6" font-weight="550" text-anchor="end">− R$ 18,50</text>
+      <text x="22" y="714" font-size="10" fill="#A2AEBE" font-weight="400" text-anchor="start">Anulados ficam no histórico e fora dos totais.</text>
+      <rect x="1" y="766" width="388" height="77" rx="0" fill="#080B10" />
+      <path d="M18 766 L372 766" stroke="#263240" stroke-width="1" fill="none" stroke-linecap="square" />
+      <g transform="translate(29 780)" fill="none" stroke="#A2AEBE" stroke-width="1.7" stroke-linecap="square" stroke-linejoin="miter">
+        <path d="M1 9L10 2l9 7v10h-6v-6H7v6H1z" />
+      </g>
+      <text x="39" y="817" font-size="10.5" fill="#A2AEBE" font-weight="400" text-anchor="middle">Início</text>
+      <g transform="translate(107 780)" fill="none" stroke="#FFB020" stroke-width="1.7" stroke-linecap="square" stroke-linejoin="miter">
+        <rect x="2" y="2" width="16" height="17" rx="2" />
+        <path d="M6 7h8M6 11h8M6 15h5" />
+      </g>
+      <text x="117" y="817" font-size="10.5" fill="#FFB020" font-weight="600" text-anchor="middle">Movimentos</text>
+      <g transform="translate(263 780)" fill="none" stroke="#A2AEBE" stroke-width="1.7" stroke-linecap="square" stroke-linejoin="miter">
+        <path d="M3 3h14l3 12v4H0v-4zM1 14h5l2 3h4l2-3h5M7 8l2 2 4-4" />
+      </g>
+      <text x="273" y="817" font-size="10.5" fill="#A2AEBE" font-weight="400" text-anchor="middle">Revisão</text>
+      <g transform="translate(341 780)" fill="none" stroke="#A2AEBE" stroke-width="1.7" stroke-linecap="square" stroke-linejoin="miter">
+        <circle cx="3" cy="10" r="1.4" />
+        <circle cx="10" cy="10" r="1.4" />
+        <circle cx="17" cy="10" r="1.4" />
+      </g>
+      <text x="351" y="817" font-size="10.5" fill="#A2AEBE" font-weight="400" text-anchor="middle">Mais</text>
+      <rect x="172.0" y="767.0" width="46.0" height="46.0" rx="4" fill="#FFB020" />
+      <path d="M186 790 L204 790" stroke="#080B10" stroke-width="2.3" fill="none" stroke-linecap="square" />
+      <path d="M195 781 L195 799" stroke="#080B10" stroke-width="2.3" fill="none" stroke-linecap="square" />
+      <text x="195" y="826" font-size="10.5" fill="#FFB020" font-weight="600" text-anchor="middle">Novo</text>
+      <rect x="165" y="835" width="60" height="3" rx="0" fill="#5B6879" />
+    </g>
+    <g transform="translate(1000 126)">
+      <rect x="0" y="0" width="390" height="844" rx="12" fill="#080B10" stroke="#263240" />
+      <text x="24" y="27" font-size="11" fill="#F3EFE6" font-weight="600" text-anchor="start">10:24</text>
+      <text x="367" y="27" font-size="10" fill="#A2AEBE" font-weight="400" text-anchor="end">LTE  ▰</text>
+      <circle cx="195" cy="20" r="5" fill="#030507" />
+      <text x="22" y="-18" font-size="14" fill="#A2AEBE" font-weight="600" text-anchor="start">03 / REVISÃO</text>
+      <text x="22" y="71" font-size="25" fill="#F3EFE6" font-weight="700" text-anchor="start">Revisão</text>
+      <text x="22" y="94" font-size="12" fill="#A2AEBE" font-weight="400" text-anchor="start">Só o que precisa da sua atenção</text>
+      <rect x="22" y="113" width="118" height="27" rx="4" fill="#192734" />
+      <text x="81.0" y="131" font-size="11" fill="#FFB020" font-weight="500" text-anchor="middle">2 para revisar</text>
+      <rect x="22" y="160" width="346" height="109" rx="4" fill="#121820" />
+      <text x="40" y="188" font-size="10.5" fill="#9DECF4" font-weight="650" text-anchor="start" letter-spacing="1">CAPTURA LOCAL</text>
+      <text x="40" y="217" font-size="19" fill="#F3EFE6" font-weight="600" text-anchor="start">Você decide o que</text>
+      <text x="40" y="242" font-size="19" fill="#F3EFE6" font-weight="600" text-anchor="start">entra no livro.</text>
+      <rect x="22" y="290" width="346" height="351" rx="4" fill="#121820" stroke="#554128" />
+      <text x="40" y="319" font-size="10" fill="#A2AEBE" font-weight="550" text-anchor="start" letter-spacing="1">EXEMPLO FICTÍCIO</text>
+      <text x="40" y="347" font-size="17" fill="#F3EFE6" font-weight="650" text-anchor="start">Movimentação em revisão</text>
+      <text x="40" y="393" font-size="33" fill="#F3EFE6" font-weight="700" text-anchor="start">R$ 84,90</text>
+      <text x="40" y="417" font-size="11" fill="#9DECF4" font-weight="400" text-anchor="start">Valor reconhecido no exemplo</text>
+      <text x="40" y="451" font-size="11" fill="#A2AEBE" font-weight="400" text-anchor="start">Natureza</text>
+      <rect x="40" y="461" width="142" height="42" rx="4" fill="#1B2430" />
+      <text x="55" y="487" font-size="13" fill="#F3EFE6" font-weight="500" text-anchor="start">Despesa  ▾</text>
+      <text x="207" y="451" font-size="11" fill="#A2AEBE" font-weight="400" text-anchor="start">Categoria</text>
+      <rect x="207" y="461" width="143" height="42" rx="4" fill="#1B2430" />
+      <text x="222" y="487" font-size="13" fill="#F3EFE6" font-weight="500" text-anchor="start">Comida  ▾</text>
+      <text x="40" y="535" font-size="11" fill="#A2AEBE" font-weight="400" text-anchor="start">Confira a origem e a data efetiva.</text>
+      <text x="40" y="559" font-size="12" fill="#9DECF4" font-weight="550" text-anchor="start">Ver evidência original  ↗</text>
+      <rect x="40" y="580" width="310" height="44" rx="4" fill="#FFB020" />
+      <text x="195" y="608" font-size="14" fill="#080B10" font-weight="700" text-anchor="middle">Revisar e confirmar</text>
+      <rect x="22" y="660" width="346" height="82" rx="4" fill="#121820" />
+      <text x="40" y="689" font-size="14" fill="#F3EFE6" font-weight="600" text-anchor="start">Outra movimentação</text>
+      <text x="40" y="713" font-size="11" fill="#A2AEBE" font-weight="400" text-anchor="start">Natureza aguardando conferência</text>
+      <text x="351" y="703" font-size="25" fill="#FFB020" font-weight="400" text-anchor="end">›</text>
+      <rect x="1" y="766" width="388" height="77" rx="0" fill="#080B10" />
+      <path d="M18 766 L372 766" stroke="#263240" stroke-width="1" fill="none" stroke-linecap="square" />
+      <g transform="translate(29 780)" fill="none" stroke="#A2AEBE" stroke-width="1.7" stroke-linecap="square" stroke-linejoin="miter">
+        <path d="M1 9L10 2l9 7v10h-6v-6H7v6H1z" />
+      </g>
+      <text x="39" y="817" font-size="10.5" fill="#A2AEBE" font-weight="400" text-anchor="middle">Início</text>
+      <g transform="translate(107 780)" fill="none" stroke="#A2AEBE" stroke-width="1.7" stroke-linecap="square" stroke-linejoin="miter">
+        <rect x="2" y="2" width="16" height="17" rx="2" />
+        <path d="M6 7h8M6 11h8M6 15h5" />
+      </g>
+      <text x="117" y="817" font-size="10.5" fill="#A2AEBE" font-weight="400" text-anchor="middle">Movimentos</text>
+      <g transform="translate(263 780)" fill="none" stroke="#FFB020" stroke-width="1.7" stroke-linecap="square" stroke-linejoin="miter">
+        <path d="M3 3h14l3 12v4H0v-4zM1 14h5l2 3h4l2-3h5M7 8l2 2 4-4" />
+      </g>
+      <text x="273" y="817" font-size="10.5" fill="#FFB020" font-weight="600" text-anchor="middle">Revisão</text>
+      <g transform="translate(341 780)" fill="none" stroke="#A2AEBE" stroke-width="1.7" stroke-linecap="square" stroke-linejoin="miter">
+        <circle cx="3" cy="10" r="1.4" />
+        <circle cx="10" cy="10" r="1.4" />
+        <circle cx="17" cy="10" r="1.4" />
+      </g>
+      <text x="351" y="817" font-size="10.5" fill="#A2AEBE" font-weight="400" text-anchor="middle">Mais</text>
+      <rect x="172.0" y="767.0" width="46.0" height="46.0" rx="4" fill="#FFB020" />
+      <path d="M186 790 L204 790" stroke="#080B10" stroke-width="2.3" fill="none" stroke-linecap="square" />
+      <path d="M195 781 L195 799" stroke="#080B10" stroke-width="2.3" fill="none" stroke-linecap="square" />
+      <text x="195" y="826" font-size="10.5" fill="#FFB020" font-weight="600" text-anchor="middle">Novo</text>
+      <rect x="165" y="835" width="60" height="3" rx="0" fill="#5B6879" />
+    </g>
+    <rect x="50" y="1002" width="29" height="29" rx="2" fill="#080B10" stroke="#263240" />
+    <text x="92" y="1015" font-size="12" fill="#F3EFE6" font-weight="600" text-anchor="start">Preto</text>
+    <text x="92" y="1033" font-size="10.5" fill="#A2AEBE" font-weight="400" text-anchor="start">#080B10</text>
+    <rect x="350" y="1002" width="29" height="29" rx="2" fill="#FFB020" stroke="#263240" />
+    <text x="392" y="1015" font-size="12" fill="#F3EFE6" font-weight="600" text-anchor="start">Ouro âmbar</text>
+    <text x="392" y="1033" font-size="10.5" fill="#A2AEBE" font-weight="400" text-anchor="start">#FFB020</text>
+    <rect x="650" y="1002" width="29" height="29" rx="2" fill="#9DECF4" stroke="#263240" />
+    <text x="692" y="1015" font-size="12" fill="#F3EFE6" font-weight="600" text-anchor="start">Ciano claro</text>
+    <text x="692" y="1033" font-size="10.5" fill="#A2AEBE" font-weight="400" text-anchor="start">#9DECF4</text>
+    <rect x="1000" y="1002" width="29" height="29" rx="2" fill="#F3EFE6" stroke="#263240" />
+    <text x="1042" y="1015" font-size="12" fill="#F3EFE6" font-weight="600" text-anchor="start">Off-white</text>
+    <text x="1042" y="1033" font-size="10.5" fill="#A2AEBE" font-weight="400" text-anchor="start">#F3EFE6</text>
+    <text x="50" y="1063" font-size="11" fill="#A2AEBE" font-weight="400" text-anchor="start">Revisão 02 · linhas mais retas, ouro alaranjado e off-white · dados fictícios · APK 0.8 inalterado.</text>
+  </g>
+</svg>

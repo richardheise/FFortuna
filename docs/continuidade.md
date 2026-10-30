@@ -4,6 +4,8 @@ Atualizado em 30/10/2026. Prioridade do usuário: funcionalidades em incrementos
 
 ## Proposta de interface — aguardando avaliação
 
+Revisão visual 02 solicitada: menos linhas curvas, amarelo mais intenso e alaranjado, manter ciano e usar off-white. A proposta ativa usa `#FFB020` (ouro âmbar), `#9DECF4` (ciano mantido), `#F3EFE6` (off-white), cantos pequenos e botão + retangular. SVG/PNG v2 em `docs/design/` foram gerados e inspecionados; a primeira proposta está preservada. Apenas documentos e artefatos visuais foram alterados, sem nova release e sem aprovação presumida da 0.8.0.
+
 Usuário pediu começar o dashboard enquanto valida a 0.8.0 e depois orientou: primeiro propor estilo e menus, usando referências de finanças e paleta preto/ouro/ciano claro. Nenhum código do dashboard ou nova release foi implementado nesta rodada. [Proposta e referências](design/tique-interface-proposta.md), SVG autoral e preview PNG apresentam Início, Movimentos e Revisão com dados fictícios. Navegação sugerida: Início, Movimentos, ação central +, Revisão e Mais. Paleta solicitada registrada; composição/menus ainda aguardam aval. Não marcar o livro 0.8.0 como aprovado: o usuário disse que ainda vai validar no celular.
 
 ## Incremento 0.8.0 — livro permanente, conferência e recuperação

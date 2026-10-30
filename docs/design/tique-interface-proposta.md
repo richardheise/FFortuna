@@ -1,28 +1,27 @@
-# Tique — proposta visual e de navegação
+# Tique — proposta visual e de navegação, revisão 02
 
-Status: **proposta para discussão, ainda não aplicada ao APK**. A paleta preto, ouro e ciano claro foi solicitada pelo usuário; hierarquia, menus e composição aguardam seu aval. A validação física do livro 0.8.0 continua pendente e não deve ser considerada aprovada por esta discussão.
+Status: **proposta para discussão, ainda não aplicada ao APK**. O usuário pediu menos curvas, um amarelo mais intenso puxando para laranja, manutenção do ciano e uso de off-white. A revisão 02 aplica essa direção; hierarquia, menus e composição continuam em avaliação. A validação física do livro 0.8.0 continua pendente e não deve ser considerada aprovada por esta discussão.
 
-![Três telas conceituais, com dados fictícios](tique-interface-proposta.png)
+![Três telas conceituais, com dados fictícios](tique-interface-proposta-v2.png)
 
-O [SVG autoral](tique-interface-proposta.svg) é a fonte editável da imagem. São conceitos de telas Android, sem código de produto, dados bancários, assets ou capturas de concorrentes. Valores, movimentos e estados de conferência da imagem são fictícios.
+O [SVG autoral](tique-interface-proposta-v2.svg) é a fonte editável da imagem. São conceitos de telas Android, sem código de produto, dados bancários, assets ou capturas de concorrentes. Valores, movimentos e estados de conferência da imagem são fictícios.
 
 ## Direção visual
 
-Interface escura, moderna e sóbria. O preto predomina; o ouro marca identidade, ações e seleção; o ciano comunica informações, vínculos e receitas. Os valores principais permanecem quase brancos para facilitar leitura. Um símbolo circular geométrico próprio acompanha o nome Tique, remetendo à ideia de fortuna. A marca usa tipografia simples; o desenho do ícone definitivo pode ser refinado depois.
+Interface escura, moderna e geométrica. O preto predomina; o ouro âmbar intenso marca identidade, ações e seleção; o ciano comunica informações, vínculos e receitas. Os valores e textos principais usam off-white quente. Um símbolo angular próprio, com oito faces e raios retos, acompanha o nome Tique. A marca usa tipografia simples; o desenho definitivo pode ser refinado depois.
 
 | Uso | Cor |
 | --- | --- |
 | Fundo principal | `#080B10` |
 | Cartões | `#121820` |
 | Superfície elevada | `#1B2430` |
-| Ouro principal | `#D4AF37` |
-| Reflexo sutil do ouro em botões | `#F4D879` |
+| Ouro âmbar / amarelo alaranjado | `#FFB020` |
 | Ciano claro | `#9DECF4` |
-| Texto principal | `#F4F7FA` |
+| Texto principal off-white | `#F3EFE6` |
 | Texto secundário | `#A2AEBE` |
 | Divisórias | `#263240` |
 
-Botões em ouro usam texto preto. O efeito metálico fica em um gradiente discreto de ações e pequenos detalhes; os cartões mantêm superfícies escuras. Vermelho/coral pode ser usado funcionalmente para diferença negativa ou erro, sempre acompanhado de texto/ícone. Despesa normal não deve ser apresentada como erro.
+Botões em ouro âmbar usam texto preto e preenchimento sólido. Cartões, campos, filtros e ações passam a retângulos com cantos de cerca de 4 dp; as barras dos gráficos têm extremidades retas. O botão central `+` também é retangular, com raio pequeno, e os ícones seguem traços mais angulares. As superfícies escuras mantêm a separação por contraste e linhas finas. Vermelho/coral pode ser usado funcionalmente para diferença negativa ou erro, sempre acompanhado de texto/ícone. Despesa normal não deve ser apresentada como erro.
 
 Tipografia sem serifa, com números bem legíveis, alinhamento consistente de valores e espaço entre seções. Na implementação, respeitar escala de fonte do Android, área segura e alvos de toque de pelo menos 48 dp. Não depender só de cor para distinguir receita, despesa, seleção ou anulação. A composição apresentada é referência, não um tamanho fixo de tela.
 
@@ -55,6 +54,10 @@ Contas adicionais, cartões, faturas, caixinhas e planejamento poderão entrar e
 Só usar dados do livro confirmado. Anulados não entram nos totais; transferências e pagamentos de fatura não viram despesas para alimentar gráficos. Meses vazios exibem estado vazio, sem dados inventados ou tendências fictícias. Uma diferença de conferência permanece visível, sem ajustar saldo automaticamente.
 
 Na revisão, o resumo abre o formulário para conferir valor, natureza, categoria, data efetiva e conta. O visual não deve sugerir que o parser reconheceu campos que continuam desconhecidos; “Revisar e confirmar” não elimina as validações financeiras existentes. A captura segue com o consentimento e os limites reais da versão instalada.
+
+## Histórico visual
+
+A [primeira proposta](tique-interface-proposta.png) e seu [SVG](tique-interface-proposta.svg) foram preservados para comparação. A revisão 02 substitui o dourado suave e os cartões arredondados por ouro âmbar mais saturado, off-white e geometria mais reta. O ciano e os destinos de navegação foram mantidos. Nenhuma mudança foi aplicada ao código do produto ou ao APK.
 
 ## Referências consultadas
 
