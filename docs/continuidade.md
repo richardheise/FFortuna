@@ -1,6 +1,14 @@
-# Continuidade — Tique 0.7.0
+# Continuidade — Tique 0.7.1
 
 Atualizado em 30/10/2026. Prioridade do usuário: funcionalidades em incrementos pequenos, depois refinamento UI/UX. A demonstração financeira e os exemplos nativos são sintéticos. A 0.5.0 implementa diagnóstico real temporário opcional, sem parser ou lançamentos; o núcleo financeiro real continua bloqueado.
+
+## Correção 0.7.1 — nove falhas na classificação
+
+Usuário relatou nove falhas na bateria da 0.7.0. Identificou cenários de criação/ciclo de vida, persistência, duplicidade, validação, isolamento, cifragem e revisão, com códigos genéricos de classificação. Não inferir os demais contadores nem registrar aprovação física.
+
+Causa identificada: `ClassificationCatalog.exists` passava `excluding=null` em dois argumentos de texto de `rawQuery` na criação. Bytecode do SQLCipher 4.19.1 conferido: `SQLiteDirectCursorDriver.query(String[])` chama `bindAllArgsAsStrings`, que chama `bindString`; este rejeita nulo antes de executar a condição SQL `? IS NULL`. Todos os nove casos que criam opções alcançam essa consulta. Correção usa cláusula e argumentos diferentes para criação (tipo/nome) e renomeação (tipo/nome/ID); o array possui tipo `Array<String>` sem elementos nulos. Não altera schema, IDs, chave ou dados.
+
+Build 0.7.1/code 9 aprovado: 50 testes JVM sem falhas; 58 cenários Android compilados, sem execução JUnit. Inspeção, assinatura preservada, bundle offline, ausência de INTERNET, política de backup, avisos e alinhamento 16 KB aprovados. Log `.local/categories-fix-build.log`; limites 12 GiB/16 CPUs mantidos. SHA-256 `43b3cfc0f7b380fffac12a66484b6f079719649a66cac86bc4e2bca27de2b4d5`. TypeScript inalterado desde os 30 testes aprovados da 0.7.0; não executados novamente neste hotfix. Publicação em preparação e validação física 0.7.1 pendente. Não desinstalar ou apagar dados para aplicar. A bateria permanece com 60 verificações; os 58 cenários Android existentes abrangem esse fluxo e precisam ser executados novamente no celular. [Roteiro curto](releases/v0.7.1-alpha.1.md).
 
 ## Incremento 0.7.0 — categorias e tags
 

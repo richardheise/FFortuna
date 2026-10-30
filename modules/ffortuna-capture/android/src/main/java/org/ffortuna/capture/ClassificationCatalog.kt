@@ -130,10 +130,13 @@ class ClassificationCatalog(
     }
 
     private fun count(): Int = db.rawQuery("SELECT COUNT(*) FROM classifications", null).use { it.moveToFirst(); it.getInt(0) }
-    private fun exists(kind: String, key: String, excluding: String? = null): Boolean = db.rawQuery(
-        "SELECT id FROM classifications WHERE kind=? AND name_key=? AND (? IS NULL OR id!=?) LIMIT 1",
-        arrayOf(kind, key, excluding, excluding)
-    ).use { it.moveToFirst() }
+    private fun exists(kind: String, key: String, excluding: String? = null): Boolean {
+        // rawQuery binds every selection argument with bindString; null is not a SQL NULL here.
+        val sql = "SELECT id FROM classifications WHERE kind=? AND name_key=?" +
+            (if (excluding == null) "" else " AND id!=?") + " LIMIT 1"
+        val args: Array<String> = if (excluding == null) arrayOf(kind, key) else arrayOf(kind, key, excluding)
+        return db.rawQuery(sql, args).use { it.moveToFirst() }
+    }
 
     private fun normalizeName(value: String): String {
         var start = 0
