@@ -10,6 +10,7 @@ class DiagnosticCapture(private val context:Context,private val name:String="ffo
     private val prefs=context.getSharedPreferences("$name-state",Context.MODE_PRIVATE)
     private var opened:DiagnosticStore?=null
     private var failure:String?=null
+    private var processingFailure:String?=null
     private fun exists()=prefs.getBoolean("created",false) || context.getDatabasePath("$name.db").exists() || KeyVault(context,name).hasStoredMaterial()
     private fun store(create:Boolean=false):DiagnosticStore {
         opened?.let { return it }
@@ -25,7 +26,7 @@ class DiagnosticCapture(private val context:Context,private val name:String="ffo
                 val current=store().state(now)
                 if(current["active"]==true) store().validateSource(if(source["installed"]==true && source["enabled"]==true) source["signer"] as? String else null)
                 val state=store().state(now)
-                failure?.let { state+mapOf("status" to "blocked","active" to false,"failureCode" to it) } ?: state
+                (failure?.let { state+mapOf("status" to "blocked","active" to false,"failureCode" to it) } ?: state)+mapOf("processingFailureCode" to processingFailure)
             }
         } catch(error:Exception) { absent+mapOf("status" to "blocked","failureCode" to safeCode(error)) }
     }
@@ -40,7 +41,7 @@ class DiagnosticCapture(private val context:Context,private val name:String="ffo
         val file=context.getDatabasePath("$name.db")
         if(file.exists() || listOf("-wal","-shm","-journal").any { File(file.path+it).exists() }) check(context.deleteDatabase(file.name))
         KeyVault(context,name).erase()
-        check(prefs.edit().clear().commit());failure=null
+        check(prefs.edit().clear().commit());failure=null;processingFailure=null
     }
     fun observe(sbn:StatusBarNotification,received:DiagnosticMoment,now:DiagnosticMoment) {
         if(sbn.packageName!=DiagnosticPolicy.PACKAGE || !exists() || failure!=null) return
@@ -52,14 +53,18 @@ class DiagnosticCapture(private val context:Context,private val name:String="ffo
             val signer=if(source["enabled"]==true) source["signer"] as? String else null
             if(signer==null) { db.stop();throw DiagnosticFailure("SOURCE_CHANGED") }
             val notification=sbn.notification
-            db.observe(sbn.packageName,signer,sbn.key,sbn.postTime,sbn.groupKey,
+            val added=db.observe(sbn.packageName,signer,sbn.key,sbn.postTime,sbn.groupKey,
                 notification.flags and Notification.FLAG_GROUP_SUMMARY!=0,received,now) { extract(notification) }
+            if(added) try { db.processCandidates(now);processingFailure=null }
+                catch (_:Exception) { processingFailure="CANDIDATE_PROCESSING" }
         } catch(error:Exception) { failure=safeCode(error);try { opened?.stop() } catch (_:Exception) { } }
     }
     fun samples(now:DiagnosticMoment)=if(exists()) store().samples(now) else emptyList()
     fun sample(id:String,now:DiagnosticMoment)=store().sample(id,now)
     fun review(id:String,json:String,confirmed:Boolean,now:DiagnosticMoment)=store().review(id,json,confirmed,now)
     fun excludeReview(id:String)=store().excludeReview(id)
+    fun candidate(id:String,now:DiagnosticMoment,force:Boolean=false)=store().candidate(id,now,force)
+    fun saveCandidate(id:String,json:String,now:DiagnosticMoment)=store().saveCandidate(id,json,now)
     fun exportReviewed(now:DiagnosticMoment)=store().exportReviewed(now)
     companion object {
         fun safeCode(error:Exception):String {

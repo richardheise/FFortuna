@@ -1,5 +1,7 @@
 # Diagnóstico local — roteiro 0.5.0
 
+A partir da 0.6.0, veja o [roteiro de prévias BRL](previa-brl.md): a migração pausa o consentimento antigo e a nova coleta requer 48 verificações. O texto abaixo registra a entrega original 0.5.0, já aprovada funcionalmente pelo usuário; a revisão de exportação continua separada da prévia de valores reais.
+
 Esta entrega permite coletar amostras reais somente para desenvolver/verificar parsers depois. Não interpreta movimentações, não cria transações nem calcula saldo. O livro financeiro no Expo Go e os exemplos da prova continuam exclusivamente sintéticos. O suporte de parsing Nubank permanece não validado.
 
 ## Política padrão

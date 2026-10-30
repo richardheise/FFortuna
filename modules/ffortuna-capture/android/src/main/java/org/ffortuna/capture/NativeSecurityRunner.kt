@@ -14,8 +14,8 @@ import java.util.concurrent.atomic.AtomicBoolean
 open class SecurityCheckFailure(val safeCode:String):IllegalStateException(safeCode)
 
 object NativeSecurityRunner {
-    const val SCOPE="isolated-native-checks/v2"
-    const val REQUIRED_CHECKS=40
+    const val SCOPE="isolated-native-checks/v3"
+    const val REQUIRED_CHECKS=48
     fun approved(report:Map<String,Any?>?):Boolean=report?.let {
         it["scope"]==SCOPE && it["passed"]==REQUIRED_CHECKS && it["failed"]==0 && it["notVerified"]==0
     } ?: false
@@ -36,7 +36,7 @@ object NativeSecurityRunner {
         execute("abandoned-check-cleanup","Limpeza de verificações interrompidas") { SecuritySandbox.recoverAbandoned(context) }
         val specific=RetentionSecurityScenarios(context) { probes.add(it) }.cases()
         val policy=specific.first { it.id=="policy-settings" }
-        val cases=listOf(policy)+NativeSecurityScenarios(context).cases()+specific.filter { it.id!=policy.id }+DiagnosticSecurityScenarios(context) { probes.add(it) }.cases()
+        val cases=listOf(policy)+NativeSecurityScenarios(context).cases()+specific.filter { it.id!=policy.id }+DiagnosticSecurityScenarios(context) { probes.add(it) }.cases()+CandidateSecurityScenarios(context) { probes.add(it) }.cases()
         for(case in cases) execute(case.id,case.title,case.run)
         Log.i("FFortunaSecurityCheck",end)
         results.add(logWindow(start,end,probes))

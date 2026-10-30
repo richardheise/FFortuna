@@ -56,6 +56,8 @@ export interface CaptureModule {
   clearLocalRecovery(): Promise<void>;
   restoreLocalRecovery(id: string): Promise<BackupResult>;
   runSecurityChecks(): Promise<SecurityReport>;
+  diagnosticCandidate(id: string, force: boolean): Promise<DiagnosticResult>;
+  saveDiagnosticCandidate(id: string, fieldsJson: string): Promise<DiagnosticResult>;
   diagnosticSnapshot(): Promise<DiagnosticStatus>;
   startDiagnostic(expectedSigner: string): Promise<DiagnosticResult>;
   stopDiagnostic(): Promise<DiagnosticResult>;
@@ -82,15 +84,33 @@ export interface DiagnosticStatus {
   status: 'absent' | 'ready' | 'blocked'; active: boolean; securityChecksPassed: boolean;
   authorized: boolean; connected: boolean; source: DiagnosticSource;
   startedAt: string | null; expiresAt: string | null;
-  count: number; reviewedCount: number; limitReached: boolean; failureCode: string | null;
+  count: number; reviewedCount: number; limitReached: boolean; failureCode: string | null; processingFailureCode?: string | null;
 }
 export interface DiagnosticFields { title: string; text: string; bigText: string; subText: string; textLines: string[] }
 export interface DiagnosticSampleInfo {
   id: string; revision: number; publishedAt: string; capturedAt: string;
-  isSummary: boolean; truncated: boolean; hasText: boolean; hasReview: boolean;
+  isSummary: boolean; truncated: boolean; hasText: boolean; hasReview: boolean; candidateParsedAt?: string | null; candidateReviewStatus?: string | null;
 }
 export interface DiagnosticSample extends DiagnosticSampleInfo { original: DiagnosticFields; suggestion: DiagnosticFields }
 export interface DiagnosticResult {
   status: 'ok' | 'error' | 'saved' | 'cancelled' | 'verified'; code?: string; count?: number;
-  samples?: DiagnosticSampleInfo[]; sample?: DiagnosticSample;
+  samples?: DiagnosticSampleInfo[]; sample?: DiagnosticSample; candidate?: NotificationCandidate;
+}
+
+export interface NotificationCandidateFields {
+  amountCents: number | null; kind: 'income' | 'expense' | 'transfer' | 'other' | null;
+  effectiveDate: string | null; description: string; category: string;
+}
+export interface NotificationCandidateReview extends NotificationCandidateFields { status: 'reviewed' | 'dismissed' }
+export interface NotificationCandidate {
+  id: string; eventId: string; revision: number; publishedAt: string; capturedAt: string; parsedAt: string;
+  parsed: {
+    parserVersion: string; draft: NotificationCandidateFields;
+    confidence: Record<'movement' | 'amount' | 'nature' | 'account' | 'date' | 'category', 'certain' | 'uncertain' | 'missing'>;
+    fieldEvidence: Record<string, { value: string; sourceField: string; observedText: string; start: number; end: number }>;
+    amountEvidence: Array<{ sourceField: string; start: number; end: number; observedText: string; amountCents: number | null }>;
+    reasonCode: string; reason: string; automaticPostingAllowed: false;
+  };
+  original: DiagnosticFields; review: NotificationCandidateReview | null; reviewedAt: string | null;
+  previousSampleId: string | null; relatedReviewExists: boolean; hasLaterRevision: boolean; temporary: true; transactionId: null;
 }

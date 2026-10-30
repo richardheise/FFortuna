@@ -143,3 +143,11 @@ _Evitar_: captura bancária validada, extrato completo, acesso à conta bancári
 **Amostra revisada**:
 Campos textuais selecionados de uma observação de diagnóstico, com sugestões de remoção de dados pessoais e confirmação manual antes da exportação cifrada. As regras automáticas não garantem anonimização de texto livre.
 _Evitar_: payload bruto, transação confirmada, anonimização garantida
+
+**Prévia temporária de parsing**:
+Interpretação revisável do original de uma observação de diagnóstico, com versão e evidências por campo. Não constitui transação, não altera saldo e expira com a observação do diagnóstico.
+_Evitar_: lançamento confirmado, histórico financeiro definitivo, cópia anonimizada
+
+**Correção da prévia**:
+Campos salvos pelo usuário em uma área separada do resultado do parser. Têm precedência na interface e permanecem após reprocessar a mesma observação, sem alterar o original.
+_Evitar_: texto original, nova notificação, confirmação de transação

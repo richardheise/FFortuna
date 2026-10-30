@@ -1,6 +1,6 @@
 # Revisão de licenças — APK de captura sintética
 
-Revisão técnica concluída em 23/10/2026 e reconferida em 26/10/2026 na versão 0.5.0 para o APK `capture-poc`, release, arm64-v8a. Não foram encontradas pendências de textos de licença ou de atribuição no inventário identificado abaixo. Isso não equivale a validar o funcionamento no celular ou a certificar juridicamente qualquer distribuição futura.
+Revisão técnica concluída em 23/10/2026 e reconferida em 26/10/2026 na versão 0.6.0 para o APK `capture-poc`, release, arm64-v8a. Não foram encontradas pendências de textos de licença ou de atribuição no inventário identificado abaixo. Isso não equivale a validar o funcionamento no celular ou a certificar juridicamente qualquer distribuição futura.
 
 ## Escopo e evidências
 
@@ -73,3 +73,9 @@ APK 0.5.0/versionCode 5: 46.266.508 bytes, SHA-256 `45e1132681c0335b2b1112e16a21
 TypeScript estrito, 30 testes TypeScript e 34 JVM aprovados; 38 testes de dispositivo compilados, sem execução pelo runner neste servidor. A 0.4.0 foi aprovada pelo usuário. Em 30/10/2026, o usuário aprovou também o fluxo funcional 0.5.0 no A36/Android 16, incluindo captura, original correto e revisão/exportação; não informou os contadores da bateria desta versão. Trata-se de coleta real opcional e consentida, sem parser/lançamentos: não rotular o APK inteiro como exclusivamente sintético. Nenhum dado real foi coletado no ambiente de desenvolvimento ou adicionado aos anexos.
 
 A [pré-release v0.5.0-alpha.1](https://github.com/richardheise/FFortuna/releases/tag/v0.5.0-alpha.1) foi publicada em 26/10/2026 com nove anexos, conferidos por tamanho e SHA-256 remoto. O download público do APK respondeu HTTP 200. Fonte correspondente à tag no commit `72b1491203e081f56fb3d75cdc5db4e82671a4f6`, com 184 arquivos conferidos byte a byte. A aprovação funcional 0.5.0 foi informada pelo usuário em 30/10/2026; a publicação em si não equivale a testes e o runner JUnit Android permanece sem execução.
+
+## Reconferência 0.6.0
+
+APK 0.6.0/versionCode 6: 46.301.268 bytes, SHA-256 `b82bd30d7fe4ba79fd9a7a38f6cbd8acb6016762ef747a9f179997fdcb983815`. Extrator genérico BRL, migração e revisão usam dependências já presentes, sem componentes adicionais. Inventário reconferido na inspeção final: 71 pacotes npm, 189 coordenadas Maven, 23 bibliotecas nativas, 24 suplementos C/C++ e zero pendências identificadas. Avisos e AGPL dentro do APK coincidem com os textos revisados.
+
+TypeScript estrito, 30 testes TypeScript e 50 JVM aprovados; 46 cenários Android compilados, sem execução do runner neste servidor. A 0.6.0 aguarda a bateria de 48 verificações no A36 e o novo roteiro de revisão. Parsing genérico não é suporte Nubank validado. Prévia/correções continuam temporárias, sem livro financeiro ou lançamento automático. Não houve amostra real no ambiente de desenvolvimento ou nos anexos.

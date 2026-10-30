@@ -26,7 +26,7 @@ class DiagnosticStore(private val context:Context,private val name:String="ffort
             db.execSQL("PRAGMA synchronous=FULL");db.execSQL("PRAGMA cipher_memory_security=ON")
             db.beginTransaction()
             try {
-                check(db.version<=1)
+                check(db.version<=2)
                 if(db.version==0) {
                     db.execSQL("""CREATE TABLE session(id INTEGER PRIMARY KEY CHECK(id=1),session_id TEXT NOT NULL,
                         started_at TEXT NOT NULL,expires_at TEXT NOT NULL,elapsed_start INTEGER NOT NULL,boot INTEGER NOT NULL,
@@ -37,6 +37,12 @@ class DiagnosticStore(private val context:Context,private val name:String="ffort
                         UNIQUE(source_key,fingerprint),UNIQUE(source_key,revision))""")
                     db.execSQL("CREATE TABLE reviews(sample_id TEXT PRIMARY KEY REFERENCES samples(id) ON DELETE CASCADE,fields TEXT NOT NULL)")
                     db.version=1
+                }
+                if(db.version==1) {
+                    CandidateStore.createSchema(db)
+                    // Earlier consent did not include automatic parsing. Preserve data, require a new session.
+                    db.execSQL("UPDATE session SET enabled=0")
+                    db.version=2
                 }
                 db.setTransactionSuccessful()
             } finally { db.endTransaction() }
@@ -115,9 +121,10 @@ class DiagnosticStore(private val context:Context,private val name:String="ffort
     }
     fun samples(now:DiagnosticMoment):List<Map<String,Any?>> {
         maintain(now);val rows=mutableListOf<Map<String,Any?>>()
-        db.rawQuery("SELECT s.id,s.revision,s.published_at,s.captured_at,s.is_summary,s.truncated,s.payload,r.sample_id FROM samples s LEFT JOIN reviews r ON r.sample_id=s.id ORDER BY s.rowid DESC",null).use {
+        db.rawQuery("SELECT s.id,s.revision,s.published_at,s.captured_at,s.is_summary,s.truncated,s.payload,r.sample_id,p.parsed_at,e.fields_json FROM samples s LEFT JOIN reviews r ON r.sample_id=s.id LEFT JOIN candidate_parses p ON p.sample_id=s.id LEFT JOIN candidate_edits e ON e.sample_id=s.id ORDER BY s.rowid DESC",null).use {
             while(it.moveToNext()) rows.add(mapOf("id" to it.getString(0),"revision" to it.getInt(1),"publishedAt" to it.getString(2),"capturedAt" to it.getString(3),
-                "isSummary" to (it.getInt(4)==1),"truncated" to (it.getInt(5)==1),"hasText" to (!it.isNull(6) && DiagnosticFields.decode(it.getString(6)).hasText()),"hasReview" to !it.isNull(7)))
+                "isSummary" to (it.getInt(4)==1),"truncated" to (it.getInt(5)==1),"hasText" to (!it.isNull(6) && DiagnosticFields.decode(it.getString(6)).hasText()),"hasReview" to !it.isNull(7),"candidateParsedAt" to if(it.isNull(8)) null else it.getString(8),
+                "candidateReviewStatus" to if(it.isNull(9)) null else JSONObject(it.getString(9)).getString("status")))
         }
         return rows
     }
@@ -154,6 +161,13 @@ class DiagnosticStore(private val context:Context,private val name:String="ffort
         return JSONObject().put("format","ffortuna-reviewed-notification-samples").put("version",1)
             .put("sourcePackage",DiagnosticPolicy.PACKAGE).put("reviewedByUser",true).put("samples",result).toString().toByteArray(Charsets.UTF_8)
     }
+    fun candidate(id:String,now:DiagnosticMoment,force:Boolean=false):Map<String,Any?> {
+        maintain(now);return CandidateStore(db).detail(id,now.wall,force)
+    }
+    fun saveCandidate(id:String,json:String,now:DiagnosticMoment):Map<String,Any?> {
+        maintain(now);return CandidateStore(db).save(id,json,now.wall)
+    }
+    fun processCandidates(now:DiagnosticMoment):Int { maintain(now);return CandidateStore(db).processCurrentSession(now.wall) }
     fun verify() {
         db.rawQuery("PRAGMA cipher_integrity_check",null).use { check(!it.moveToFirst()) }
         check(file.inputStream().use { input -> val b=ByteArray(16);input.read(b)==16 && !b.contentEquals("SQLite format 3\u0000".toByteArray()) })

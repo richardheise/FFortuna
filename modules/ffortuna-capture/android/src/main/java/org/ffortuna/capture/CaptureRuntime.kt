@@ -139,6 +139,8 @@ object CaptureRuntime {
     fun diagnosticSample(context:Context,id:String)=call { diagnostic(context).sample(id,DiagnosticSource.moment(context)) }
     fun reviewDiagnostic(context:Context,id:String,json:String,confirmed:Boolean)=call { diagnostic(context).review(id,json,confirmed,DiagnosticSource.moment(context)) }
     fun excludeDiagnosticReview(context:Context,id:String)=call { diagnostic(context).excludeReview(id) }
+    fun diagnosticCandidate(context:Context,id:String,force:Boolean=false)=call { diagnostic(context).candidate(id,DiagnosticSource.moment(context),force) }
+    fun saveDiagnosticCandidate(context:Context,id:String,json:String)=call { diagnostic(context).saveCandidate(id,json,DiagnosticSource.moment(context)) }
     fun exportDiagnostic(context:Context)=call { diagnostic(context).exportReviewed(DiagnosticSource.moment(context)) }
     fun observeDiagnostic(context:Context,sbn:android.service.notification.StatusBarNotification,received:DiagnosticMoment) {
         if(sbn.packageName!=DiagnosticPolicy.PACKAGE || sbn.user!=android.os.Process.myUserHandle()) return

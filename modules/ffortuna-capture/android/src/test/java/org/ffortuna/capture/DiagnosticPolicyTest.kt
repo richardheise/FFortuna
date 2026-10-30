@@ -32,9 +32,10 @@ class DiagnosticPolicyTest {
     }
     @Test fun currentSecurityBatchIsRequiredToStartRealCollection() {
         assertFalse(NativeSecurityRunner.approved(null))
-        val report=mapOf<String,Any?>("scope" to NativeSecurityRunner.SCOPE,"passed" to 40,"failed" to 0,"notVerified" to 0)
+        val report=mapOf<String,Any?>("scope" to NativeSecurityRunner.SCOPE,"passed" to 48,"failed" to 0,"notVerified" to 0)
         assertTrue(NativeSecurityRunner.approved(report))
         assertFalse(NativeSecurityRunner.approved(report+mapOf("passed" to 30)))
+        assertFalse(NativeSecurityRunner.approved(report+mapOf("passed" to 40)))
         assertFalse(NativeSecurityRunner.approved(report+mapOf("notVerified" to 1)))
         assertFalse(NativeSecurityRunner.approved(report+mapOf("failed" to 1)))
     }

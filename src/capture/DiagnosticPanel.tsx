@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Alert, AppState, Text, View } from 'react-native';
+import { CandidatePanel } from './CandidatePanel';
 import { Action, Card, Field, styles } from '../ui/common';
 import type {
   CaptureModule, DiagnosticFields, DiagnosticResult, DiagnosticSample,
@@ -21,7 +22,7 @@ const emptyPrivateState = (): PrivateReviewState => ({ sample: null, fields: nul
 const PAGE_SIZE = 20;
 
 const errorMessages: Record<string, string> = {
-  SECURITY_CHECKS_REQUIRED: 'Execute as 40 verificações nativas isoladas nesta versão antes de iniciar uma sessão.',
+  SECURITY_CHECKS_REQUIRED: 'Execute as 48 verificações nativas isoladas nesta versão antes de iniciar uma sessão.',
   ACCESS_REQUIRED: 'Conceda acesso às notificações e aguarde a conexão do listener.',
   SOURCE_CHANGED: 'A origem instalada mudou ou ficou indisponível. Confira o aplicativo antes de iniciar outra sessão.',
   SAMPLE_LIMIT: 'O limite de 200 observações foi atingido. Pare e revise ou apague o diagnóstico.',
@@ -55,6 +56,7 @@ function failureMessage(code?: string) {
 function blank(value: string) { return value.length === 0 ? '—' : value; }
 
 export function DiagnosticPanel({ native, busy, run }: Props) {
+  const [candidateId, setCandidateId] = useState<string | null>(null);
   const [status, setStatus] = useState<DiagnosticStatus | null>(null);
   const [samples, setSamples] = useState<DiagnosticSampleInfo[]>([]);
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
@@ -68,7 +70,7 @@ export function DiagnosticPanel({ native, busy, run }: Props) {
   const clearPrivateState = useCallback((rerender = true) => {
     privateGeneration.current += 1;
     privateState.current = emptyPrivateState();
-    if (rerender && mounted.current) setPrivateRevision(value => value + 1);
+    if (rerender && mounted.current) { setCandidateId(null);setPrivateRevision(value => value + 1); }
   }, []);
 
   const refresh = useCallback(async () => {
@@ -131,7 +133,7 @@ export function DiagnosticPanel({ native, busy, run }: Props) {
     }
     Alert.alert(
       'Iniciar diagnóstico temporário?',
-      'O app de origem poderá fornecer notificações por até 24 horas ou 200 observações, com retenção local de até 7 dias. O conteúdo não é convertido em lançamentos nem usado para calcular saldo. O Android pode ocultar parte do texto; a captura não é garantida. Você pode parar antes, sem apagar os registros já coletados.',
+      'O app de origem poderá fornecer notificações por até 24 horas ou 200 observações, com retenção local de até 7 dias. O parser preliminar poderá gerar prévias de valores em BRL para revisão, sem confirmar transações ou calcular saldo. O Android pode ocultar parte do texto; a captura não é garantida. Você pode parar antes, sem apagar os registros já coletados.',
       [
         { text: 'Cancelar', style: 'cancel' },
         { text: 'Consentir e iniciar', onPress: () => void perform(() => native.startDiagnostic(signer)) },
@@ -157,6 +159,7 @@ export function DiagnosticPanel({ native, busy, run }: Props) {
   }
 
   async function openSample(info: DiagnosticSampleInfo) {
+    setCandidateId(null);
     setError(null);
     setMessage(null);
     const generation = privateGeneration.current;
@@ -245,7 +248,7 @@ export function DiagnosticPanel({ native, busy, run }: Props) {
   return <>
     <Card>
       <Text style={styles.heading}>Diagnóstico temporário de notificações</Text>
-      <Text style={styles.body}>Captura texto de notificações do app selecionado apenas para revisão local. Não interpreta transações, não cria lançamentos e não altera saldo. Nomes, lojas, locais e frases devem ser revisados manualmente; sugestões automáticas não garantem anonimização.</Text>
+      <Text style={styles.body}>Captura texto de notificações do app selecionado apenas para revisão local. O parser preliminar procura valores em BRL no original, sem inferir natureza, conta ou data efetiva. Não cria lançamentos e não altera saldo. Nomes, lojas, locais e frases devem ser revisados manualmente; sugestões automáticas não garantem anonimização.</Text>
       <Text style={styles.small}>Android pode ocultar campos ou fornecer notificações incompletas. Não há garantia de captura integral.</Text>
       {source && <View style={{ gap: 4 }}>
         <Text style={styles.small}>Origem: {source.installed ? 'instalada' : 'não instalada'} · aplicativo {source.enabled ? 'ativado' : 'desativado'} · {source.label || source.packageName}</Text>
@@ -256,6 +259,7 @@ export function DiagnosticPanel({ native, busy, run }: Props) {
         Estado: {status?.status ?? 'verificando'} · sessão: {status?.active ? 'ativa' : 'parada'} · autorização: {status?.authorized ? 'concedida' : 'não concedida'} · listener: {status?.connected ? 'conectado' : 'desconectado'}
         {status?.startedAt ? ` · iniciou ${new Date(status.startedAt).toLocaleString()}` : ''}{status?.expiresAt ? ` · expira ${new Date(status.expiresAt).toLocaleString()}` : ''}
       </Text>
+      {status?.processingFailureCode && <Text style={styles.warning}>A captura persistiu a evidência, mas uma interpretação ficou pendente. Abra e reprocese o original para tentar novamente. Código: {status.processingFailureCode}</Text>}
       {status?.failureCode && <Text style={styles.warning}>{failureMessage(status.failureCode)}</Text>}
       {error && <Text accessibilityRole="alert" style={styles.error}>{error}</Text>}
       {message && <Text style={styles.small}>{message}</Text>}
@@ -266,7 +270,7 @@ export function DiagnosticPanel({ native, busy, run }: Props) {
           : <Action title="Consentir e iniciar até 24 horas" disabled={busy || !status || !status.securityChecksPassed || !status.source.installed || !status.source.enabled || !status.source.signer || !status.authorized || status.status === 'blocked' || status.limitReached} onPress={confirmStart} />}
         <Action title="Apagar registros temporários" secondary disabled={busy || !status || (status.count === 0 && status.status !== 'blocked')} onPress={confirmClear} />
       </View>
-      {!status?.securityChecksPassed && <Text style={styles.warning}>Antes da coleta real, execute “Executar verificações nativas isoladas” abaixo e confira as 40 aprovadas. Para iniciar outra sessão após encerrar o processo, execute a bateria novamente.</Text>}
+      {!status?.securityChecksPassed && <Text style={styles.warning}>Antes da coleta real, execute “Executar verificações nativas isoladas” abaixo e confira as 48 aprovadas. Para iniciar outra sessão após encerrar o processo, execute a bateria novamente.</Text>}
       {!status?.authorized && <Text style={styles.small}>Conceda o acesso ao listener nas permissões do Android antes de iniciar a coleta.</Text>}
       <Text style={styles.small}>Limites: até 24 horas, 200 observações e retenção de 7 dias. Parar não apaga. A origem não é tratada como confiável só por estar instalada.</Text>
     </Card>
@@ -277,13 +281,17 @@ export function DiagnosticPanel({ native, busy, run }: Props) {
       {visibleSamples.length === 0 ? <Text style={styles.small}>Nenhuma observação disponível.</Text> : visibleSamples.map(info => <View key={info.id} style={{ gap: 6, borderTopWidth: 1, borderColor: '#DCE3D9', paddingTop: 10 }}>
         <Text style={styles.small}>Revisão {info.revision} · capturada {new Date(info.capturedAt).toLocaleString()} · publicada {new Date(info.publishedAt).toLocaleString()}</Text>
         <Text style={styles.small}>{info.isSummary ? 'Resumo de grupo' : 'Notificação individual'} · {info.truncated ? 'texto truncado' : 'sem truncamento pelo FFortuna'} · {info.hasText ? 'contém texto' : 'sem texto'} · {info.hasReview ? 'revisada' : 'não revisada'}</Text>
+        <Text style={styles.small}>{info.candidateParsedAt ? `Prévia interpretada ${new Date(info.candidateParsedAt).toLocaleString()}` : 'Original ainda sem prévia'}{info.candidateReviewStatus ? ` · revisão local: ${info.candidateReviewStatus}` : ''}</Text>
         <View style={styles.wrap}>
-          <Action title="Abrir e revisar" secondary disabled={busy} onPress={() => void openSample(info)} />
+          {!info.isSummary && <Action title="Interpretar original" secondary disabled={busy} onPress={() => { clearPrivateState();setCandidateId(info.id); }} />}
+          <Action title="Preparar cópia para exportação" secondary disabled={busy} onPress={() => void openSample(info)} />
           {info.hasReview && <Action title="Excluir revisão" secondary disabled={busy} onPress={() => confirmExclude(info)} />}
         </View>
       </View>)}
       {samples.length > visibleCount && <Action title="Mostrar mais" secondary disabled={busy} onPress={() => setVisibleCount(count => count + PAGE_SIZE)} />}
     </Card>
+
+    {candidateId && <CandidatePanel key={candidateId} native={native} busy={busy} run={run} sampleId={candidateId} onClose={() => { setCandidateId(null);void refresh(); }} />}
 
     {opened && fields && <Card>
       <Text style={styles.heading}>Original da observação · exibido após solicitação</Text>
@@ -292,8 +300,8 @@ export function DiagnosticPanel({ native, busy, run }: Props) {
       <Text style={styles.label}>Texto expandido</Text><Text selectable={false} style={styles.body}>{blank(opened.original.bigText)}</Text>
       <Text style={styles.label}>Subtexto</Text><Text selectable={false} style={styles.body}>{blank(opened.original.subText)}</Text>
       <Text style={styles.label}>Linhas</Text><Text selectable={false} style={styles.body}>{blank(opened.original.textLines.join('\n'))}</Text>
-      <Text style={styles.heading}>Sugestão editável</Text>
-      <Text style={styles.small}>Revise todos os campos manualmente. A sugestão é apenas um auxílio e pode deixar identificadores no texto.</Text>
+      <Text style={styles.heading}>Cópia para exportação · valores fictícios</Text>
+      <Text style={styles.small}>Valores reconhecidos foram substituídos por R$ 12,34 somente nesta cópia. O original e a prévia do parser preservam os valores reais. Revise todos os campos manualmente. A sugestão é apenas um auxílio e pode deixar identificadores no texto.</Text>
       <Field label="Título" value={fields.title} onChangeText={value => editField('title', value)} editable={!busy} autoCorrect={false} autoComplete="off" importantForAutofill="no" autoCapitalize="sentences" maxLength={4096} />
       <Field label="Texto" value={fields.text} onChangeText={value => editField('text', value)} editable={!busy} multiline autoCorrect={false} autoComplete="off" importantForAutofill="no" autoCapitalize="sentences" maxLength={4096} />
       <Field label="Texto expandido" value={fields.bigText} onChangeText={value => editField('bigText', value)} editable={!busy} multiline autoCorrect={false} autoComplete="off" importantForAutofill="no" autoCapitalize="sentences" maxLength={4096} />
@@ -310,14 +318,14 @@ export function DiagnosticPanel({ native, busy, run }: Props) {
       <Text style={styles.body}>Gera um arquivo .ffortuna-samples cifrado localmente. Inclui apenas campos revisados e confirmados. Não compartilha nem envia o arquivo. Este formato é independente dos backups da caixa sintética.</Text>
       <Field label="Senha (12 a 128 caracteres)" value={privateState.current.password} onChangeText={value => { privateState.current.password = value; setPrivateRevision(revision => revision + 1); }} editable={!busy} secureTextEntry autoCapitalize="none" autoCorrect={false} autoComplete="off" importantForAutofill="no" maxLength={128} />
       <Field label="Confirmar senha" value={privateState.current.confirmation} onChangeText={value => { privateState.current.confirmation = value; setPrivateRevision(revision => revision + 1); }} editable={!busy} secureTextEntry autoCapitalize="none" autoCorrect={false} autoComplete="off" importantForAutofill="no" maxLength={128} />
-      <Action title="Conferir arquivo exportado" secondary disabled={busy || !!opened || privateState.current.password.length < 12} onPress={() => {
+      <Action title="Conferir arquivo exportado" secondary disabled={busy || !!opened || !!candidateId || privateState.current.password.length < 12} onPress={() => {
         const secret=privateState.current.password;clearPrivateState();
         void perform(() => native.verifyDiagnosticExport(secret), result => {
           if(result.status==='verified') setMessage(`Arquivo autenticado: ${result.count ?? 0} amostras revisadas. Nenhum registro foi importado ou alterado.`);
           else if(result.status==='cancelled') setMessage('Seleção cancelada.');
         });
       }} />
-      <Action title="Exportar revisões cifradas" disabled={busy || !!opened || privateState.current.password.length < 12 || privateState.current.password.length > 128 || privateState.current.password !== privateState.current.confirmation || (status?.reviewedCount ?? 0) === 0} onPress={exportReviewed} />
+      <Action title="Exportar revisões cifradas" disabled={busy || !!opened || !!candidateId || privateState.current.password.length < 12 || privateState.current.password.length > 128 || privateState.current.password !== privateState.current.confirmation || (status?.reviewedCount ?? 0) === 0} onPress={exportReviewed} />
     </Card>
   </>;
 }

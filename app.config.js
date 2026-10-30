@@ -5,12 +5,12 @@ module.exports = ({ config }) => {
     name: 'FFortuna · Diagnóstico local',
     slug: 'ffortuna-capture-poc',
     scheme: 'ffortuna-capture-poc',
-    version: '0.5.0',
+    version: '0.6.0',
     updates: { enabled: false },
     android: {
       ...config.android,
       package: 'org.ffortuna.capturepoc',
-      versionCode: 5,
+      versionCode: 6,
       allowBackup: false,
       blockedPermissions: [
         'android.permission.INTERNET', 'android.permission.SYSTEM_ALERT_WINDOW',

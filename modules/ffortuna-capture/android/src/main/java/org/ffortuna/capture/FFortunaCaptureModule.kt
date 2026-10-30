@@ -74,6 +74,12 @@ class FFortunaCaptureModule:Module() {
                 }
             } finally { chars.fill('\u0000') }
         } }
+        AsyncFunction("diagnosticCandidate") { id:String,force:Boolean -> diagnosticAction {
+            mapOf("status" to "ok","candidate" to CaptureRuntime.diagnosticCandidate(context(),id,force))
+        } }
+        AsyncFunction("saveDiagnosticCandidate") { id:String,json:String -> diagnosticAction {
+            mapOf("status" to "ok","candidate" to CaptureRuntime.saveDiagnosticCandidate(context(),id,json))
+        } }
         AsyncFunction("diagnosticSnapshot") { CaptureRuntime.diagnosticSnapshot(context()) }
         AsyncFunction("startDiagnostic") { signer:String -> diagnosticAction { CaptureRuntime.startDiagnostic(context(),signer);mapOf("status" to "ok") } }
         AsyncFunction("stopDiagnostic") { diagnosticAction { CaptureRuntime.stopDiagnostic(context());mapOf("status" to "ok") } }

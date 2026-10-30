@@ -1,6 +1,20 @@
-# Continuidade — checkpoint 0.5.0
+# Continuidade — checkpoint 0.6.0
 
 Atualizado em 30/10/2026. Prioridade do usuário: funcionalidades em incrementos pequenos, depois refinamento UI/UX. A demonstração financeira e os exemplos nativos são sintéticos. A 0.5.0 implementa diagnóstico real temporário opcional, sem parser ou lançamentos; o núcleo financeiro real continua bloqueado.
+
+## Incremento 0.6.0
+
+Autorizado pelo usuário em 30/10/2026. Repositório/áreas privadas inspecionados: não há amostras bancárias reais ou revisadas disponíveis. Portanto, não foram inventados templates Nubank. Implementado extrator genérico `notification-brl/1` para marcadores R$/BRL, duas casas decimais e agrupamento por ponto, com centavos inteiros seguros e evidência exata/campo/offsets UTF-16. Valores ambíguos, inválidos, truncados ou sem marcador não são escolhidos. Natureza/conta/data efetiva permanecem desconhecidas; não há lançamento automático.
+
+`CandidateStore` compartilha conexão/executor da caixa diagnóstica. Migração transacional 1→2 cria parsing e edições separados, mantém originais/chave/revisões de exportação e pausa a sessão antiga para novo consentimento que inclua parsing. Observações novas são interpretadas nativamente após commit durável; falha de parsing deixa evidência recuperável e sinaliza pendência sem bloquear gravações futuras. Antigas entram apenas mediante “Interpretar original”. Um resultado por observação; reprocessar não duplica nem sobrescreve correções. Relação por identidade/revisão Android não comprova mesma transação financeira.
+
+A interface oferece “Interpretar original” e revisão parcial/descartar, com campos reais; a cópia para exportar tem rótulo explícito de valores fictícios R$ 12,34. Prévia e edições são temporárias e expiram com a observação após 7 dias; não pertencem a um livro financeiro nem aos backups/exports sintéticos. O núcleo financeiro real continua bloqueado. Não perder essa limitação na comunicação. Decisão no [ADR 0009](adr/0009-previa-brl-no-diagnostico.md).
+
+Checkpoint necessário: [roteiro 0.6.0 no A36](previa-brl.md), com 48 verificações sintéticas (38 cenários anteriores +8 novos, mais limpeza e logs próprios), migração sem reset, valor/evidência do original, edição salva após reprocessar/reabrir e coleta com interpretação ao fundo. **A execução Android 0.6.0 ainda está pendente**. A aprovação funcional 0.5.0 não valida os novos cenários.
+
+Verificações locais finais: TypeScript estrito, 30 testes TypeScript e 50 testes JVM aprovados. 46 cenários de dispositivo compilados; nenhum runner Android executado neste servidor. APK 0.6.0/versionCode 6 gerado/inspecionado com mesma assinatura: 46.301.268 bytes; SHA-256 `b82bd30d7fe4ba79fd9a7a38f6cbd8acb6016762ef747a9f179997fdcb983815`. Sem INTERNET/SMS/READ_LOGS/QUERY_ALL_PACKAGES/permissões amplas de armazenamento; bundle offline, avisos e 23 bibliotecas alinhadas a 16 KB. Logs `.local/candidate-js-final-check.log` e `.local/candidate-release-build.log`. Sem aparelho ADB/emulador.
+
+Pré-release preparada: `v0.6.0-alpha.1`, com novo fonte/checksums e roteiro. Registrar publicação efetiva após comparar os nove anexos com os hashes locais e conferir o download público. Não mover tags ou substituir anexos antigos.
 
 ## Incremento 0.5.0
 
