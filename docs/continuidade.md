@@ -1,16 +1,24 @@
-# Continuidade — Tique 0.6.1
+# Continuidade — Tique 0.7.0
 
 Atualizado em 30/10/2026. Prioridade do usuário: funcionalidades em incrementos pequenos, depois refinamento UI/UX. A demonstração financeira e os exemplos nativos são sintéticos. A 0.5.0 implementa diagnóstico real temporário opcional, sem parser ou lançamentos; o núcleo financeiro real continua bloqueado.
+
+## Incremento 0.7.0 — categorias e tags
+
+Usuário aprovou uma categoria principal e tags opcionais múltiplas. Catálogo SQLCipher separado e permanente, IDs estáveis, criar/renomear/arquivar/reativar. Oito categorias iniciais, nomes até 80 caracteres, até 200 opções e 20 tags por revisão. Revisões antigas em texto livre preservadas; IDs opcionais no JSON não alteram o schema 2 do diagnóstico. Reprocessamento mantém a seleção. Configuração sobrevive à retenção e a apagar diagnóstico. [Decisão e consequências](adr/0010-categorias-e-tags-do-diagnostico.md).
+
+Catálogo não é ledger, e seleção ainda expira com observação após sete dias. Catálogo e revisões reais não entram nos backups sintéticos; a interface informa a limitação e a perda do catálogo ao desinstalar. Runner nativo passa a `isolated-native-checks/v4`, 60 verificações (58 callbacks Android + limpeza e logs próprios). Doze cenários adicionados, ainda sem execução em aparelho. Build final aprovado: TypeScript estrito/30 testes TypeScript e 50 testes JVM sem falhas; 58 métodos Android compilados. APK 0.7.0/code 8, 46.327.692 bytes, SHA-256 `04cc41bcafa659303bf70ac2aba3a514c3c681fb6a444cd33b7da0f19164b8a3`, certificado igual, sem INTERNET, avisos/backup/alinhamento 16 KB aprovados. Log `.local/categories-release-final.log`; limites de 12 GiB/16 CPUs mantidos. Publicação 0.7.0 em preparação; validação física pendente. Não alegar aprovação da entrega nova a partir da aprovação 0.6.1.
+
+A próxima sessão deve começar pelo [roteiro 0.7.0](releases/v0.7.0-alpha.1.md). Priorizar integrar o livro real e recuperação antes de relatórios reais ou classificadores automáticos.
 
 ## Mudança de marca — 30/10/2026
 
 O aplicativo e repositório passam a se chamar **Tique**, em referência à deusa grega da fortuna. A identidade anterior FFortuna e a tag de conteúdo `v0.6.0-alpha.1` permanecem no histórico. O repositório atual é [github.com/richardheise/Tique](https://github.com/richardheise/Tique). O snapshot da versão de conteúdo 0.6.0 está preservado em `artifacts/releases/v0.6.0-alpha.1/`.
 
-O build de marca 0.6.1 usa versionCode 7 e os artefatos locais `artifacts/tique-arm64.apk` e `artifacts/tique-source.tar.gz`; a tag imutável é `v0.6.1-alpha.1`. A pré-release foi publicada; a versão 0.6.1 ainda não foi validada no aparelho. Os registros de validação são os mesmos 50 testes JVM e 30 TypeScript aprovados, 46 cenários Android compilados e roteiro de 48 verificações nativas pendente. Não interpretar esses dados como aprovação de aparelho da 0.6.1.
+O build de marca 0.6.1 usa versionCode 7 e os artefatos locais `artifacts/tique-arm64.apk` e `artifacts/tique-source.tar.gz`; a tag imutável é `v0.6.1-alpha.1`. A pré-release foi publicada e o usuário relatou em 30/10/2026 que tudo funcionou no aparelho. Essa é aprovação funcional informada, sem contadores individuais fornecidos. Os registros de validação são os mesmos 50 testes JVM e 30 TypeScript aprovados, 46 cenários Android compilados e roteiro de 48 verificações nativas pendente. Os 48 resultados individuais da bateria não foram informados; não inferir uma execução JUnit Android.
 
 Para permitir atualização por cima das instalações anteriores, foram preservados o application ID `org.ffortuna.capturepoc`, certificado de assinatura, bancos, chaves, formatos e protocolos internos, variáveis de ambiente e o caminho de trabalho local `/home/heise/FFortuna`. Esses nomes antigos são identificadores de compatibilidade, não a marca atual.
 
-Verificação final da marca: TypeScript estrito e 30 testes TypeScript aprovados; 50 testes JVM aprovados; 46 cenários Android compilados, sem runner. APK `tique-arm64.apk` 0.6.1/code 7: 46.301.248 bytes, SHA-256 `2c4e61ca9a66526c26cf4ab6d022ebd851c2c35ca9d56c28b5da18595baf34e9`. Nome Tique e pacote `org.ffortuna.capturepoc` conferidos no aapt; certificado SHA-256 `8e4f3bab8b047372480c82d9d361b6273bfd459e76cc0d16d8ff6e201ea74f36`, igual às versões anteriores. Inspeção completa/avisos aprovada. Log `.local/tique-release-build.log`; limite rígido 12 GiB/16 CPUs mantido. Repo `richardheise/Tique` confirmado com ADMIN, remoto local novo e API do endereço antigo encaminhando para Tique. Validação física 0.6.1 segue pendente.
+Verificação final da marca: TypeScript estrito e 30 testes TypeScript aprovados; 50 testes JVM aprovados; 46 cenários Android compilados, sem runner. APK `tique-arm64.apk` 0.6.1/code 7: 46.301.248 bytes, SHA-256 `2c4e61ca9a66526c26cf4ab6d022ebd851c2c35ca9d56c28b5da18595baf34e9`. Nome Tique e pacote `org.ffortuna.capturepoc` conferidos no aapt; certificado SHA-256 `8e4f3bab8b047372480c82d9d361b6273bfd459e76cc0d16d8ff6e201ea74f36`, igual às versões anteriores. Inspeção completa/avisos aprovada. Log `.local/tique-release-build.log`; limite rígido 12 GiB/16 CPUs mantido. Repo `richardheise/Tique` confirmado com ADMIN, remoto local novo e API do endereço antigo encaminhando para Tique. Validação funcional 0.6.1 relatada pelo usuário; não houve ADB ou runner JUnit neste servidor.
 
 ## Incremento 0.6.0
 

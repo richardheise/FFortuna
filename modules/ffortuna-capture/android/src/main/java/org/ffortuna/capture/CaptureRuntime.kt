@@ -13,6 +13,8 @@ object CaptureRuntime {
     private const val RETENTION_WARNING="Limpeza de bruto bloqueada; captura pausada. Confira a retenção abaixo."
     private val executor = Executors.newSingleThreadExecutor { task -> Thread(task, "ffortuna-capture") }
     private var diagnostic:DiagnosticCapture?=null
+    private var catalog:ClassificationCatalog?=null
+    private fun catalog(context:Context)=catalog ?: ClassificationCatalog(context.applicationContext).also { catalog=it }
     private fun diagnostic(context:Context)=diagnostic ?: DiagnosticCapture(context.applicationContext).also { diagnostic=it }
     private var boxes: CaptureBoxes? = null
     private var recovery:LocalRecoveryStore?=null
@@ -139,8 +141,21 @@ object CaptureRuntime {
     fun diagnosticSample(context:Context,id:String)=call { diagnostic(context).sample(id,DiagnosticSource.moment(context)) }
     fun reviewDiagnostic(context:Context,id:String,json:String,confirmed:Boolean)=call { diagnostic(context).review(id,json,confirmed,DiagnosticSource.moment(context)) }
     fun excludeDiagnosticReview(context:Context,id:String)=call { diagnostic(context).excludeReview(id) }
-    fun diagnosticCandidate(context:Context,id:String,force:Boolean=false)=call { diagnostic(context).candidate(id,DiagnosticSource.moment(context),force) }
-    fun saveDiagnosticCandidate(context:Context,id:String,json:String)=call { diagnostic(context).saveCandidate(id,json,DiagnosticSource.moment(context)) }
+    fun classifications(context:Context)=call { catalog(context).snapshot() }
+    fun createClassification(context:Context,kind:String,name:String)=call { catalog(context).create(kind,name);catalog(context).snapshot() }
+    fun renameClassification(context:Context,id:String,name:String)=call { catalog(context).rename(id,name);catalog(context).snapshot() }
+    fun archiveClassification(context:Context,id:String,archived:Boolean)=call { catalog(context).setArchived(id,archived);catalog(context).snapshot() }
+    fun diagnosticCandidate(context:Context,id:String,force:Boolean=false)=call {
+        ClassificationReview.detail(diagnostic(context).candidate(id,DiagnosticSource.moment(context),force),catalog(context).snapshot())
+    }
+    @Suppress("UNCHECKED_CAST")
+    fun saveDiagnosticCandidate(context:Context,id:String,json:String)=call {
+        val now=DiagnosticSource.moment(context)
+        val items=catalog(context).snapshot()
+        val previous=diagnostic(context).candidate(id,now)["review"] as? Map<String,Any?>
+        val checked=ClassificationReview.prepare(json,items,previous)
+        ClassificationReview.detail(diagnostic(context).saveCandidate(id,checked,now),items)
+    }
     fun exportDiagnostic(context:Context)=call { diagnostic(context).exportReviewed(DiagnosticSource.moment(context)) }
     fun observeDiagnostic(context:Context,sbn:android.service.notification.StatusBarNotification,received:DiagnosticMoment) {
         if(sbn.packageName!=DiagnosticPolicy.PACKAGE || sbn.user!=android.os.Process.myUserHandle()) return

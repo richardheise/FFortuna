@@ -151,3 +151,15 @@ _Evitar_: lançamento confirmado, histórico financeiro definitivo, cópia anoni
 **Correção da prévia**:
 Campos salvos pelo usuário em uma área separada do resultado do parser. Têm precedência na interface e permanecem após reprocessar a mesma observação, sem alterar o original.
 _Evitar_: texto original, nova notificação, confirmação de transação
+
+**Categoria principal**:
+Assunto único e opcional de uma revisão, como Comida, Lazer ou Contas. Usa um ID estável do catálogo; não determina se o movimento é receita, despesa ou transferência.
+_Evitar_: natureza financeira, meio de pagamento
+
+**Tag**:
+Marcador opcional de contexto, como Viagem ou Trabalho. Uma revisão pode ter várias tags, gerenciadas pelo usuário e vinculadas por ID.
+_Evitar_: categoria obrigatória, classificação automática
+
+**Opção arquivada**:
+Categoria ou tag indisponível para novas seleções, preservada nos vínculos existentes. Pode ser renomeada e reativada sem trocar seu ID.
+_Evitar_: opção excluída, revisão apagada

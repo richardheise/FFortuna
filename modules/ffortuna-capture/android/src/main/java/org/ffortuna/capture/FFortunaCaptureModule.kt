@@ -74,6 +74,10 @@ class FFortunaCaptureModule:Module() {
                 }
             } finally { chars.fill('\u0000') }
         } }
+        AsyncFunction("classifications") { diagnosticAction { mapOf("status" to "ok","items" to CaptureRuntime.classifications(context())) } }
+        AsyncFunction("createClassification") { kind:String,name:String -> diagnosticAction { mapOf("status" to "ok","items" to CaptureRuntime.createClassification(context(),kind,name)) } }
+        AsyncFunction("renameClassification") { id:String,name:String -> diagnosticAction { mapOf("status" to "ok","items" to CaptureRuntime.renameClassification(context(),id,name)) } }
+        AsyncFunction("archiveClassification") { id:String,archived:Boolean -> diagnosticAction { mapOf("status" to "ok","items" to CaptureRuntime.archiveClassification(context(),id,archived)) } }
         AsyncFunction("diagnosticCandidate") { id:String,force:Boolean -> diagnosticAction {
             mapOf("status" to "ok","candidate" to CaptureRuntime.diagnosticCandidate(context(),id,force))
         } }

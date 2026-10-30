@@ -84,7 +84,10 @@ class CandidateStore(private val db:SQLiteDatabase) {
     fun save(id:String,json:String,now:Instant):Map<String,Any?> {
         if(json.length>8192) throw DiagnosticFailure("INVALID_CANDIDATE_REVIEW")
         val root=try { JSONObject(json) } catch (_:Exception) { throw DiagnosticFailure("INVALID_CANDIDATE_REVIEW") }
-        if(root.keys().asSequence().toSet()!=setOf("amountCents","kind","effectiveDate","description","category","status")) throw DiagnosticFailure("INVALID_CANDIDATE_REVIEW")
+        val required=setOf("amountCents","kind","effectiveDate","description","category","status")
+        val keys=root.keys().asSequence().toSet()
+        if(!keys.containsAll(required) || !required.plus(setOf("categoryId","tagIds")).containsAll(keys)) throw DiagnosticFailure("INVALID_CANDIDATE_REVIEW")
+        ClassificationReview.validate(root)
         val amount=if(root.isNull("amountCents")) null else when(val value=root.get("amountCents")) {
             is Int -> value.toLong(); is Long -> value;else -> throw DiagnosticFailure("INVALID_AMOUNT")
         }

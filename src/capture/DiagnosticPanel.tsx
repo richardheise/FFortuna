@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Alert, AppState, Text, View } from 'react-native';
 import { CandidatePanel } from './CandidatePanel';
+import { ClassificationPanel } from './ClassificationPanel';
 import { Action, Card, Field, styles } from '../ui/common';
 import type {
   CaptureModule, DiagnosticFields, DiagnosticResult, DiagnosticSample,
@@ -22,7 +23,7 @@ const emptyPrivateState = (): PrivateReviewState => ({ sample: null, fields: nul
 const PAGE_SIZE = 20;
 
 const errorMessages: Record<string, string> = {
-  SECURITY_CHECKS_REQUIRED: 'Execute as 48 verificações nativas isoladas nesta versão antes de iniciar uma sessão.',
+  SECURITY_CHECKS_REQUIRED: 'Execute as 60 verificações nativas isoladas nesta versão antes de iniciar uma sessão.',
   ACCESS_REQUIRED: 'Conceda acesso às notificações e aguarde a conexão do listener.',
   SOURCE_CHANGED: 'A origem instalada mudou ou ficou indisponível. Confira o aplicativo antes de iniciar outra sessão.',
   SAMPLE_LIMIT: 'O limite de 200 observações foi atingido. Pare e revise ou apague o diagnóstico.',
@@ -56,6 +57,7 @@ function failureMessage(code?: string) {
 function blank(value: string) { return value.length === 0 ? '—' : value; }
 
 export function DiagnosticPanel({ native, busy, run }: Props) {
+  const [catalogOpen, setCatalogOpen] = useState(false);
   const [candidateId, setCandidateId] = useState<string | null>(null);
   const [status, setStatus] = useState<DiagnosticStatus | null>(null);
   const [samples, setSamples] = useState<DiagnosticSampleInfo[]>([]);
@@ -70,7 +72,7 @@ export function DiagnosticPanel({ native, busy, run }: Props) {
   const clearPrivateState = useCallback((rerender = true) => {
     privateGeneration.current += 1;
     privateState.current = emptyPrivateState();
-    if (rerender && mounted.current) { setCandidateId(null);setPrivateRevision(value => value + 1); }
+    if (rerender && mounted.current) { setCatalogOpen(false);setCandidateId(null);setPrivateRevision(value => value + 1); }
   }, []);
 
   const refresh = useCallback(async () => {
@@ -246,6 +248,8 @@ export function DiagnosticPanel({ native, busy, run }: Props) {
   void privateRevision;
 
   return <>
+    <Action secondary title={catalogOpen ? 'Fechar categorias e tags' : 'Gerenciar categorias e tags'} disabled={busy || !!candidateId || !!opened} onPress={() => setCatalogOpen(value => !value)} />
+    {catalogOpen && <ClassificationPanel native={native} busy={busy} run={run} />}
     <Card>
       <Text style={styles.heading}>Diagnóstico temporário de notificações</Text>
       <Text style={styles.body}>Captura texto de notificações do app selecionado apenas para revisão local. O parser preliminar procura valores em BRL no original, sem inferir natureza, conta ou data efetiva. Não cria lançamentos e não altera saldo. Nomes, lojas, locais e frases devem ser revisados manualmente; sugestões automáticas não garantem anonimização.</Text>
@@ -270,7 +274,7 @@ export function DiagnosticPanel({ native, busy, run }: Props) {
           : <Action title="Consentir e iniciar até 24 horas" disabled={busy || !status || !status.securityChecksPassed || !status.source.installed || !status.source.enabled || !status.source.signer || !status.authorized || status.status === 'blocked' || status.limitReached} onPress={confirmStart} />}
         <Action title="Apagar registros temporários" secondary disabled={busy || !status || (status.count === 0 && status.status !== 'blocked')} onPress={confirmClear} />
       </View>
-      {!status?.securityChecksPassed && <Text style={styles.warning}>Antes da coleta real, execute “Executar verificações nativas isoladas” abaixo e confira as 48 aprovadas. Para iniciar outra sessão após encerrar o processo, execute a bateria novamente.</Text>}
+      {!status?.securityChecksPassed && <Text style={styles.warning}>Antes da coleta real, execute “Executar verificações nativas isoladas” abaixo e confira as 60 aprovadas. Para iniciar outra sessão após encerrar o processo, execute a bateria novamente.</Text>}
       {!status?.authorized && <Text style={styles.small}>Conceda o acesso ao listener nas permissões do Android antes de iniciar a coleta.</Text>}
       <Text style={styles.small}>Limites: até 24 horas, 200 observações e retenção de 7 dias. Parar não apaga. A origem não é tratada como confiável só por estar instalada.</Text>
     </Card>

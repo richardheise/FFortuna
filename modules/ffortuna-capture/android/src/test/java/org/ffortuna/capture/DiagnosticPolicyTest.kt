@@ -32,10 +32,12 @@ class DiagnosticPolicyTest {
     }
     @Test fun currentSecurityBatchIsRequiredToStartRealCollection() {
         assertFalse(NativeSecurityRunner.approved(null))
-        val report=mapOf<String,Any?>("scope" to NativeSecurityRunner.SCOPE,"passed" to 48,"failed" to 0,"notVerified" to 0)
+        val report=mapOf<String,Any?>("scope" to NativeSecurityRunner.SCOPE,"passed" to 60,"failed" to 0,"notVerified" to 0)
         assertTrue(NativeSecurityRunner.approved(report))
         assertFalse(NativeSecurityRunner.approved(report+mapOf("passed" to 30)))
         assertFalse(NativeSecurityRunner.approved(report+mapOf("passed" to 40)))
+        assertFalse(NativeSecurityRunner.approved(report+mapOf("passed" to 48)))
+        assertFalse(NativeSecurityRunner.approved(report+mapOf("scope" to "isolated-native-checks/v3")))
         assertFalse(NativeSecurityRunner.approved(report+mapOf("notVerified" to 1)))
         assertFalse(NativeSecurityRunner.approved(report+mapOf("failed" to 1)))
     }
@@ -43,6 +45,7 @@ class DiagnosticPolicyTest {
         val error=java.util.concurrent.ExecutionException(DiagnosticFailure("REVIEW_SENSITIVE"))
         assertEquals("REVIEW_SENSITIVE",DiagnosticCapture.safeCode(error))
         assertEquals("DIAGNOSTIC_STORAGE",DiagnosticCapture.safeCode(IllegalStateException("private fixture text")))
+        assertEquals("CLASSIFICATION_DUPLICATE_NAME",DiagnosticCapture.safeCode(java.util.concurrent.ExecutionException(ClassificationFailure("DUPLICATE_NAME"))))
     }
     @Test fun retentionAndLimitsAreBoundedIndependentlyOfTheSession() {
         assertEquals(7,DiagnosticPolicy.RETENTION.toDays())

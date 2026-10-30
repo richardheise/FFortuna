@@ -56,6 +56,10 @@ export interface CaptureModule {
   clearLocalRecovery(): Promise<void>;
   restoreLocalRecovery(id: string): Promise<BackupResult>;
   runSecurityChecks(): Promise<SecurityReport>;
+  classifications(): Promise<ClassificationResult>;
+  createClassification(kind: ClassificationItem['kind'], name: string): Promise<ClassificationResult>;
+  renameClassification(id: string, name: string): Promise<ClassificationResult>;
+  archiveClassification(id: string, archived: boolean): Promise<ClassificationResult>;
   diagnosticCandidate(id: string, force: boolean): Promise<DiagnosticResult>;
   saveDiagnosticCandidate(id: string, fieldsJson: string): Promise<DiagnosticResult>;
   diagnosticSnapshot(): Promise<DiagnosticStatus>;
@@ -100,7 +104,10 @@ export interface DiagnosticResult {
 export interface NotificationCandidateFields {
   amountCents: number | null; kind: 'income' | 'expense' | 'transfer' | 'other' | null;
   effectiveDate: string | null; description: string; category: string;
+  categoryId?: string | null; tagIds?: string[];
 }
+export interface ClassificationItem { id: string; kind: 'category' | 'tag'; name: string; archived: boolean }
+export interface ClassificationResult { status: 'ok' | 'error'; code?: string; items?: ClassificationItem[] }
 export interface NotificationCandidateReview extends NotificationCandidateFields { status: 'reviewed' | 'dismissed' }
 export interface NotificationCandidate {
   id: string; eventId: string; revision: number; publishedAt: string; capturedAt: string; parsedAt: string;

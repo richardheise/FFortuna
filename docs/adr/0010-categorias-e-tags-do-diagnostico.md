@@ -1,0 +1,17 @@
+# Categorias e tags gerenciadas
+
+Decisão aceita em 30/10/2026: uma categoria principal opcional e várias tags opcionais por revisão de notificação. O usuário confirmou esse modelo após aprovar funcionalmente a 0.6.1. Natureza financeira (receita, despesa, transferência ou outra) permanece independente da classificação temática.
+
+O catálogo possui IDs UUID estáveis e nomes editáveis. Começa com oito categorias locais: Comida, Lazer, Contas, Transporte, Saúde, Educação, Compras e Outros. Sem seleção, a prévia fica “A classificar”. Tags começam vazias. Criar, renomear, arquivar e reativar são operações explícitas; arquivar impede novas seleções, preservando as anteriores. Não há exclusão definitiva nem regra automática criada por uma correção. Nomes têm até 80 caracteres, normalização NFC e unicidade por tipo sem distinção de caixa, inclusive entre opções arquivadas. Limites: 200 opções no total e 20 tags por revisão.
+
+`CaptureRuntime` continua dono do executor serial. `ClassificationCatalog` abre um SQLCipher separado, `ffortuna-classifications-v1.db`, com chave aleatória encapsulada pelo Keystore e migração transacional do schema 0 para 1. Falta de chave ou banco com material existente falha sem recriação. As políticas de SQLCipher e backup Android desabilitado são as existentes. Essa separação é de configuração, não constitui outro livro financeiro.
+
+O catálogo sobrevive à retenção de sete dias e a “Apagar registros temporários”. Revisões continuam no banco temporário; os campos JSON opcionais `categoryId` e `tagIds` são uma extensão compatível do schema 2 existente. Rótulos livres anteriores permanecem legíveis e não são associados automaticamente a uma categoria por coincidência de nome. Ao selecionar uma opção, passam a usar o ID. O nome salvo da categoria serve como compatibilidade; a leitura resolve o nome atual pelo catálogo. Tags são resolvidas pelo catálogo e não contêm inferência financeira.
+
+Antes de salvar, o mesmo executor valida existência, tipo e estado das opções. A edição da revisão usa uma gravação atômica no banco de diagnóstico. Não há gravação distribuída entre bancos: criar uma opção e salvar uma revisão são ações independentes, de modo que uma interrupção pode deixar uma opção sem uso, nunca uma revisão parcialmente salva. Arquivar ou renomear não modifica os IDs. Reprocessar só substitui o parsing e preserva a classificação revisada.
+
+Alternativas: manter apenas texto livre dificultaria reutilizar e renomear; várias tags sem categoria principal tornariam o agrupamento mensal ambíguo; guardar o catálogo junto aos registros temporários exigiria mudar a política de descarte e a garantia de remoção da caixa. O banco de configuração separado adiciona uma chave e um pequeno armazenamento, mas mantém os ciclos de vida explícitos.
+
+Consequências: classificar ainda não confirma transações, altera saldo ou produz relatório de gastos reais. As seleções expiram com a observação; o catálogo permanece. Nesta etapa, nem o catálogo nem revisões reais entram nas cópias locais/portáteis sintéticas. A interface informa que desinstalar remove o catálogo; integrar esses dados a uma política de recuperação e ao livro real exige incremento próprio. Não há nova dependência, permissão ou envio de dados.
+
+Doze cenários novos compartilham callbacks entre JUnit Android e a bateria local da interface. O escopo passa a `isolated-native-checks/v4`, com 60 verificações no total. Compilar cenários não equivale a executá-los no celular.

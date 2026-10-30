@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AppState, Text, View } from 'react-native';
 import { Action, Card, Chip, ErrorBox, Field, styles } from '../ui/common';
 import { formatBRL, moneyInput, parseBRL } from '../core/money';
+import { ClassificationPanel } from './ClassificationPanel';
 import type {
   CaptureModule, DiagnosticResult, NotificationCandidate, NotificationCandidateFields,
 } from './native';
@@ -13,7 +14,7 @@ type Props = {
   sampleId: string;
   onClose: () => void;
 };
-type Editor = { amount: string; kind: NotificationCandidateFields['kind']; effectiveDate: string; description: string; category: string };
+type Editor = { amount: string; kind: NotificationCandidateFields['kind']; effectiveDate: string; description: string; category: string; categoryId: string | null; tagIds: string[] };
 
 const kinds: Array<{ value: NonNullable<Editor['kind']>; label: string }> = [
   { value: 'income', label: 'Receita' }, { value: 'expense', label: 'Despesa' },
@@ -30,6 +31,9 @@ const codeMessages: Record<string, string> = {
   DIAGNOSTIC_STORAGE: 'Não foi possível acessar o diagnóstico local.',
   INVALID_AMOUNT: 'Informe um valor em reais válido ou deixe o campo vazio.',
   INVALID_DATE: 'Informe uma data válida no formato AAAA-MM-DD ou deixe vazio.',
+  INVALID_CLASSIFICATION: 'A categoria ou as tags não foram aceitas.',
+  CLASSIFICATION_MISSING: 'Uma opção não está disponível. Reabra a revisão.',
+  CLASSIFICATION_ARCHIVED: 'Uma opção foi arquivada. Escolha uma opção ativa.',
 };
 const confidenceLabel = (value: string) => value === 'certain' ? 'extração consistente' : value === 'missing' ? 'ausente' : 'incerta';
 const safeError = (code?: string) => code ? `${codeMessages[code] ?? 'Não foi possível concluir a operação.'} (${code})` : 'Não foi possível concluir a operação.';
@@ -39,12 +43,13 @@ function toEditor(fields: NotificationCandidateFields): Editor {
   if (fields.amountCents !== null && Number.isSafeInteger(fields.amountCents) && fields.amountCents >= 0) {
     try { amount = moneyInput(fields.amountCents); } catch { amount = ''; }
   }
-  return { amount, kind: fields.kind, effectiveDate: fields.effectiveDate ?? '', description: fields.description ?? '', category: fields.category ?? '' };
+  return { amount, kind: fields.kind, effectiveDate: fields.effectiveDate ?? '', description: fields.description ?? '', category: fields.category ?? '', categoryId: fields.categoryId ?? null, tagIds: fields.tagIds ?? [] };
 }
 
 function sameFields(left: NotificationCandidateFields, right: NotificationCandidateFields) {
   return left.amountCents === right.amountCents && left.kind === right.kind && left.effectiveDate === right.effectiveDate &&
-    left.description === right.description && left.category === right.category;
+    left.description === right.description && left.category === right.category && (left.categoryId ?? null) === (right.categoryId ?? null) &&
+    [...(left.tagIds ?? [])].sort().join(',') === [...(right.tagIds ?? [])].sort().join(',');
 }
 
 function validDate(value: string): boolean {
@@ -133,7 +138,7 @@ export function CandidatePanel({ native, busy, run, sampleId, onClose }: Props) 
     if (editor.amount.trim()) {
       try { amountCents = parseBRL(editor.amount); } catch { return null; }
     }
-    return { amountCents, kind: editor.kind, effectiveDate: editor.effectiveDate || null, description: editor.description, category: editor.category };
+    return { amountCents, kind: editor.kind, effectiveDate: editor.effectiveDate || null, description: editor.description, category: editor.category, categoryId: editor.categoryId, tagIds: editor.tagIds };
   }, [editor]);
   const dirty = !!(currentFields && baseline && !sameFields(currentFields, baseline)) || (!!editor && !currentFields);
 
@@ -155,6 +160,8 @@ export function CandidatePanel({ native, busy, run, sampleId, onClose }: Props) 
       effectiveDate: fields.effectiveDate,
       description: fields.description,
       category: fields.category,
+      categoryId: fields.categoryId ?? null,
+      tagIds: fields.tagIds ?? [],
       status,
     };
     let payloadJson = JSON.stringify(payload);
@@ -225,7 +232,9 @@ export function CandidatePanel({ native, busy, run, sampleId, onClose }: Props) 
       <Field label="Data efetiva (opcional, AAAA-MM-DD)" value={editor?.effectiveDate ?? ''} onChangeText={value => update('effectiveDate', value)} editable={!busy && !saving} autoCorrect={false} autoComplete="off" importantForAutofill="no" maxLength={10} placeholder="AAAA-MM-DD" />
       <Text style={styles.small}>A data de publicação não é preenchida automaticamente. Transferência, pagamento de fatura, estorno e aporte não devem ser classificados como receita ou despesa comum.</Text>
       <Field label="Descrição" value={editor?.description ?? ''} onChangeText={value => update('description', value)} editable={!busy && !saving} autoCorrect={false} autoComplete="off" importantForAutofill="no" maxLength={500} />
-      <Field label="Categoria" value={editor?.category ?? ''} onChangeText={value => update('category', value)} editable={!busy && !saving} autoCorrect={false} autoComplete="off" importantForAutofill="no" maxLength={80} />
+      {editor && <ClassificationPanel native={native} busy={busy || saving} run={run} selection={{ categoryId: editor.categoryId, category: editor.category, tagIds: editor.tagIds }} onChange={selection => {
+        setEditor(current => current ? { ...current, ...selection } : current);setError(null);setMessage(null);
+      }} />}
       <View style={styles.wrap}>
         <Action title="Salvar revisão" disabled={busy || saving || loading || !editor || !currentFields || !validDate(editor?.effectiveDate ?? '')} onPress={() => save('reviewed', true)} />
         <Action title="Descartar candidatura" secondary disabled={busy || saving || loading || !candidate} onPress={() => save('dismissed', false)} />

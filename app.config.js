@@ -5,12 +5,12 @@ module.exports = ({ config }) => {
     name: 'Tique · Diagnóstico local',
     slug: 'ffortuna-capture-poc',
     scheme: 'ffortuna-capture-poc',
-    version: '0.6.1',
+    version: '0.7.0',
     updates: { enabled: false },
     android: {
       ...config.android,
       package: 'org.ffortuna.capturepoc',
-      versionCode: 7,
+      versionCode: 8,
       allowBackup: false,
       blockedPermissions: [
         'android.permission.INTERNET', 'android.permission.SYSTEM_ALERT_WINDOW',

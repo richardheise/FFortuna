@@ -70,7 +70,11 @@ class DiagnosticCapture(private val context:Context,private val name:String="ffo
         fun safeCode(error:Exception):String {
             var current:Throwable=error
             while((current is java.util.concurrent.ExecutionException || current is java.util.concurrent.CompletionException) && current.cause!=null) current=current.cause!!
-            return if(current is DiagnosticFailure) current.code else "DIAGNOSTIC_STORAGE"
+            return when(current) {
+                is DiagnosticFailure -> current.code
+                is ClassificationFailure -> "CLASSIFICATION_${current.code}"
+                else -> "DIAGNOSTIC_STORAGE"
+            }
         }
         /** Bounded allowlist; never dump extras, images, actions, people or PendingIntents. */
         internal fun extract(notification:Notification):Pair<DiagnosticFields,Boolean> {
