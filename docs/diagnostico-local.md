@@ -25,7 +25,7 @@ Originais e revisões expiram após 7 dias da captura, quando o núcleo executar
 7. Informe a senha no primeiro campo e use **Conferir arquivo exportado**. Com senha errada válida em comprimento, deve falhar a autenticação. Com a correta, deve informar a quantidade de amostras válidas, sem importar ou alterar registros. Cancelar o seletor não altera a caixa. Esse formato não restaura a caixa sintética; “Restaurar backup” recusará seu conteúdo.
 8. Pare a coleta. Novas notificações não devem aumentar o total. Opcionalmente apague o diagnóstico e confira que a contagem volta a zero e os exemplos sintéticos continuam presentes. Reiniciar o celular exige novo consentimento; reabrir somente o app preserva os registros. Não é necessário esperar sete dias ou alterar o relógio: esses limites são exercitados nos cenários isolados.
 
-O checkpoint esperado é confirmar os 40 resultados sintéticos, identificação da origem e funcionamento local da coleta/revisão/exportação. Não envie dados reais nesta conversa. A coleta ainda precisa dessa validação física; nenhum parser bancário foi validado por este build.
+O checkpoint esperado é confirmar os 40 resultados sintéticos, identificação da origem e funcionamento local da coleta/revisão/exportação. Não envie dados reais nesta conversa. O usuário aprovou o fluxo funcional em 30/10/2026 no A36/Android 16, incluindo captura, original com valor correto e revisão/exportação. Não informou contadores da bateria, logs ou relatório exportado. A aprovação não equivale a execução pelo runner JUnit ou validação de parser bancário.
 
 ## Executar e verificar
 
@@ -39,3 +39,5 @@ npm run native:build -- --compile-device-tests
 O build local mantém o teto de 12 GiB e 16 CPUs por systemd/cgroup, sem EAS/conta Expo/serviço pago. O APK é release, com JavaScript embutido e sem INTERNET; downloads de ferramentas/dependências são etapas de desenvolvimento. Expo Go não executa o módulo e não pode receber amostras reais.
 
 Decisão, alternativas e fontes oficiais no [ADR 0008](adr/0008-diagnostico-real-temporario.md). A exportação reutiliza o envelope do [ADR 0006](adr/0006-backup-portatil-da-caixa.md), com PBKDF2-HMAC-SHA256/600 mil iterações e AES-256-GCM. Arquivo cifrado em memória antes do SAF, sem temporário em claro; senhas não são persistidas. Autofill e correção estão desativados nos campos sensíveis. Isso não controla o comportamento de teclados ou garante apagar todas as strings/buffers internos das plataformas.
+
+No relato do usuário, R$ 12,34 aparecia somente na sugestão, enquanto o original preservava o valor correto. Esse comportamento é intencional para preparar a exportação. O futuro processamento financeiro deve consumir o original; os valores substitutos nunca representam valores de transações reais.

@@ -1,6 +1,6 @@
 # Continuidade — checkpoint 0.5.0
 
-Atualizado em 26/10/2026. Prioridade do usuário: funcionalidades em incrementos pequenos, depois refinamento UI/UX. A demonstração financeira e os exemplos nativos são sintéticos. A 0.5.0 implementa diagnóstico real temporário opcional, sem parser ou lançamentos; o núcleo financeiro real continua bloqueado.
+Atualizado em 30/10/2026. Prioridade do usuário: funcionalidades em incrementos pequenos, depois refinamento UI/UX. A demonstração financeira e os exemplos nativos são sintéticos. A 0.5.0 implementa diagnóstico real temporário opcional, sem parser ou lançamentos; o núcleo financeiro real continua bloqueado.
 
 ## Incremento 0.5.0
 
@@ -12,7 +12,11 @@ As 40 verificações desta versão devem passar antes de iniciar uma sessão rea
 
 Revisão com sugestões determinísticas para identificadores/valores; confirmação manual obrigatória porque nomes/locais/texto livre não são anonimizáveis por garantia. Exporta somente campos revisados com senha (mesmo envelope PBKDF2/GCM já testado), sem IDs/horários/assinatura/grupos/originais. Conferir arquivo decifra/valida em memória sem importar. Sem temporário em claro, envio, novas dependências ou permissões amplas. FLAG_SECURE na janela e limpeza de campos ao background. Diagnóstico não integra os backups sintéticos; originais efêmeros não têm restauração portátil.
 
-Roteiro de validação no A36 em [diagnostico-local.md](diagnostico-local.md). Próxima validação necessária: 40 cenários da interface, origem identificada, consentimento/coleta ao fundo, revisão, exportação/conferência com senha e parar/apagar sem afetar a caixa sintética. **0.5.0 ainda não testada no aparelho.** Não solicitar que o usuário envie originais ou dados reais nesta conversa. A política detalhada está no [ADR 0008](adr/0008-diagnostico-real-temporario.md).
+Em 30/10/2026, o usuário aprovou o funcionamento do roteiro 0.5.0 no Samsung Galaxy A36 SM-A366E/DS, Android 16. Confirmou captura de notificações, valores corretos no original e substituição por R$ 12,34 somente na sugestão, além de revisão/exportação funcionando. Não forneceu contadores numéricos da bateria desta versão, logs ou relatório exportado; não registrar 40/0/0 como resultado explicitamente informado. O runner JUnit Android continua sem execução neste servidor.
+
+O usuário relatou inicialmente valores R$ 12,34 e esclareceu que o original estava correto; a diferença existia só na sugestão. É o mascaramento intencional para exportação, não alteração do original. Não aplicar essa transformação ao futuro parser/livro financeiro. A interface pode explicar melhor a separação em um incremento futuro; nenhum APK foi alterado por essa confirmação.
+
+Checkpoint funcional aprovado conforme relato do usuário. Próximo incremento pequeno: primeiro parser determinístico, fundamentado em amostras revisadas e transformadas em fixtures sintéticas, com testes de valores/confiança/natureza/duplicidade. Não inventar formatos Nubank nem solicitar originais, senhas ou conteúdo financeiro nesta conversa. A aprovação da coleta não equivale à validação de parsing. Política/roteiro em [diagnostico-local.md](diagnostico-local.md) e [ADR 0008](adr/0008-diagnostico-real-temporario.md).
 
 Verificações locais finais: TypeScript estrito, 30 testes TypeScript e 34 testes JVM aprovados. 38 testes instrumentados compilados, sem runner Android. APK interno 0.5.0/versionCode 5 gerado/inspecionado com a mesma assinatura: 46.266.508 bytes, SHA-256 `45e1132681c0335b2b1112e16a215bada3fcfc26fcc99026c5b8986da1d44a38`. Sem INTERNET/SMS/READ_LOGS/QUERY_ALL_PACKAGES/permissões amplas de armazenamento; avisos, 23 bibliotecas alinhadas a 16 KB, consulta restrita e configuração FLAG_SECURE conferidos. Logs locais `.local/diagnostic-js-final-check.log` e `.local/diagnostic-release-build.log`. Não há aparelho ADB; nenhum emulador iniciado.
 
