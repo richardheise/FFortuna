@@ -23,6 +23,7 @@ assert 'android.permission.INTERNET' not in permissions, 'APK still requests INT
 assert not set(permissions) & {'android.permission.READ_LOGS', 'android.permission.READ_EXTERNAL_STORAGE', 'android.permission.WRITE_EXTERNAL_STORAGE', 'android.permission.MANAGE_EXTERNAL_STORAGE', 'android.permission.QUERY_ALL_PACKAGES', 'android.permission.READ_SMS', 'android.permission.RECEIVE_SMS'}, 'Broad logs/storage permissions are forbidden'
 assert 'android.permission.POST_NOTIFICATIONS' in permissions
 assert "name='org.ffortuna.capturepoc'" in badging
+assert "application-label:'Tique" in badging, 'App display name must be Tique'
 assert 'application-debuggable' not in badging
 assert re.search(r'android:allowBackup[^\n]*0x0\s*$',manifest,re.M), 'Backup must be disabled'
 assert 'android:dataExtractionRules' in manifest and 'android:fullBackupContent' in manifest

@@ -187,8 +187,8 @@ if '--check' not in sys.argv:
     (ROOT/'legal/archive-notices.json').write_text(json.dumps(archive_notices,ensure_ascii=False,indent=2)+'\n')
 if issues:
     print(json.dumps(summary));print('\n'.join(issues));raise SystemExit(1)
-parts=['FFortuna — avisos de bibliotecas do APK de captura sintética',
-       'Código original: AGPL-3.0-only. Fonte: https://github.com/richardheise/FFortuna',
+parts=['Tique — avisos de bibliotecas do APK Android',
+       'Código original: AGPL-3.0-only. Fonte: https://github.com/richardheise/Tique',
        'Distribua o código-fonte da mesma revisão junto da release; a tag e o manifesto da release vinculam o APK ao fonte.',
        'This software is based in part on the work of the Independent JPEG Group.',
        f'Inventário: {len(js_keys)} pacotes JavaScript, {len(packages)} pacotes NPM no total com módulos nativos, {len(maven)} coordenadas Maven no grafo release e {len(native)} bibliotecas nativas.',

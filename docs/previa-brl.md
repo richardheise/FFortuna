@@ -1,5 +1,7 @@
 # Prévia de valores BRL — roteiro 0.6.0
 
+Este roteiro descreve a versão de conteúdo 0.6.0, incluída no build de marca Tique 0.6.1 (versionCode 7). A nova marca preserva o application ID e os dados do app anterior para permitir atualização. O build 0.6.1 ainda não foi publicado nem validado no aparelho.
+
 A 0.6.0 interpreta o texto original de uma observação em uma prévia revisável, dentro do diagnóstico cifrado. Não há amostras revisadas disponíveis neste ambiente para fundamentar templates do Nubank. O parser `notification-brl/1` é genérico: reconhece valores explicitamente marcados por `R$` ou `BRL`, com vírgula e dois decimais, sem adivinhar a movimentação.
 
 Exemplos deste documento e dos testes são inventados; não representam frases reais do Nubank. `R$ 99,90` é convertido em 9990 centavos inteiros. Milhares com ponto e espaço Unicode entre marcador/número são aceitos. Números sem marcador, formatos incompletos/estrangeiros, negativos, zero e valores acima de 9.007.199.254.740.991 centavos não são escolhidos. Mais de uma possibilidade, repetição no mesmo campo ou truncamento deixam o valor desconhecido; repetições idênticas em campos distintos podem representar o mesmo texto expandido. A evidência mostra o trecho original e o campo que sustentaram a interpretação.

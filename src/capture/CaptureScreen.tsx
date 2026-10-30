@@ -70,11 +70,11 @@ export function CaptureScreen() {
     !state.storageReady && 'A caixa cifrada está indisponível. Confira a mensagem de erro acima.',
     retentionBlocked && 'A retenção de dados brutos está bloqueada. A captura permanece pausada até a limpeza ser verificada.',
     !state.enabled && 'Toque em “Concordo: ativar captura somente sintética” na seção 1.',
-    !state.authorized && 'Toque em “Abrir acesso às notificações no Android” e conceda o acesso ao FFortuna.',
+    !state.authorized && 'Toque em “Abrir acesso às notificações no Android” e conceda o acesso ao Tique.',
     !state.notificationsAllowed && 'Toque em “Permitir notificações do emissor fictício” e autorize a publicação.',
   ].filter((reason): reason is string => typeof reason === 'string') : ['Aguardando o diagnóstico. Se não carregar, toque em “Atualizar estado” na seção 1.'];
   return <SafeAreaView style={styles.page}><ScreenScroll>
-    <Text style={styles.title}>FFortuna · Captura nativa</Text>
+    <Text style={styles.title}>Tique · Captura nativa</Text>
     <Text style={styles.warning}>PROVA DE CAPTURA · Exemplos são sintéticos. Diagnóstico real somente mediante ativação explícita nas configurações avançadas.</Text>
     {state?.diagnostic?.active && <Text style={styles.warning}>Diagnóstico real ativo até {state.diagnostic.expiresAt ? new Date(state.diagnostic.expiresAt).toLocaleString() : "expirar"}. Fonte: Nubank. Pare a coleta nas configurações avançadas.</Text>}
     <ErrorBox message={error ?? state?.lastError ?? null} />

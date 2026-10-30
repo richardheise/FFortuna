@@ -22,7 +22,7 @@ export function makeDemoEvent(scenario: DemoScenario, date: string, id: string):
 export function makeUpdatedEvent(original: ObservedEvent, id: string): ObservedEvent {
   const parsed: unknown = JSON.parse(original.payload);
   if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed) || (parsed as Record<string, unknown>).marker !== marker) {
-    throw new Error('Evento original não é uma fixture sintética FFortuna.');
+    throw new Error('Evento original não é uma fixture sintética compatível.');
   }
   const payload: Record<string, unknown> = { ...(parsed as Record<string, unknown>), amountCents: 2990 };
   const effectiveDate = payload.effectiveDate;
@@ -65,5 +65,5 @@ export function getDemoOfx(variant: 'current' | 'overlap' | 'history', reference
     'OFXHEADER:100', 'DATA:OFXSGML', 'VERSION:102', 'SECURITY:NONE', 'ENCODING:UTF-8', 'CHARSET:UTF-8', 'COMPRESSION:NONE', 'OLDFILEUID:NONE', 'NEWFILEUID:NONE',
     '<OFX>', '<BANKMSGSRSV1>', '<STMTTRNRS>', '<STMTRS>', '<CURDEF>BRL', '<BANKACCTFROM>', '<BANKID>DEMO', '<ACCTID>FICTICIA', '</BANKACCTFROM>', '<BANKTRANLIST>', ...rows, '</BANKTRANLIST>', '</STMTRS>', '</STMTTRNRS>', '</BANKMSGSRSV1>', '</OFX>',
   ].join('\n');
-  return { name: `FFortuna sintético ${variant} ${referenceDate}.ofx`, text };
+  return { name: `Tique sintético ${variant} ${referenceDate}.ofx`, text };
 }

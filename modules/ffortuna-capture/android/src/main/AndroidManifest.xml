@@ -2,7 +2,7 @@
   <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
   <queries><package android:name="com.nu.production" /></queries>
   <application>
-    <service android:name="org.ffortuna.capture.SyntheticNotificationListener" android:label="FFortuna · captura e diagnóstico local" android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE" android:exported="false" android:directBootAware="false">
+    <service android:name="org.ffortuna.capture.SyntheticNotificationListener" android:label="Tique · captura e diagnóstico local" android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE" android:exported="false" android:directBootAware="false">
       <intent-filter><action android:name="android.service.notification.NotificationListenerService" /></intent-filter>
     </service>
     <receiver android:name="org.ffortuna.capture.SyntheticAlarmReceiver" android:exported="false" android:directBootAware="false" />

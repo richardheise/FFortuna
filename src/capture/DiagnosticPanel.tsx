@@ -280,7 +280,7 @@ export function DiagnosticPanel({ native, busy, run }: Props) {
       <Text style={styles.small}>{status?.count ?? samples.length} coletadas · {status?.reviewedCount ?? samples.filter(sample => sample.hasReview).length} revisadas · exibindo {visibleSamples.length} de {samples.length} metadados.</Text>
       {visibleSamples.length === 0 ? <Text style={styles.small}>Nenhuma observação disponível.</Text> : visibleSamples.map(info => <View key={info.id} style={{ gap: 6, borderTopWidth: 1, borderColor: '#DCE3D9', paddingTop: 10 }}>
         <Text style={styles.small}>Revisão {info.revision} · capturada {new Date(info.capturedAt).toLocaleString()} · publicada {new Date(info.publishedAt).toLocaleString()}</Text>
-        <Text style={styles.small}>{info.isSummary ? 'Resumo de grupo' : 'Notificação individual'} · {info.truncated ? 'texto truncado' : 'sem truncamento pelo FFortuna'} · {info.hasText ? 'contém texto' : 'sem texto'} · {info.hasReview ? 'revisada' : 'não revisada'}</Text>
+        <Text style={styles.small}>{info.isSummary ? 'Resumo de grupo' : 'Notificação individual'} · {info.truncated ? 'texto truncado' : 'sem truncamento pelo Tique'} · {info.hasText ? 'contém texto' : 'sem texto'} · {info.hasReview ? 'revisada' : 'não revisada'}</Text>
         <Text style={styles.small}>{info.candidateParsedAt ? `Prévia interpretada ${new Date(info.candidateParsedAt).toLocaleString()}` : 'Original ainda sem prévia'}{info.candidateReviewStatus ? ` · revisão local: ${info.candidateReviewStatus}` : ''}</Text>
         <View style={styles.wrap}>
           {!info.isSummary && <Action title="Interpretar original" secondary disabled={busy} onPress={() => { clearPrivateState();setCandidateId(info.id); }} />}

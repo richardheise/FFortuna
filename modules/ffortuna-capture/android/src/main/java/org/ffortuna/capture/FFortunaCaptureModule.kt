@@ -41,7 +41,7 @@ class FFortunaCaptureModule:Module() {
                 try { BackupCodec.encrypt(plain,chars) } finally { plain.fill(0) }
             } } finally { chars.fill('\u0000') }
             try {
-                val uri=withContext(Dispatchers.Main) { createBackup.launch("FFortuna-sintetico-${java.time.LocalDate.now()}.ffortuna") }
+                val uri=withContext(Dispatchers.Main) { createBackup.launch("Tique-sintetico-${java.time.LocalDate.now()}.ffortuna") }
                 if(uri==null) mapOf("status" to "cancelled")
                 else withContext(Dispatchers.IO) {
                     try {
@@ -117,7 +117,7 @@ class FFortunaCaptureModule:Module() {
                 try { BackupCodec.encrypt(plain,chars) } finally { plain.fill(0) }
             } } finally { chars.fill('\u0000') }
             try {
-                val uri=withContext(Dispatchers.Main) { createBackup.launch("FFortuna-amostras-revisadas.ffortuna-samples") }
+                val uri=withContext(Dispatchers.Main) { createBackup.launch("Tique-amostras-revisadas.ffortuna-samples") }
                 if(uri==null) mapOf("status" to "cancelled")
                 else withContext(Dispatchers.IO) {
                     try {

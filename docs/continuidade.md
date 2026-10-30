@@ -1,6 +1,16 @@
-# Continuidade — checkpoint 0.6.0
+# Continuidade — Tique 0.6.1
 
 Atualizado em 30/10/2026. Prioridade do usuário: funcionalidades em incrementos pequenos, depois refinamento UI/UX. A demonstração financeira e os exemplos nativos são sintéticos. A 0.5.0 implementa diagnóstico real temporário opcional, sem parser ou lançamentos; o núcleo financeiro real continua bloqueado.
+
+## Mudança de marca — 30/10/2026
+
+O aplicativo e repositório passam a se chamar **Tique**, em referência à deusa grega da fortuna. A identidade anterior FFortuna e a tag de conteúdo `v0.6.0-alpha.1` permanecem no histórico. O repositório atual é [github.com/richardheise/Tique](https://github.com/richardheise/Tique). O snapshot da versão de conteúdo 0.6.0 está preservado em `artifacts/releases/v0.6.0-alpha.1/`.
+
+O build de marca 0.6.1 usa versionCode 7 e os artefatos locais `artifacts/tique-arm64.apk` e `artifacts/tique-source.tar.gz`; a tag prevista é `v0.6.1-alpha.1`. A pré-release ainda não foi publicada e a versão 0.6.1 não foi validada no aparelho. Os registros de validação são os mesmos 50 testes JVM e 30 TypeScript aprovados, 46 cenários Android compilados e roteiro de 48 verificações nativas pendente. Não interpretar esses dados como aprovação de aparelho da 0.6.1.
+
+Para permitir atualização por cima das instalações anteriores, foram preservados o application ID `org.ffortuna.capturepoc`, certificado de assinatura, bancos, chaves, formatos e protocolos internos, variáveis de ambiente e o caminho de trabalho local `/home/heise/FFortuna`. Esses nomes antigos são identificadores de compatibilidade, não a marca atual.
+
+Verificação final da marca: TypeScript estrito e 30 testes TypeScript aprovados; 50 testes JVM aprovados; 46 cenários Android compilados, sem runner. APK `tique-arm64.apk` 0.6.1/code 7: 46.301.248 bytes, SHA-256 `2c4e61ca9a66526c26cf4ab6d022ebd851c2c35ca9d56c28b5da18595baf34e9`. Nome Tique e pacote `org.ffortuna.capturepoc` conferidos no aapt; certificado SHA-256 `8e4f3bab8b047372480c82d9d361b6273bfd459e76cc0d16d8ff6e201ea74f36`, igual às versões anteriores. Inspeção completa/avisos aprovada. Log `.local/tique-release-build.log`; limite rígido 12 GiB/16 CPUs mantido. Repo `richardheise/Tique` confirmado com ADMIN, remoto local novo e API do endereço antigo encaminhando para Tique. Validação física 0.6.1 segue pendente.
 
 ## Incremento 0.6.0
 
@@ -14,7 +24,7 @@ Checkpoint necessário: [roteiro 0.6.0 no A36](previa-brl.md), com 48 verificaç
 
 Verificações locais finais: TypeScript estrito, 30 testes TypeScript e 50 testes JVM aprovados. 46 cenários de dispositivo compilados; nenhum runner Android executado neste servidor. APK 0.6.0/versionCode 6 gerado/inspecionado com mesma assinatura: 46.301.268 bytes; SHA-256 `b82bd30d7fe4ba79fd9a7a38f6cbd8acb6016762ef747a9f179997fdcb983815`. Sem INTERNET/SMS/READ_LOGS/QUERY_ALL_PACKAGES/permissões amplas de armazenamento; bundle offline, avisos e 23 bibliotecas alinhadas a 16 KB. Logs `.local/candidate-js-final-check.log` e `.local/candidate-release-build.log`. Sem aparelho ADB/emulador.
 
-Pré-release preparada: `v0.6.0-alpha.1`, com novo fonte/checksums e roteiro. Registrar publicação efetiva após comparar os nove anexos com os hashes locais e conferir o download público. Não mover tags ou substituir anexos antigos.
+Pré-release `v0.6.0-alpha.1` publicada e imutável sob a marca anterior FFortuna, com fonte/checksums e roteiro. O snapshot local está em `artifacts/releases/v0.6.0-alpha.1/`. Não mover a tag ou substituir anexos antigos.
 
 ## Incremento 0.5.0
 
@@ -34,11 +44,11 @@ Checkpoint funcional aprovado conforme relato do usuário. Próximo incremento p
 
 Verificações locais finais: TypeScript estrito, 30 testes TypeScript e 34 testes JVM aprovados. 38 testes instrumentados compilados, sem runner Android. APK interno 0.5.0/versionCode 5 gerado/inspecionado com a mesma assinatura: 46.266.508 bytes, SHA-256 `45e1132681c0335b2b1112e16a215bada3fcfc26fcc99026c5b8986da1d44a38`. Sem INTERNET/SMS/READ_LOGS/QUERY_ALL_PACKAGES/permissões amplas de armazenamento; avisos, 23 bibliotecas alinhadas a 16 KB, consulta restrita e configuração FLAG_SECURE conferidos. Logs locais `.local/diagnostic-js-final-check.log` e `.local/diagnostic-release-build.log`. Não há aparelho ADB; nenhum emulador iniciado.
 
-[Pré-release v0.5.0-alpha.1](https://github.com/richardheise/FFortuna/releases/tag/v0.5.0-alpha.1) publicada com nove anexos conferidos por tamanho/digest remoto. [Download público do APK](https://github.com/richardheise/FFortuna/releases/download/v0.5.0-alpha.1/ffortuna-capture-poc-arm64.apk) confirmado HTTP 200, 46.266.508 bytes. Fonte exato dos 184 arquivos da tag no commit `72b1491203e081f56fb3d75cdc5db4e82671a4f6`, com licenças/recibo/checksums; sem amostras reais ou credenciais. Tags e anexos anteriores preservados. Snapshot local em `artifacts/releases/v0.5.0-alpha.1/`. Atualizações posteriores desta documentação não alteram o APK/fonte da tag.
+[Pré-release v0.5.0-alpha.1](https://github.com/richardheise/Tique/releases/tag/v0.5.0-alpha.1) publicada com nove anexos conferidos por tamanho/digest remoto. [Download público do APK](https://github.com/richardheise/Tique/releases/download/v0.5.0-alpha.1/ffortuna-capture-poc-arm64.apk) confirmado HTTP 200, 46.266.508 bytes. Fonte exato dos 184 arquivos da tag no commit `72b1491203e081f56fb3d75cdc5db4e82671a4f6`, com licenças/recibo/checksums; sem amostras reais ou credenciais. Tags e anexos anteriores preservados. Snapshot local em `artifacts/releases/v0.5.0-alpha.1/`. Atualizações posteriores desta documentação não alteram o APK/fonte da tag.
 
 ## Entrega anterior disponível (0.4.0)
 
-[Pré-release v0.4.0-alpha.1](https://github.com/richardheise/FFortuna/releases/tag/v0.4.0-alpha.1) · [APK direto](https://github.com/richardheise/FFortuna/releases/download/v0.4.0-alpha.1/ffortuna-capture-poc-arm64.apk).
+[Pré-release v0.4.0-alpha.1](https://github.com/richardheise/Tique/releases/tag/v0.4.0-alpha.1) · [APK direto](https://github.com/richardheise/Tique/releases/download/v0.4.0-alpha.1/ffortuna-capture-poc-arm64.apk).
 
 Publicada, não rascunho, com nove anexos conferidos por tamanho e digest SHA-256 remoto. O download público sem autenticação respondeu HTTP 200. Código da tag imutável: `697fee04fa083de77c5903c18258986ca3ff1a47`. APK interno 0.4.0, versionCode 4, pacote `org.ffortuna.capturepoc`, arm64-v8a/API 26+. Atualizar por cima da 0.3.0; mesma assinatura. Tamanho 46.207.716 bytes; SHA-256 `0ef198733e42f5e227a7b7bba4e7a22096da3d76603f618d801142fd68977085`.
 
@@ -78,12 +88,12 @@ Toolchain ignorada em `.local/android-toolchain`: Temurin 17.0.21+9, SDK 36, Bui
 
 ```sh
 (cd artifacts && sha256sum -c SHA256SUMS)
-GH_CONFIG_DIR=/home/heise/FFortuna/.local/github-cli/config .local/github-cli/gh release view v0.5.0-alpha.1 --repo richardheise/FFortuna
+GH_CONFIG_DIR=/home/heise/FFortuna/.local/github-cli/config .local/github-cli/gh release view v0.5.0-alpha.1 --repo richardheise/Tique
 ```
 
 ## Git e publicação
 
-Branch main, origin fetch HTTPS e push SSH `git@github.com:richardheise/FFortuna.git`. Fonte/nota/roteiro enviados e tag `v0.5.0-alpha.1` publicada. Atualizações posteriores da documentação não mudam a tag ou o fonte do APK. Usar outra tag para nova compilação distribuída; não mover tags/substituir anexos anteriores.
+Branch main, origin fetch HTTPS e push SSH `git@github.com:richardheise/Tique.git`. Fonte/nota/roteiro enviados e tag `v0.5.0-alpha.1` publicada. Atualizações posteriores da documentação não mudam a tag ou o fonte do APK. Usar outra tag para nova compilação distribuída; não mover tags/substituir anexos anteriores.
 
 GitHub CLI autenticado como `richardheise`: `.local/github-cli/gh`, sempre com `GH_CONFIG_DIR=/home/heise/FFortuna/.local/github-cli/config`. Configuração restrita/ignorada; não imprimir/copiar credenciais. Essa autenticação é independente das contas Codex. Notas atuais em [releases/v0.5.0-alpha.1.md](releases/v0.5.0-alpha.1.md). Artefatos permanentes em `artifacts/`, com snapshots por versão em `artifacts/releases/`.
 

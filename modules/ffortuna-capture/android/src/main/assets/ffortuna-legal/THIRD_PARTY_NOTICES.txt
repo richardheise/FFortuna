@@ -1,5 +1,5 @@
-FFortuna — avisos de bibliotecas do APK de captura sintética
-Código original: AGPL-3.0-only. Fonte: https://github.com/richardheise/FFortuna
+Tique — avisos de bibliotecas do APK Android
+Código original: AGPL-3.0-only. Fonte: https://github.com/richardheise/Tique
 Distribua o código-fonte da mesma revisão junto da release; a tag e o manifesto da release vinculam o APK ao fonte.
 This software is based in part on the work of the Independent JPEG Group.
 Inventário: 63 pacotes JavaScript, 71 pacotes NPM no total com módulos nativos, 189 coordenadas Maven no grafo release e 23 bibliotecas nativas.

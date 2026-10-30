@@ -34,7 +34,7 @@ object SyntheticEmitter {
         }
     }
     private fun manager(context:Context)=context.getSystemService(NotificationManager::class.java).apply {
-        createNotificationChannel(NotificationChannel(CHANNEL,"FFortuna · notificações fictícias",NotificationManager.IMPORTANCE_DEFAULT))
+        createNotificationChannel(NotificationChannel(CHANNEL,"Tique · notificações fictícias",NotificationManager.IMPORTANCE_DEFAULT))
     }
     private fun post(context:Context,update:Boolean,group:Boolean) {
         val prefs=prefs(context)
@@ -48,14 +48,14 @@ object SyntheticEmitter {
             .put("description","Café fictício").put("category","Alimentação").put("accountRef","demo-main").put("externalId",generation)
         val extras=Bundle().apply { putString("ffortuna.synthetic.generation",generation); putString("ffortuna.synthetic.payload",payload.toString()) }
         val builder=Notification.Builder(context,CHANNEL).setSmallIcon(android.R.drawable.ic_dialog_info)
-            .setContentTitle("FFortuna · EXEMPLO FICTÍCIO").setContentText("Café fictício · revisão $revision · sem movimentação bancária")
+            .setContentTitle("Tique · EXEMPLO FICTÍCIO").setContentText("Café fictício · revisão $revision · sem movimentação bancária")
             .setAutoCancel(true).addExtras(extras)
         if(group) builder.setGroup("ffortuna-synthetic-group")
         manager(context).notify(id,builder.build())
     }
     private fun summary(context:Context) {
         manager(context).notify(42,Notification.Builder(context,CHANNEL).setSmallIcon(android.R.drawable.ic_dialog_info)
-            .setContentTitle("FFortuna · grupo fictício").setContentText("Resumo não representa uma movimentação")
+            .setContentTitle("Tique · grupo fictício").setContentText("Resumo não representa uma movimentação")
             .setGroup("ffortuna-synthetic-group").setGroupSummary(true).build())
     }
     fun cancel(context:Context) {

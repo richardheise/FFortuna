@@ -56,7 +56,7 @@ Os artefatos locais incluem os avisos separados, um arquivo com o fonte atual e 
 
 A versão 0.3.0 usa somente APIs criptográficas JCA do Android e os contratos de atividade do Expo já instalado, sem novas dependências distribuídas. O inventário e os avisos foram reconferidos e permanecem sem pendências identificadas.
 
-A revisão de licenças não havia publicado release/tag. No checkpoint posterior, o usuário autorizou commit/push e avaliação da pré-release `v0.3.0-alpha.1`. A [pré-release](https://github.com/richardheise/FFortuna/releases/tag/v0.3.0-alpha.1) foi publicada após autenticar o GitHub CLI, com nove anexos e seus hashes remotos conferidos. O fonte corresponde ao commit `11174020cc5df9236041674fd44783b2f3225a2c` da tag `v0.3.0-alpha.1`; atualizações posteriores de documentação não mudam esse snapshot. Se houver mudança de código após este checkpoint, recompilar e atualizar fonte/checksums antes de anexar. O nome e as notas devem explicitar **captura exclusivamente sintética**, sem suporte Nubank ou dados financeiros reais.
+A revisão de licenças não havia publicado release/tag. No checkpoint posterior, o usuário autorizou commit/push e avaliação da pré-release `v0.3.0-alpha.1`. A [pré-release](https://github.com/richardheise/Tique/releases/tag/v0.3.0-alpha.1) foi publicada após autenticar o GitHub CLI, com nove anexos e seus hashes remotos conferidos. O fonte corresponde ao commit `11174020cc5df9236041674fd44783b2f3225a2c` da tag `v0.3.0-alpha.1`; atualizações posteriores de documentação não mudam esse snapshot. Se houver mudança de código após este checkpoint, recompilar e atualizar fonte/checksums antes de anexar. O nome e as notas devem explicitar **captura exclusivamente sintética**, sem suporte Nubank ou dados financeiros reais.
 
 ## Reconferência 0.4.0
 
@@ -64,7 +64,7 @@ APK 0.4.0 (versionCode 4), 46.207.716 bytes, SHA-256 `0ef198733e42f5e227a7b7bba4
 
 TypeScript estrito, 30 testes TypeScript e 22 JVM aprovados; 28 testes de dispositivo compilados, não executados. Em 26/10/2026, o usuário aprovou o roteiro 0.4.0 no A36/Android 16 e relatou 30 verificações da interface aprovadas, zero falhas e zero não verificadas. É execução dos callbacks pela interface, informada pelo usuário, sem logs; o runner JUnit não foi executado. A nova distribuição usa `v0.4.0-alpha.1`, sem mover tags ou substituir anexos anteriores. Fonte exato, recibo, licenças e checksums acompanham o APK.
 
-A [pré-release v0.4.0-alpha.1](https://github.com/richardheise/FFortuna/releases/tag/v0.4.0-alpha.1) foi publicada com nove anexos, conferidos por tamanho e digest remoto. Fonte correspondente ao commit `697fee04fa083de77c5903c18258986ca3ff1a47`; download público do APK confirmado HTTP 200. A tag e os anexos 0.3.0 permanecem intactos.
+A [pré-release v0.4.0-alpha.1](https://github.com/richardheise/Tique/releases/tag/v0.4.0-alpha.1) foi publicada com nove anexos, conferidos por tamanho e digest remoto. Fonte correspondente ao commit `697fee04fa083de77c5903c18258986ca3ff1a47`; download público do APK confirmado HTTP 200. A tag e os anexos 0.3.0 permanecem intactos.
 
 ## Reconferência 0.5.0
 
@@ -72,10 +72,18 @@ APK 0.5.0/versionCode 5: 46.266.508 bytes, SHA-256 `45e1132681c0335b2b1112e16a21
 
 TypeScript estrito, 30 testes TypeScript e 34 JVM aprovados; 38 testes de dispositivo compilados, sem execução pelo runner neste servidor. A 0.4.0 foi aprovada pelo usuário. Em 30/10/2026, o usuário aprovou também o fluxo funcional 0.5.0 no A36/Android 16, incluindo captura, original correto e revisão/exportação; não informou os contadores da bateria desta versão. Trata-se de coleta real opcional e consentida, sem parser/lançamentos: não rotular o APK inteiro como exclusivamente sintético. Nenhum dado real foi coletado no ambiente de desenvolvimento ou adicionado aos anexos.
 
-A [pré-release v0.5.0-alpha.1](https://github.com/richardheise/FFortuna/releases/tag/v0.5.0-alpha.1) foi publicada em 26/10/2026 com nove anexos, conferidos por tamanho e SHA-256 remoto. O download público do APK respondeu HTTP 200. Fonte correspondente à tag no commit `72b1491203e081f56fb3d75cdc5db4e82671a4f6`, com 184 arquivos conferidos byte a byte. A aprovação funcional 0.5.0 foi informada pelo usuário em 30/10/2026; a publicação em si não equivale a testes e o runner JUnit Android permanece sem execução.
+A [pré-release v0.5.0-alpha.1](https://github.com/richardheise/Tique/releases/tag/v0.5.0-alpha.1) foi publicada em 26/10/2026 com nove anexos, conferidos por tamanho e SHA-256 remoto. O download público do APK respondeu HTTP 200. Fonte correspondente à tag no commit `72b1491203e081f56fb3d75cdc5db4e82671a4f6`, com 184 arquivos conferidos byte a byte. A aprovação funcional 0.5.0 foi informada pelo usuário em 30/10/2026; a publicação em si não equivale a testes e o runner JUnit Android permanece sem execução.
 
 ## Reconferência 0.6.0
 
 APK 0.6.0/versionCode 6: 46.301.268 bytes, SHA-256 `b82bd30d7fe4ba79fd9a7a38f6cbd8acb6016762ef747a9f179997fdcb983815`. Extrator genérico BRL, migração e revisão usam dependências já presentes, sem componentes adicionais. Inventário reconferido na inspeção final: 71 pacotes npm, 189 coordenadas Maven, 23 bibliotecas nativas, 24 suplementos C/C++ e zero pendências identificadas. Avisos e AGPL dentro do APK coincidem com os textos revisados.
 
 TypeScript estrito, 30 testes TypeScript e 50 JVM aprovados; 46 cenários Android compilados, sem execução do runner neste servidor. A 0.6.0 aguarda a bateria de 48 verificações no A36 e o novo roteiro de revisão. Parsing genérico não é suporte Nubank validado. Prévia/correções continuam temporárias, sem livro financeiro ou lançamento automático. Não houve amostra real no ambiente de desenvolvimento ou nos anexos.
+
+## Mudança de marca para Tique — 0.6.1
+
+Em 30/10/2026, o usuário solicitou renomear app/repositório para Tique. URL atual: https://github.com/richardheise/Tique. A mudança não altera a licença AGPL-3.0-only nem os avisos de terceiros. Só o prefácio próprio do arquivo de avisos e o link do fonte foram atualizados; o restante do texto de licenças foi comparado e preservado. O auditor --check aprovou o inventário sem alterações de dependências ou pendências identificadas.
+
+O APK novo usa `tique-arm64.apk` e o fonte usa `tique-source.tar.gz`. O namespace Android, os formatos e caminhos internos legados permanecem para atualização sem perda de dados. O snapshot anterior 0.6.0 foi preservado em `artifacts/releases/v0.6.0-alpha.1/`; não substituir seus anexos ou mover a tag. A inspeção final e os novos hashes acompanham a entrega 0.6.1.
+
+Resultado final 0.6.1: 50 testes JVM e 30 TypeScript aprovados, 46 cenários Android compilados; nenhuma execução pelo runner neste servidor. APK `tique-arm64.apk` de 46.301.248 bytes, SHA-256 `2c4e61ca9a66526c26cf4ab6d022ebd851c2c35ca9d56c28b5da18595baf34e9`. Nome Tique e assinatura igual verificados; inspeção de permissões/backup/offline/16 KB e comparação dos avisos aprovada. A nova tag leva fonte correspondente, preservando as distribuições antigas.

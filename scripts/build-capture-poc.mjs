@@ -23,7 +23,7 @@ const local = join(root, '.local');
 const java = process.env.FFORTUNA_JAVA_HOME ?? join(local, 'android-toolchain/jdk');
 const sdk = process.env.ANDROID_HOME ?? join(local, 'android-toolchain/android-sdk');
 if (!existsSync(join(java, 'bin/java')) || !existsSync(join(sdk, 'platform-tools/adb'))) {
-  throw new Error('Toolchain ausente. Configure FFortuna JDK/SDK conforme docs/captura-nativa.md.');
+  throw new Error('Toolchain ausente. Configure Tique JDK/SDK conforme docs/captura-nativa.md.');
 }
 const keys = join(local, 'keys');
 mkdirSync(keys, { recursive: true, mode: 0o700 });
@@ -82,11 +82,11 @@ if (!configureOnly) gradle([':ffortuna-capture:testReleaseUnitTest', ...(testOnl
 if (!testOnly && !configureOnly) {
   const destination = join(root,'artifacts');
   mkdirSync(destination,{recursive:true});
-  const apk = join(destination,'ffortuna-capture-poc-arm64.apk');
+  const apk = join(destination,'tique-arm64.apk');
   const source = join(root,'android/app/build/outputs/apk/release/app-release.apk');
   run('python3', ['scripts/inspect-capture-apk.py',source,sdk]);
   copyFileSync(source,apk);
   const digest = createHash('sha256').update(readFileSync(apk)).digest('hex');
-  writeFileSync(apk+'.sha256', `${digest}  ffortuna-capture-poc-arm64.apk\n`);
+  writeFileSync(apk+'.sha256', `${digest}  tique-arm64.apk\n`);
   console.log(`APK local (exemplos sintéticos e diagnóstico real opcional): ${apk}\nSHA-256: ${digest}`);
 }

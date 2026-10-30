@@ -1,10 +1,10 @@
-# FFortuna
+# Tique
 
-Aplicativo Android livre para organização financeira pessoal no Brasil. O primeiro **F** vem de *free*; **Fortuna** homenageia a deusa romana da fortuna.
+Aplicativo Android livre para organização financeira pessoal no Brasil. **Tique** (Τύχη, *Tyche*) é a deusa grega da fortuna. O projeto se chamava **FFortuna**; esse nome permanece em identificadores internos para preservar atualizações e dados existentes.
 
 O projeto tem uma **demonstração financeira no Expo Go** e uma [prova nativa Android](docs/captura-nativa.md), com demonstração e exemplos exclusivamente fictícios. O APK próprio usa SQLCipher/Kotlin e oferece diagnóstico real temporário opcional, separado e desativado até consentimento, sem gerar lançamentos financeiros. Inclui conta em BRL, lançamentos manuais, resumo mensal por categoria, caixinhas, compromissos iniciais do cartão, processamento de eventos sintéticos e importação OFX sintética com prévia. Os dados persistem localmente em SQLite.
 
-Pré-release experimental: [baixar APK Android 0.6.0](https://github.com/richardheise/FFortuna/releases/download/v0.6.0-alpha.1/ffortuna-capture-poc-arm64.apk) · [fonte, checksums e avisos](https://github.com/richardheise/FFortuna/releases/tag/v0.6.0-alpha.1). O roteiro 0.3.0 foi aprovado no A36/Android 16. A versão 0.4.0 foi aprovada pelo usuário no A36/Android 16 (30 verificações). O diagnóstico real opcional da 0.5.0 foi aprovado funcionalmente pelo usuário nesse aparelho em 30/10/2026, incluindo original com valor correto e revisão/exportação. A 0.6.0 ainda aguarda validação no aparelho.
+Build Android de marca Tique 0.6.1 (versionCode 7), ainda não publicado nem validado no aparelho: [APK preparado](https://github.com/richardheise/Tique/releases/download/v0.6.1-alpha.1/tique-arm64.apk) · [fonte correspondente](https://github.com/richardheise/Tique/releases/download/v0.6.1-alpha.1/tique-source.tar.gz). A publicação preparada usará a tag `v0.6.1-alpha.1` no [repositório Tique](https://github.com/richardheise/Tique). A versão de conteúdo 0.6.0 permanece na [pré-release histórica](https://github.com/richardheise/Tique/releases/tag/v0.6.0-alpha.1), sob a marca anterior FFortuna. O roteiro 0.3.0 foi aprovado no A36/Android 16. A versão 0.4.0 foi aprovada pelo usuário no A36/Android 16 (30 verificações). O diagnóstico real opcional da 0.5.0 foi aprovado funcionalmente pelo usuário nesse aparelho em 30/10/2026, incluindo original com valor correto e revisão/exportação. A execução no aparelho das 48 verificações nativas da 0.6.0 continua pendente.
 
 ## Executar no celular
 
@@ -21,7 +21,7 @@ Computador e celular devem estar na mesma rede. Abra o Expo Go e escaneie o QR d
 
 O projeto fixa Expo 57 / React Native 0.86 / React 19.2; foi seguida a [orientação oficial durante a transição do Expo Go](https://docs.expo.dev/get-started/create-a-project/). Se o Expo Go instalado informar incompatibilidade, use uma [versão Android compatível](https://expo.dev/go), sem misturar dependências de SDKs diferentes. A combinação foi conferida com `npx expo install --check`.
 
-Expo Go é o aplicativo hospedeiro desta demonstração. APK da prova disponível em `artifacts/ffortuna-capture-poc-arm64.apk`, versão 0.6.0 gerada e inspecionada localmente. O roteiro de captura 0.2.1 foi aprovado pelo usuário no Galaxy A36/Android 16; o roteiro de backup/restauração 0.3.0 também foi aprovado em 25/10/2026. O módulo Kotlin e o APK da prova sintética usam um [build Android próprio](https://docs.expo.dev/guides/local-app-development/); Expo Go não executa módulos nativos personalizados. Os comandos e critérios estão em [captura-nativa.md](docs/captura-nativa.md). O modo financeiro com dados reais ainda não está habilitado.
+Expo Go é o aplicativo hospedeiro desta demonstração. APK da prova de marca atual disponível localmente em `artifacts/tique-arm64.apk` (0.6.1, versionCode 7); a cópia imutável de conteúdo 0.6.0 está em `artifacts/releases/v0.6.0-alpha.1/`. O roteiro de captura 0.2.1 foi aprovado pelo usuário no Galaxy A36/Android 16; o roteiro de backup/restauração 0.3.0 também foi aprovado em 25/10/2026. O módulo Kotlin e o APK da prova sintética usam um [build Android próprio](https://docs.expo.dev/guides/local-app-development/); Expo Go não executa módulos nativos personalizados. Os comandos e critérios estão em [captura-nativa.md](docs/captura-nativa.md). O modo financeiro com dados reais ainda não está habilitado.
 
 ## O que funciona
 
@@ -40,7 +40,7 @@ Expo Go é o aplicativo hospedeiro desta demonstração. APK da prova disponíve
 
 O saldo atual é acumulado; receitas, despesas e categorias seguem o mês selecionado. Alterar a renda prevista não deposita dinheiro. Posições iniciais, transferências, ajustes e pagamentos de dívida não inflam receita ou consumo. Caixinhas são posições informadas; não calculam rentabilidade, impostos ou liquidez. Compromissos iniciais não reconstroem compras antigas nem parcelamentos.
 
-Estado da sessão e próximos passos em [continuidade](docs/continuidade.md). O checkpoint experimental [`v0.6.0-alpha.1`](https://github.com/richardheise/FFortuna/releases/tag/v0.6.0-alpha.1) está publicado com nove anexos, incluindo APK, fonte correspondente e checksums. As [notas](docs/releases/v0.6.0-alpha.1.md) registram o escopo e as validações pendentes. Para acesso por SSH, use `npm start -- --tunnel`; esse modo usa um intermediário de desenvolvimento e dispensa estar na mesma rede.
+Estado da sessão e próximos passos em [continuidade](docs/continuidade.md). O checkpoint histórico de conteúdo [`v0.6.0-alpha.1`](https://github.com/richardheise/Tique/releases/tag/v0.6.0-alpha.1), publicado sob a marca anterior, permanece imutável. A tag de marca [`v0.6.1-alpha.1`](https://github.com/richardheise/Tique/releases/tag/v0.6.1-alpha.1) ainda aguarda publicação. Para acesso por SSH, use `npm start -- --tunnel`; esse modo usa um intermediário de desenvolvimento e dispensa estar na mesma rede.
 
 ## Verificação
 

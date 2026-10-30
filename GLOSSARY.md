@@ -1,4 +1,4 @@
-# FFortuna — Finanças pessoais
+# Tique — Finanças pessoais
 
 Vocabulário do aplicativo para distinguir fatos observados, decisões do usuário e seus efeitos financeiros.
 
