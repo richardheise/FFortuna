@@ -4,7 +4,7 @@ Aplicativo Android livre para organização financeira pessoal no Brasil. **Tiqu
 
 O **APK próprio** tem um livro financeiro real e cifrado para uma conta BRL: receitas/despesas manuais, confirmação de notificações revisadas, saldo, histórico, categorias/tags, conferências e backup financeiro. A captura de notificações continua sendo um diagnóstico opcional e temporário, sem postagem automática. O **Expo Go** mantém uma demonstração exclusivamente sintética, com caixinhas, compromissos de cartão e importação OFX fictícia; esses recursos ainda não estão habilitados com dados reais no APK.
 
-Incremento **Tique 0.8.0 (versionCode 11)** construído e em preparação para publicar. [Roteiro no celular](docs/releases/v0.8.0-alpha.2.md) · [decisão sobre livro e recuperação](docs/adr/0011-primeiro-livro-financeiro-real.md). Migra o catálogo existente preservando chave e IDs e cria o primeiro livro permanente. A 0.7.1 foi aprovada pelo usuário no A36/Android 16; a bateria da 0.8.0 passa a 72 verificações e aguarda execução no aparelho. Tags e anexos anteriores permanecem intactos.
+Pré-release **Tique 0.8.0-alpha.2 (versionCode 11)** publicada: [baixar APK](https://github.com/richardheise/Tique/releases/download/v0.8.0-alpha.2/tique-arm64.apk) · [fonte correspondente](https://github.com/richardheise/Tique/releases/download/v0.8.0-alpha.2/tique-source.tar.gz) · [roteiro no celular](docs/releases/v0.8.0-alpha.2.md). Migra o catálogo preservando chave e IDs e cria o primeiro livro permanente. A 0.7.1 foi aprovada pelo usuário no A36/Android 16; a bateria da 0.8.0 passa a 72 verificações e aguarda execução no aparelho. O candidato alpha.1 ficou como rascunho não publicado. Tags e anexos anteriores permanecem intactos.
 
 ## Executar no celular
 
