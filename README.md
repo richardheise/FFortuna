@@ -4,7 +4,7 @@ Aplicativo Android livre para organização financeira pessoal no Brasil. **Tiqu
 
 O projeto tem uma **demonstração financeira no Expo Go** e uma [prova nativa Android](docs/captura-nativa.md), com demonstração e exemplos exclusivamente fictícios. O APK próprio usa SQLCipher/Kotlin e oferece diagnóstico real temporário opcional, separado e desativado até consentimento, sem gerar lançamentos financeiros. Inclui conta em BRL, lançamentos manuais, resumo mensal por categoria, caixinhas, compromissos iniciais do cartão, processamento de eventos sintéticos e importação OFX sintética com prévia. Os dados persistem localmente em SQLite.
 
-Pré-release **Tique 0.7.1 (versionCode 9)** publicada: [baixar APK](https://github.com/richardheise/Tique/releases/download/v0.7.1-alpha.1/tique-arm64.apk) · [fonte correspondente](https://github.com/richardheise/Tique/releases/download/v0.7.1-alpha.1/tique-source.tar.gz) · [roteiro da correção](docs/releases/v0.7.1-alpha.1.md). Corrige a consulta que impedia criar categorias/tags e causou nove falhas relatadas no celular na 0.7.0. Atualize por cima, sem desinstalar. A validação física da 0.7.1 está pendente; a bateria continua com 60 verificações. A 0.6.1 foi aprovada funcionalmente pelo usuário no A36/Android 16 em 30/10/2026. Tags e anexos anteriores permanecem intactos.
+Pré-release **Tique 0.7.1 (versionCode 9)** publicada: [baixar APK](https://github.com/richardheise/Tique/releases/download/v0.7.1-alpha.1/tique-arm64.apk) · [fonte correspondente](https://github.com/richardheise/Tique/releases/download/v0.7.1-alpha.1/tique-source.tar.gz) · [roteiro da correção](docs/releases/v0.7.1-alpha.1.md). Corrige a consulta que impedia criar categorias/tags e causou nove falhas relatadas no celular na 0.7.0. Atualize por cima, sem desinstalar. O usuário aprovou a bateria e o funcionamento da 0.7.1 no A36/Android 16, relatando que tudo passou; não forneceu contadores individuais. A bateria contém 60 verificações. A 0.6.1 foi aprovada funcionalmente pelo usuário no A36/Android 16 em 30/10/2026. Tags e anexos anteriores permanecem intactos.
 
 ## Executar no celular
 
@@ -85,7 +85,7 @@ O núcleo financeiro e as importações reais continuam bloqueados. O diagnósti
 
 ## Próximo incremento
 
-Prioridade confirmada: funcionalidades antes do refinamento UI/UX. A 0.6.1 foi aprovada funcionalmente pelo usuário. A 0.7.0 acrescentou uma categoria principal e várias tags opcionais por revisão; nove falhas de criação foram relatadas no aparelho. A 0.7.1 corrige a consulta e aguarda repetir a bateria e o roteiro funcional. Após esse checkpoint, o próximo desenho deve integrar revisões ao livro real e à recuperação cifrada, preservando natureza, evidência e correções, sem presumir completude das notificações. Não há amostras revisadas no ambiente nem parser Nubank validado.
+Prioridade confirmada: funcionalidades antes do refinamento UI/UX. A 0.6.1 foi aprovada funcionalmente pelo usuário. A 0.7.0 acrescentou uma categoria principal e várias tags opcionais por revisão; nove falhas de criação foram relatadas no aparelho. A 0.7.1 corrigiu a consulta, e o usuário informou que a bateria e o roteiro passaram. Após esse checkpoint, o próximo desenho deve integrar revisões ao livro real e à recuperação cifrada, preservando natureza, evidência e correções, sem presumir completude das notificações. Não há amostras revisadas no ambiente nem parser Nubank validado.
 
 ## Licença
 
