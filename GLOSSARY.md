@@ -137,7 +137,7 @@ Prazo para remover somente os payloads originais das evidências, preservando os
 _Evitar_: apagar transações, prazo garantido com aplicativo encerrado
 
 **Diagnóstico temporário de notificações**:
-Coleta local com consentimento explícito e prazo limitado, para examinar a evidência realmente entregue pelo Android. Preserva dados numa caixa cifrada separada e não interpreta nem lança transações.
+Coleta local com consentimento explícito e prazo limitado, para examinar a evidência realmente entregue pelo Android. Preserva dados numa caixa cifrada separada e permite prévias genéricas revisáveis, sem lançar transações.
 _Evitar_: captura bancária validada, extrato completo, acesso à conta bancária
 
 **Amostra revisada**:
