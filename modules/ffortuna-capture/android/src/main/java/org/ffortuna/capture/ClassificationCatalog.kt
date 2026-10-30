@@ -12,11 +12,12 @@ class ClassificationFailure(val code: String) : IllegalStateException(code)
 /** Permanent encrypted category/tag options; owned by CaptureRuntime's serial executor. */
 class ClassificationCatalog(
     context: Context,
-    private val name: String = DEFAULT_NAME
+    private val name: String = DEFAULT_NAME,
+    allowCreate: Boolean = true
 ) : AutoCloseable {
     companion object {
         const val DEFAULT_NAME = "ffortuna-classifications-v1"
-        private const val VERSION = 1
+        private const val VERSION = 2
         private val seedCategories = listOf("Comida", "Lazer", "Contas", "Transporte", "Saúde", "Educação", "Compras", "Outros")
 
         private fun createSchema(db: SQLiteDatabase) {
@@ -44,7 +45,7 @@ class ClassificationCatalog(
         SqlCipherPolicy.initialize()
         check(file.parentFile?.isDirectory == true || file.parentFile?.mkdirs() == true) { "CLASSIFICATION_STORAGE" }
         val sidecars = listOf("-wal", "-shm", "-journal").map { File(file.path + it) }
-        if (!file.exists()) check(!vault.hasStoredMaterial() && sidecars.none { it.exists() }) { "CLASSIFICATION_MISSING_DB" }
+        if (!file.exists()) check(allowCreate && !vault.hasStoredMaterial() && sidecars.none { it.exists() }) { "CLASSIFICATION_MISSING_DB" }
         else check(file.isFile && file.length() >= 16) { "CLASSIFICATION_INVALID_DB" }
 
         val key = vault.load(file.exists())
@@ -65,8 +66,9 @@ class ClassificationCatalog(
                         val normalized = normalizeName(label)
                         db.execSQL("INSERT INTO classifications VALUES(?,?,?,?,0)", arrayOf(UUID.randomUUID().toString(), "category", normalized, nameKey(normalized)))
                     }
-                    db.version = VERSION
+                    db.version = 1
                 }
+                if(db.version==1) { FinancialLedger.createSchema(db);db.version=2 }
                 db.setTransactionSuccessful()
             } finally { db.endTransaction() }
             verify()
@@ -87,6 +89,20 @@ class ClassificationCatalog(
         return items
     }
 
+    fun ledger()=FinancialLedger(db)
+    fun exportFinance():ByteArray { validateCatalog();ledger().validate();return FinancialBackup.encode(ledger()) }
+    fun importFinance(plain:ByteArray) { FinancialBackup.restore(db,plain);validateCatalog();verify() }
+    fun validateCatalog() {
+        val rows=ledger().rows("classifications")
+        if(rows.size>200) throw FinanceFailure("INVALID_STATE")
+        for(row in rows) {
+            val id=row["id"] as String
+            if(UUID.fromString(id).toString()!=id || row["kind"] !in setOf("category","tag") || row["archived"] !in setOf(0L,1L)) throw FinanceFailure("INVALID_STATE")
+            val label=row["name"] as String
+            if(normalizeName(label)!=label || nameKey(label)!=row["name_key"]) throw FinanceFailure("INVALID_STATE")
+        }
+    }
+
     fun create(kind: String, name: String): List<Map<String, Any?>> {
         checkOpen()
         requireKind(kind)
@@ -97,6 +113,7 @@ class ClassificationCatalog(
             if (count() >= 200) throw ClassificationFailure("ITEM_LIMIT")
             if (exists(kind, key)) throw ClassificationFailure("DUPLICATE_NAME")
             db.execSQL("INSERT INTO classifications VALUES(?,?,?,?,0)", arrayOf(UUID.randomUUID().toString(), kind, normalized, key))
+            FinancialBackup.encode(ledger()).fill(0)
             db.setTransactionSuccessful()
         } finally { db.endTransaction() }
         return snapshot()
@@ -112,6 +129,7 @@ class ClassificationCatalog(
             }
             if (exists(kind, nameKey(normalized), id)) throw ClassificationFailure("DUPLICATE_NAME")
             db.execSQL("UPDATE classifications SET name=?,name_key=? WHERE id=?", arrayOf(normalized, nameKey(normalized), id))
+            FinancialBackup.encode(ledger()).fill(0)
             db.setTransactionSuccessful()
         } finally { db.endTransaction() }
         return snapshot()

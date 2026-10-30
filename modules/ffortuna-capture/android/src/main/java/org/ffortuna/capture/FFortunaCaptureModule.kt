@@ -22,7 +22,11 @@ class FFortunaCaptureModule:Module() {
     private suspend fun backupAction(block:suspend () -> Map<String,Any>):Map<String,Any> {
         if(!backupBusy.compareAndSet(false,true)) return mapOf("status" to "error","code" to "BUSY")
         return try { block() }
-        catch(error:Exception) { mapOf("status" to "error","code" to when(error) { is BackupFailure -> error.problem.name; is LocalRecoveryFailure -> error.code; is DiagnosticFailure -> error.code; else -> "STORAGE" }) }
+        catch(error:Exception) {
+            var cause:Throwable=error
+            while((cause is java.util.concurrent.ExecutionException || cause is java.util.concurrent.CompletionException) && cause.cause!=null) cause=cause.cause!!
+            mapOf("status" to "error","code" to when(cause) { is BackupFailure -> cause.problem.name;is LocalRecoveryFailure -> cause.code;is FinanceFailure -> cause.code;is DiagnosticFailure -> cause.code;else -> "STORAGE" })
+        }
         finally { backupBusy.set(false) }
     }
     private fun diagnosticAction(block:()->Map<String,Any?>):Map<String,Any?> = try { block() }
@@ -33,6 +37,52 @@ class FFortunaCaptureModule:Module() {
             createBackup=registerForActivityResult(BackupDocumentContract(true))
             openBackup=registerForActivityResult(BackupDocumentContract(false))
         }
+        AsyncFunction("financeSnapshot") { month:String -> diagnosticAction { mapOf("status" to "ok","snapshot" to CaptureRuntime.financeSnapshot(context(),month)) } }
+        AsyncFunction("setupFinance") { json:String -> diagnosticAction { mapOf("status" to "ok","snapshot" to CaptureRuntime.setupFinance(context(),json)) } }
+        AsyncFunction("createFinanceTransaction") { json:String -> diagnosticAction { mapOf("status" to "ok")+CaptureRuntime.createFinanceTransaction(context(),json) } }
+        AsyncFunction("recordFinanceBalance") { json:String -> diagnosticAction { mapOf("status" to "ok","snapshot" to CaptureRuntime.recordFinanceBalance(context(),json)) } }
+        AsyncFunction("cancelFinanceTransaction") { json:String -> diagnosticAction { mapOf("status" to "ok","snapshot" to CaptureRuntime.cancelFinanceTransaction(context(),json)) } }
+        AsyncFunction("restartFinance") { diagnosticAction { mapOf("status" to "ok","snapshot" to CaptureRuntime.restartFinance(context())) } }
+        AsyncFunction("confirmDiagnosticCandidate") { id:String,json:String -> diagnosticAction { mapOf("status" to "ok")+CaptureRuntime.confirmDiagnosticCandidate(context(),id,json) } }
+        AsyncFunction("switchPreviousFinance") { diagnosticAction { mapOf("status" to "ok","snapshot" to CaptureRuntime.switchPreviousFinance(context())) } }
+        AsyncFunction("discardPreviousFinance") { diagnosticAction { mapOf("status" to "ok","snapshot" to CaptureRuntime.discardPreviousFinance(context())) } }
+        AsyncFunction("financeRecoveryEntries") { CaptureRuntime.financeRecoveryEntries(context()) }
+        AsyncFunction("setFinanceRecoveryEnabled") { enabled:Boolean -> CaptureRuntime.setFinanceRecoveryEnabled(context(),enabled) }
+        AsyncFunction("clearFinanceRecovery") { CaptureRuntime.clearFinanceRecovery(context()) }
+        AsyncFunction("restoreFinanceRecovery") Coroutine { id:String -> backupAction {
+            withContext(Dispatchers.IO) { mapOf("status" to "restored","count" to CaptureRuntime.restoreFinanceRecovery(context(),id)) }
+        } }
+        AsyncFunction("exportFinanceBackup") Coroutine { password:String -> backupAction {
+            val chars=password.toCharArray()
+            val encrypted=try { withContext(Dispatchers.IO) {
+                BackupCodec.validatePassword(chars)
+                val plain=CaptureRuntime.exportFinanceBackup(context())
+                try { BackupCodec.encrypt(plain,chars) } finally { plain.fill(0) }
+            } } finally { chars.fill('\u0000') }
+            try {
+                val uri=withContext(Dispatchers.Main) { createBackup.launch("Tique-financeiro-${java.time.LocalDate.now()}.ffortuna") }
+                if(uri==null) mapOf("status" to "cancelled")
+                else withContext(Dispatchers.IO) {
+                    try { context().contentResolver.openOutputStream(uri,"w")?.use { it.write(encrypted);it.flush() } ?: throw BackupFailure(BackupProblem.IO) }
+                    catch (_:Exception) { try { DocumentsContract.deleteDocument(context().contentResolver,uri) } catch (_:Exception) { };throw BackupFailure(BackupProblem.IO) }
+                    mapOf("status" to "saved")
+                }
+            } finally { encrypted.fill(0) }
+        } }
+        AsyncFunction("restoreFinanceBackup") Coroutine { password:String -> backupAction {
+            val chars=password.toCharArray()
+            try {
+                BackupCodec.validatePassword(chars)
+                val uri=withContext(Dispatchers.Main) { openBackup.launch("open") }
+                if(uri==null) mapOf("status" to "cancelled")
+                else withContext(Dispatchers.IO) {
+                    val encrypted=try { context().contentResolver.openInputStream(uri)?.use(BackupCodec::readBounded) ?: throw BackupFailure(BackupProblem.IO) }
+                        catch(error:BackupFailure) { throw error } catch (_:Exception) { throw BackupFailure(BackupProblem.IO) }
+                    val plain=try { BackupCodec.decrypt(encrypted,chars) } finally { encrypted.fill(0) }
+                    try { mapOf("status" to "restored","count" to CaptureRuntime.restoreFinanceBackup(context(),plain)) } finally { plain.fill(0) }
+                }
+            } finally { chars.fill('\u0000') }
+        } }
         AsyncFunction("exportBackup") Coroutine { password:String -> backupAction {
             val chars=password.toCharArray()
             val bytes=try { withContext(Dispatchers.IO) {

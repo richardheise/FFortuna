@@ -101,3 +101,10 @@ Publicada a pré-release `v0.7.0-alpha.1`, fonte `b3a2dbad5a3c6e7bbeb595e42a8f38
 ## Correção 0.7.1 — argumentos da consulta de classificação
 
 Corrige parâmetros nulos de `rawQuery(String[])` sem nova dependência, permissão, schema ou chave. Inspeção e auditoria do APK aprovadas, mesmo inventário e avisos, mesma assinatura, sem INTERNET, backup Android desabilitado e 23 bibliotecas alinhadas a 16 KB. APK 0.7.1/code 9, 46.327.700 bytes, SHA-256 `43b3cfc0f7b380fffac12a66484b6f079719649a66cac86bc4e2bca27de2b4d5`. 50 testes JVM aprovados e 58 cenários Android compilados; JUnit Android não executado. TypeScript inalterado desde os 30 testes aprovados da 0.7.0, sem nova execução neste hotfix. Fonte `aab75fb65a540b35e2a3eb8855840640725c9181`, 204 arquivos conferidos; nove anexos remotos com tamanhos/hashes verificados e download público HTTP 200. A 0.7.0 teve nove falhas relatadas pelo usuário; a 0.7.1 aguarda nova execução das 60 verificações e do roteiro no aparelho. Tags e anexos anteriores preservados.
+
+
+## Incremento 0.8.0 — livro e backup financeiro
+
+Nenhuma dependência nova: livro, snapshots e restauração usam SQLCipher, Keystore/JCA e Expo Modules já presentes; UUID da interface usa o expo-crypto existente. O auditor `--check` do APK final manteve 71 pacotes npm, 189 coordenadas Maven, 23 bibliotecas nativas e 24 suplementos C/C++, zero pendências de textos identificadas. Avisos e AGPL no APK conferidos byte a byte. Pacote e certificado preservados, nome visível Tique, backup Android desabilitado também nas regras de transferência, bundle offline, sem INTERNET e bibliotecas alinhadas a 16 KiB.
+
+54 testes JVM e 30 TypeScript aprovados, 70 cenários Android compilados. Os 72 checks locais da interface e o roteiro funcional ainda precisam ser executados no aparelho para a 0.8.0. Não há amostras reais no ambiente nem parser Nubank validado. APK 46.419.896 bytes, SHA-256 `e3ba41ef7e3c78fd5e3b5166a8e5b49d2e213abc295f1f764b3c112c4cde8610`. Fonte da nova tag, recibos, licenças e checksums devem acompanhar a distribuição, preservando tags e anexos antigos.

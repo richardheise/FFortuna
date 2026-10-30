@@ -76,7 +76,7 @@ class CandidateStore(private val db:SQLiteDatabase) {
         }
         val related=db.rawQuery("SELECT COUNT(*) FROM candidate_edits e JOIN samples s ON s.id=e.sample_id WHERE s.source_key=? AND s.id!=?",arrayOf(source.sourceKey,id)).use { it.moveToFirst();it.getInt(0)>0 }
         val later=db.rawQuery("SELECT COUNT(*) FROM samples WHERE source_key=? AND revision>?",arrayOf(source.sourceKey,source.revision.toString())).use { it.moveToFirst();it.getInt(0)>0 }
-        return mapOf("id" to id,"eventId" to id,"revision" to source.revision,"publishedAt" to source.publishedAt,"capturedAt" to source.capturedAt,
+        return mapOf("id" to id,"eventId" to id,"sourceKey" to source.sourceKey,"revision" to source.revision,"publishedAt" to source.publishedAt,"capturedAt" to source.capturedAt,
             "parsedAt" to parsed.second,"parsed" to jsonMap(parsed.first),"original" to original.toMap(),
             "review" to edit?.let { jsonMap(it.first) },"reviewedAt" to edit?.second,"previousSampleId" to previous,
             "relatedReviewExists" to related,"hasLaterRevision" to later,"temporary" to true,"transactionId" to null)

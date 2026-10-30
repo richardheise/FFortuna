@@ -23,7 +23,7 @@ const emptyPrivateState = (): PrivateReviewState => ({ sample: null, fields: nul
 const PAGE_SIZE = 20;
 
 const errorMessages: Record<string, string> = {
-  SECURITY_CHECKS_REQUIRED: 'Execute as 60 verificações nativas isoladas nesta versão antes de iniciar uma sessão.',
+  SECURITY_CHECKS_REQUIRED: 'Execute as 72 verificações nativas isoladas nesta versão antes de iniciar uma sessão.',
   ACCESS_REQUIRED: 'Conceda acesso às notificações e aguarde a conexão do listener.',
   SOURCE_CHANGED: 'A origem instalada mudou ou ficou indisponível. Confira o aplicativo antes de iniciar outra sessão.',
   SAMPLE_LIMIT: 'O limite de 200 observações foi atingido. Pare e revise ou apague o diagnóstico.',
@@ -151,7 +151,7 @@ export function DiagnosticPanel({ native, busy, run }: Props) {
   }
 
   function confirmClear() {
-    Alert.alert('Apagar diagnóstico?', 'Remove somente os registros temporários deste diagnóstico. Isso não apaga caixas sintéticas nem backups portáteis.', [
+    Alert.alert('Apagar diagnóstico?', 'Remove somente os registros temporários deste diagnóstico. Livro financeiro, categorias, tags e backups são preservados.', [
       { text: 'Cancelar', style: 'cancel' },
       { text: 'Apagar diagnóstico', style: 'destructive', onPress: () => void perform(() => native.clearDiagnostic(), () => {
         clearPrivateState();
@@ -252,7 +252,7 @@ export function DiagnosticPanel({ native, busy, run }: Props) {
     {catalogOpen && <ClassificationPanel native={native} busy={busy} run={run} />}
     <Card>
       <Text style={styles.heading}>Diagnóstico temporário de notificações</Text>
-      <Text style={styles.body}>Captura texto de notificações do app selecionado apenas para revisão local. O parser preliminar procura valores em BRL no original, sem inferir natureza, conta ou data efetiva. Não cria lançamentos e não altera saldo. Nomes, lojas, locais e frases devem ser revisados manualmente; sugestões automáticas não garantem anonimização.</Text>
+      <Text style={styles.body}>Captura texto de notificações para revisão local. O parser procura valores em BRL sem inferir natureza, conta ou data efetiva. Salvar uma revisão não altera saldo; a confirmação explícita no livro financeiro cria um lançamento permanente. Para exportar amostras, revise nomes, lojas, locais e frases; sugestões de remoção não garantem anonimização.</Text>
       <Text style={styles.small}>Android pode ocultar campos ou fornecer notificações incompletas. Não há garantia de captura integral.</Text>
       {source && <View style={{ gap: 4 }}>
         <Text style={styles.small}>Origem: {source.installed ? 'instalada' : 'não instalada'} · aplicativo {source.enabled ? 'ativado' : 'desativado'} · {source.label || source.packageName}</Text>
@@ -274,7 +274,7 @@ export function DiagnosticPanel({ native, busy, run }: Props) {
           : <Action title="Consentir e iniciar até 24 horas" disabled={busy || !status || !status.securityChecksPassed || !status.source.installed || !status.source.enabled || !status.source.signer || !status.authorized || status.status === 'blocked' || status.limitReached} onPress={confirmStart} />}
         <Action title="Apagar registros temporários" secondary disabled={busy || !status || (status.count === 0 && status.status !== 'blocked')} onPress={confirmClear} />
       </View>
-      {!status?.securityChecksPassed && <Text style={styles.warning}>Antes da coleta real, execute “Executar verificações nativas isoladas” abaixo e confira as 60 aprovadas. Para iniciar outra sessão após encerrar o processo, execute a bateria novamente.</Text>}
+      {!status?.securityChecksPassed && <Text style={styles.warning}>Antes da coleta real, execute “Executar verificações nativas isoladas” abaixo e confira as 72 aprovadas. Para iniciar outra sessão após encerrar o processo, execute a bateria novamente.</Text>}
       {!status?.authorized && <Text style={styles.small}>Conceda o acesso ao listener nas permissões do Android antes de iniciar a coleta.</Text>}
       <Text style={styles.small}>Limites: até 24 horas, 200 observações e retenção de 7 dias. Parar não apaga. A origem não é tratada como confiável só por estar instalada.</Text>
     </Card>

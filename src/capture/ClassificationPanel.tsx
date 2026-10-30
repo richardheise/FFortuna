@@ -92,7 +92,7 @@ export function ClassificationPanel({ native, busy, run, selection, onChange }: 
       <Action secondary title={manage ? 'Fechar gerenciamento' : 'Gerenciar categorias e tags'} disabled={busy} onPress={() => setManage(value => !value)} />
     </>}
     {manage && <>
-      <Text style={styles.small}>Opções cifradas neste aparelho. Arquivar preserva os vínculos e impede novas seleções. Apagar o diagnóstico não apaga o catálogo. Ainda não há backup deste catálogo; desinstalar o app o remove.</Text>
+      <Text style={styles.small}>Opções cifradas neste aparelho e incluídas no backup financeiro. Arquivar preserva os vínculos e impede novas seleções. Apagar o diagnóstico não apaga o catálogo. Cópias locais automáticas começam ao configurar o livro; desinstalar remove dados e cópias locais. Um backup portátil salvo fora do app permite restaurar depois.</Text>
       <View style={styles.wrap}>{(['category', 'tag'] as const).map(value => <Chip key={value} title={value === 'category' ? 'Categorias' : 'Tags'} active={kind === value} onPress={() => { if (!busy) { setKind(value);setEditing(null);setName(''); } }} />)}</View>
       <Field label={editing ? 'Novo nome' : kind === 'category' ? 'Nome da nova categoria' : 'Nome da nova tag'} value={name} onChangeText={setName} editable={!disabled} maxLength={80} autoCorrect={false} autoComplete="off" importantForAutofill="no" />
       <Action title={editing ? 'Salvar nome' : kind === 'category' ? 'Criar categoria' : 'Criar tag'} disabled={disabled || !name.trim()} onPress={() => mutate(() => editing ? native.renameClassification(editing, name) : native.createClassification(kind, name))} />

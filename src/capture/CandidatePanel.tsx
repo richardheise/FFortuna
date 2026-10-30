@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { AppState, Text, View } from 'react-native';
+import { Alert, AppState, Text, View } from 'react-native';
 import { Action, Card, Chip, ErrorBox, Field, styles } from '../ui/common';
 import { formatBRL, moneyInput, parseBRL } from '../core/money';
 import { ClassificationPanel } from './ClassificationPanel';
@@ -34,6 +34,14 @@ const codeMessages: Record<string, string> = {
   INVALID_CLASSIFICATION: 'A categoria ou as tags não foram aceitas.',
   CLASSIFICATION_MISSING: 'Uma opção não está disponível. Reabra a revisão.',
   CLASSIFICATION_ARCHIVED: 'Uma opção foi arquivada. Escolha uma opção ativa.',
+  ACCOUNT_REQUIRED: 'Configure primeiro o saldo de abertura no livro financeiro.',
+  DATE_BEFORE_OPENING: 'A data efetiva é anterior à abertura do livro. Confira o período e não duplique movimentos incluídos no saldo inicial.',
+  FUTURE_DATE: 'Esta entrega registra movimentos realizados, com data até hoje.',
+  UNSUPPORTED_MOVEMENT: 'Este tipo de movimentação ainda não pode ser confirmado no livro.',
+  CONFIRMATION_CONFLICT: 'Já existe confirmação com outros campos. O lançamento original foi preservado.',
+  AMOUNT_LIMIT: 'A operação ultrapassaria um limite monetário seguro.',
+  TRANSACTION_LIMIT: 'O livro atingiu o limite desta entrega. Exporte um backup e mantenha os dados.',
+  INVALID_SOURCE: 'Os metadados da origem não puderam ser validados.',
 };
 const confidenceLabel = (value: string) => value === 'certain' ? 'extração consistente' : value === 'missing' ? 'ausente' : 'incerta';
 const safeError = (code?: string) => code ? `${codeMessages[code] ?? 'Não foi possível concluir a operação.'} (${code})` : 'Não foi possível concluir a operação.';
@@ -67,6 +75,7 @@ export function CandidatePanel({ native, busy, run, sampleId, onClose }: Props) 
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const [affectsAccount, setAffectsAccount] = useState(false);
   const generation = useRef(0);
   const mounted = useRef(false);
   const active = useRef(AppState.currentState !== 'background' && AppState.currentState !== 'inactive');
@@ -83,12 +92,13 @@ export function CandidatePanel({ native, busy, run, sampleId, onClose }: Props) 
       setBaseline(null);
       setError(null);
       setMessage(null);
+      setAffectsAccount(false);
       setLoading(false);setSaving(false);
     }
   }, []);
 
   const applyCandidate = useCallback((value: NotificationCandidate) => {
-    const fields = value.review ?? value.parsed.draft;
+    const fields = value.financialReview ?? value.review ?? value.parsed.draft;
     const next = toEditor(fields);
     setCandidate(value);
     setEditor(next);
@@ -144,6 +154,7 @@ export function CandidatePanel({ native, busy, run, sampleId, onClose }: Props) 
 
   function update<K extends keyof Editor>(key: K, value: Editor[K]) {
     setEditor(current => current ? { ...current, [key]: value } : current);
+    setAffectsAccount(false);
     setError(null);
     setMessage(null);
   }
@@ -188,12 +199,42 @@ export function CandidatePanel({ native, busy, run, sampleId, onClose }: Props) 
     }).finally(() => { payloadJson = ''; });
   }
 
+  function confirmFinancial() {
+    if(!candidate || !currentFields || !affectsAccount || candidate.transactionId) return;
+    if(!currentFields.effectiveDate || !validDate(currentFields.effectiveDate) || currentFields.amountCents === null || currentFields.amountCents <= 0 || !['income','expense'].includes(currentFields.kind ?? '')) {
+      setError('Para confirmar, informe valor positivo, data efetiva e natureza Receita ou Despesa.');return;
+    }
+    const payload = JSON.stringify({ amountCents: currentFields.amountCents, kind: currentFields.kind,
+      effectiveDate: currentFields.effectiveDate, description: currentFields.description, category: currentFields.category,
+      categoryId: currentFields.categoryId ?? null, tagIds: currentFields.tagIds ?? [], affectsAccount: true });
+    const id = candidate.id;const request = generation.current;
+    Alert.alert('Confirmar no livro financeiro?', 'O lançamento será permanente e afetará o saldo da conta. Confira os campos. Compras no crédito, pagamento de fatura, transferências, aportes e estornos ainda não devem ser lançados por este fluxo.', [
+      { text: 'Cancelar', style: 'cancel' },
+      { text: 'Confirmar lançamento', onPress: () => {
+        if(!mounted.current || !active.current || generation.current !== request) return;
+        setSaving(true);setError(null);
+        void runRef.current(async () => {
+          try {
+            const result = await nativeRef.current.confirmDiagnosticCandidate(id, payload);
+            if(!mounted.current || !active.current || generation.current !== request) return;
+            if(result.status === 'error') { setError(safeError(result.code));return; }
+            const updated = await nativeRef.current.diagnosticCandidate(id, false);
+            if(!mounted.current || !active.current || generation.current !== request) return;
+            if(updated.candidate) applyCandidate(updated.candidate);
+            setMessage('Lançamento confirmado. Volte ao livro financeiro para conferir o saldo e o histórico.');
+          } catch { if(mounted.current && active.current && generation.current === request) setError('Não foi possível concluir. Reabra a prévia para conferir antes de repetir.'); }
+          finally { if(mounted.current && active.current && generation.current === request) setSaving(false); }
+        });
+      } },
+    ]);
+  }
+
   const formatAmount = (value: number | null) => value === null || !Number.isSafeInteger(value) ? 'Não definido' : formatBRL(value);
   const reason = candidate?.parsed.reasonCode ?? '';
 
   return <Card>
     <Text style={styles.heading}>Candidatura temporária para revisão</Text>
-    <Text style={styles.warning}>Prévia temporária do diagnóstico, retida por até 7 dias. Não é uma transação, não altera saldo e não entra no backup sintético. O parser BRL é genérico: não usa templates Nubank nem infere automaticamente movimentação.</Text>
+    <Text style={styles.warning}>A prévia e o original expiram após 7 dias. Salvar revisão não altera saldo. Confirmar no livro financeiro cria um lançamento permanente, com vínculo de origem e campos revisados, incluído no backup financeiro. O parser BRL é genérico e não infere automaticamente movimentação.</Text>
     <ErrorBox message={error} />
     {message && <Text style={styles.small}>{message}</Text>}
     {loading && <Text style={styles.small}>Carregando candidatura…</Text>}
@@ -203,7 +244,8 @@ export function CandidatePanel({ native, busy, run, sampleId, onClose }: Props) 
       {candidate.relatedReviewExists && <Text style={styles.warning}>Já existe uma revisão relacionada; ela não foi alterada por esta análise.</Text>}
       {candidate.hasLaterRevision && <Text style={styles.warning}>Existe uma observação posterior com a mesma identidade Android. Isso não prova que sejam a mesma movimentação.</Text>}
 
-      {candidate.review && <Text style={styles.small}>Revisão local: {candidate.review.status === 'dismissed' ? 'marcada para descartar' : 'salva'}{candidate.reviewedAt ? ` · ${new Date(candidate.reviewedAt).toLocaleString()}` : ''}. Nenhuma transação confirmada.</Text>}
+      {candidate.review && <Text style={styles.small}>Revisão temporária: {candidate.review.status === 'dismissed' ? 'marcada para descartar' : 'salva'}{candidate.reviewedAt ? ` · ${new Date(candidate.reviewedAt).toLocaleString()}` : ''}.{!candidate.transactionId ? ' Ainda sem lançamento confirmado.' : ''}</Text>}
+      {candidate.transactionId && <Text style={styles.warning}>Lançamento financeiro já confirmado. Reprocessar não duplica nem altera o lançamento. Apagar o diagnóstico preserva o histórico financeiro.</Text>}
       <Text style={styles.small}>Publicada: {new Date(candidate.publishedAt).toLocaleString()} · capturada: {new Date(candidate.capturedAt).toLocaleString()}</Text>
       <Text style={styles.heading}>Original da notificação · valores reais</Text>
       <Text style={styles.label}>Título</Text><Text selectable={false} style={styles.body}>{candidate.original.title || '—'}</Text>
@@ -222,22 +264,27 @@ export function CandidatePanel({ native, busy, run, sampleId, onClose }: Props) 
       {candidate.parsed.amountEvidence.length === 0 && <Text style={styles.small}>Nenhum valor com evidência reconhecida.</Text>}
 
       <Text style={styles.heading}>Revisar campos</Text>
-      <Field label="Valor (BRL; vazio = desconhecido)" value={editor?.amount ?? ''} onChangeText={value => update('amount', value)} editable={!busy && !saving} keyboardType="decimal-pad" autoCorrect={false} autoComplete="off" importantForAutofill="no" maxLength={32} placeholder="12,34" />
+      <Field label="Valor (BRL; vazio = desconhecido)" value={editor?.amount ?? ''} onChangeText={value => update('amount', value)} editable={!busy && !saving && !candidate.transactionId} keyboardType="decimal-pad" autoCorrect={false} autoComplete="off" importantForAutofill="no" maxLength={32} placeholder="12,34" />
       <Text style={styles.small}>Valor sugerido pelo parser: {formatAmount(candidate.parsed.draft.amountCents)} · motivo: {reason}</Text>
       <Text style={styles.label}>Natureza (não inferida automaticamente)</Text>
       <View style={styles.wrap}>
-        <Chip title="Não definida" active={editor?.kind === null} onPress={() => { if(!busy && !saving) update('kind', null); }} />
-        {kinds.map(item => <Chip key={item.value} title={item.label} active={editor?.kind === item.value} onPress={() => { if(!busy && !saving) update('kind', item.value); }} />)}
+        <Chip title="Não definida" active={editor?.kind === null} onPress={() => { if(!busy && !saving && !candidate.transactionId) update('kind', null); }} />
+        {kinds.map(item => <Chip key={item.value} title={item.label} active={editor?.kind === item.value} onPress={() => { if(!busy && !saving && !candidate.transactionId) update('kind', item.value); }} />)}
       </View>
-      <Field label="Data efetiva (opcional, AAAA-MM-DD)" value={editor?.effectiveDate ?? ''} onChangeText={value => update('effectiveDate', value)} editable={!busy && !saving} autoCorrect={false} autoComplete="off" importantForAutofill="no" maxLength={10} placeholder="AAAA-MM-DD" />
+      <Field label="Data efetiva (opcional, AAAA-MM-DD)" value={editor?.effectiveDate ?? ''} onChangeText={value => update('effectiveDate', value)} editable={!busy && !saving && !candidate.transactionId} autoCorrect={false} autoComplete="off" importantForAutofill="no" maxLength={10} placeholder="AAAA-MM-DD" />
       <Text style={styles.small}>A data de publicação não é preenchida automaticamente. Transferência, pagamento de fatura, estorno e aporte não devem ser classificados como receita ou despesa comum.</Text>
-      <Field label="Descrição" value={editor?.description ?? ''} onChangeText={value => update('description', value)} editable={!busy && !saving} autoCorrect={false} autoComplete="off" importantForAutofill="no" maxLength={500} />
-      {editor && <ClassificationPanel native={native} busy={busy || saving} run={run} selection={{ categoryId: editor.categoryId, category: editor.category, tagIds: editor.tagIds }} onChange={selection => {
-        setEditor(current => current ? { ...current, ...selection } : current);setError(null);setMessage(null);
+      <Field label="Descrição" value={editor?.description ?? ''} onChangeText={value => update('description', value)} editable={!busy && !saving && !candidate.transactionId} autoCorrect={false} autoComplete="off" importantForAutofill="no" maxLength={500} />
+      {editor && <ClassificationPanel native={native} busy={busy || saving || !!candidate.transactionId} run={run} selection={{ categoryId: editor.categoryId, category: editor.category, tagIds: editor.tagIds }} onChange={selection => {
+        setEditor(current => current ? { ...current, ...selection } : current);setAffectsAccount(false);setError(null);setMessage(null);
       }} />}
+      {!candidate.transactionId && <>
+        <Text style={styles.small}>Para confirmar, configure primeiro o saldo de abertura no livro financeiro. Este fluxo aceita somente receita ou despesa efetivamente na conta disponível; os demais tipos ficam em revisão.</Text>
+        <Chip title="Conferi: esta movimentação afeta o saldo da conta disponível" active={affectsAccount} onPress={() => { if(!busy && !saving) setAffectsAccount(value => !value); }} />
+        <Action title="Confirmar no livro financeiro" disabled={busy || saving || loading || !affectsAccount || !currentFields || !currentFields.effectiveDate || !['income','expense'].includes(currentFields.kind ?? '')} onPress={confirmFinancial} />
+      </>}
       <View style={styles.wrap}>
-        <Action title="Salvar revisão" disabled={busy || saving || loading || !editor || !currentFields || !validDate(editor?.effectiveDate ?? '')} onPress={() => save('reviewed', true)} />
-        <Action title="Descartar candidatura" secondary disabled={busy || saving || loading || !candidate} onPress={() => save('dismissed', false)} />
+        <Action title="Salvar revisão" disabled={busy || saving || loading || !!candidate.transactionId || !editor || !currentFields || !validDate(editor?.effectiveDate ?? '')} onPress={() => save('reviewed', true)} />
+        <Action title="Descartar candidatura" secondary disabled={busy || saving || loading || !!candidate.transactionId || !candidate} onPress={() => save('dismissed', false)} />
         <Action title="Reprocessar" secondary disabled={busy || saving || loading || dirty || !candidate} onPress={() => void load(true)} />
         <Action title="Fechar candidatura" secondary disabled={busy || saving} onPress={() => { clearSensitive(); onClose(); }} />
       </View>

@@ -13,8 +13,61 @@ object CaptureRuntime {
     private const val RETENTION_WARNING="Limpeza de bruto bloqueada; captura pausada. Confira a retenção abaixo."
     private val executor = Executors.newSingleThreadExecutor { task -> Thread(task, "ffortuna-capture") }
     private var diagnostic:DiagnosticCapture?=null
-    private var catalog:ClassificationCatalog?=null
-    private fun catalog(context:Context)=catalog ?: ClassificationCatalog(context.applicationContext).also { catalog=it }
+    private var financeBoxes:FinanceBoxes?=null
+    private var financeRecovery:LocalRecoveryStore?=null
+    private var financeRecoveryError:String?=null
+    private fun financeBoxes(context:Context)=financeBoxes ?: FinanceBoxes(context.applicationContext).also { financeBoxes=it }
+    private fun catalog(context:Context)=financeBoxes(context).current()
+    private fun financeRecovery(context:Context)=financeRecovery ?: LocalRecoveryStore(context.applicationContext,
+        keyName="tique-finance-recovery",fileNamespace="finance-recovery",payloadInfo=FinancialBackup::info).also { financeRecovery=it }
+    private fun financialRecoveryState(context:Context):Map<String,Any?> {
+        val status=financeRecovery(context).status()
+        return financeRecoveryError?.let { status+mapOf("status" to "blocked","failureCode" to it) } ?: status
+    }
+    private fun financialRecovery(context:Context) {
+        try {
+            if(!catalog(context).ledger().configured()) return
+            val recovery=financeRecovery(context)
+            if(recovery.needsSnapshot()) {
+                val plain=catalog(context).exportFinance()
+                try { recovery.maybeSavePayload(plain) } finally { plain.fill(0) }
+            }
+            financeRecoveryError=null
+        } catch(error:Exception) { financeRecoveryError=if(error is LocalRecoveryFailure) error.code else "LOCAL_RECOVERY_FAILED" }
+    }
+    private fun financeState(context:Context,month:String=java.time.LocalDate.now().toString().take(7)):Map<String,Any?> {
+        val snapshot=catalog(context).ledger().snapshot(month)
+        financialRecovery(context)
+        return snapshot+mapOf("recovery" to financialRecoveryState(context),"previousAvailable" to financeBoxes(context).hasPrevious(),"securityChecksPassed" to NativeSecurityRunner.approved(securityReport))
+    }
+    fun financeSnapshot(context:Context,month:String)=call { financeState(context,month) }
+    fun setupFinance(context:Context,json:String)=call {
+        if(!NativeSecurityRunner.approved(securityReport)) throw FinanceFailure("SECURITY_CHECKS_REQUIRED")
+        if(financialRecoveryState(context)["status"]=="blocked") throw FinanceFailure("RECOVERY_BLOCKED")
+        catalog(context).ledger().setup(json);financeState(context)
+    }
+    fun createFinanceTransaction(context:Context,json:String)=call {
+        val id=catalog(context).ledger().post(json)
+        mapOf("transactionId" to id,"snapshot" to financeState(context))
+    }
+    fun recordFinanceBalance(context:Context,json:String)=call { catalog(context).ledger().recordBalance(json);financeState(context) }
+    fun cancelFinanceTransaction(context:Context,json:String)=call { catalog(context).ledger().cancel(json);financeState(context) }
+    fun restartFinance(context:Context)=call {
+        financeBoxes(context).restartBook();try { diagnostic(context).stop() } catch (_:Exception) { };financeState(context)
+    }
+    fun exportFinanceBackup(context:Context):ByteArray=call { catalog(context).exportFinance() }
+    fun restoreFinanceBackup(context:Context,plain:ByteArray):Int=call {
+        val count=financeBoxes(context).restore(plain);try { diagnostic(context).stop() } catch (_:Exception) { };financialRecovery(context);count
+    }
+    fun financeRecoveryEntries(context:Context)=call { financeRecovery(context).entries().map { mapOf("id" to it.id,"createdAt" to it.createdAt,"count" to it.count) } }
+    fun setFinanceRecoveryEnabled(context:Context,enabled:Boolean)=call { financeRecovery(context).setEnabled(enabled);financeRecoveryError=null }
+    fun clearFinanceRecovery(context:Context)=call { financeRecovery(context).clearAndDisable();financeRecoveryError=null }
+    fun restoreFinanceRecovery(context:Context,id:String):Int=call {
+        val plain=financeRecovery(context).loadPayload(id)
+        try { val count=financeBoxes(context).restore(plain);try { diagnostic(context).stop() } catch (_:Exception) { };financialRecovery(context);count } finally { plain.fill(0) }
+    }
+    fun switchPreviousFinance(context:Context)=call { financeBoxes(context).switchPrevious();try { diagnostic(context).stop() } catch (_:Exception) { };financeState(context) }
+    fun discardPreviousFinance(context:Context)=call { financeBoxes(context).discardPrevious();financeState(context) }
     private fun diagnostic(context:Context)=diagnostic ?: DiagnosticCapture(context.applicationContext).also { diagnostic=it }
     private var boxes: CaptureBoxes? = null
     private var recovery:LocalRecoveryStore?=null
@@ -146,7 +199,24 @@ object CaptureRuntime {
     fun renameClassification(context:Context,id:String,name:String)=call { catalog(context).rename(id,name);catalog(context).snapshot() }
     fun archiveClassification(context:Context,id:String,archived:Boolean)=call { catalog(context).setArchived(id,archived);catalog(context).snapshot() }
     fun diagnosticCandidate(context:Context,id:String,force:Boolean=false)=call {
-        ClassificationReview.detail(diagnostic(context).candidate(id,DiagnosticSource.moment(context),force),catalog(context).snapshot())
+        candidateWithFinance(context,diagnostic(context).candidate(id,DiagnosticSource.moment(context),force))
+    }
+    private fun candidateWithFinance(context:Context,candidate:Map<String,Any?>):Map<String,Any?> {
+        val confirmed=catalog(context).ledger().transactionForEvent(candidate["id"] as String)
+        return ClassificationReview.detail(candidate,catalog(context).snapshot())+mapOf("transactionId" to confirmed?.get("id"),"financialReview" to confirmed?.get("fields"))
+    }
+    @Suppress("UNCHECKED_CAST")
+    fun confirmDiagnosticCandidate(context:Context,id:String,json:String)=call {
+        val candidate=diagnostic(context).candidate(id,DiagnosticSource.moment(context))
+        val root=try { org.json.JSONObject(json) } catch (_:Exception) { throw FinanceFailure("INVALID_FIELDS") }
+        if(root.opt("affectsAccount")!=true) throw FinanceFailure("ACCOUNT_CONFIRMATION_REQUIRED")
+        root.remove("affectsAccount")
+        val parsed=candidate["parsed"] as Map<String,Any?>
+        val source=mapOf("eventId" to id,"packageName" to DiagnosticPolicy.PACKAGE,"sourceKey" to candidate["sourceKey"],"revision" to candidate["revision"],
+            "publishedAt" to candidate["publishedAt"],"capturedAt" to candidate["capturedAt"],"parserVersion" to parsed["parserVersion"],
+            "fieldEvidence" to parsed["fieldEvidence"],"confidence" to parsed["confidence"])
+        val transactionId=catalog(context).ledger().post(root.toString(),source)
+        mapOf("transactionId" to transactionId,"snapshot" to financeState(context))
     }
     @Suppress("UNCHECKED_CAST")
     fun saveDiagnosticCandidate(context:Context,id:String,json:String)=call {
@@ -154,7 +224,7 @@ object CaptureRuntime {
         val items=catalog(context).snapshot()
         val previous=diagnostic(context).candidate(id,now)["review"] as? Map<String,Any?>
         val checked=ClassificationReview.prepare(json,items,previous)
-        ClassificationReview.detail(diagnostic(context).saveCandidate(id,checked,now),items)
+        candidateWithFinance(context,diagnostic(context).saveCandidate(id,checked,now))
     }
     fun exportDiagnostic(context:Context)=call { diagnostic(context).exportReviewed(DiagnosticSource.moment(context)) }
     fun observeDiagnostic(context:Context,sbn:android.service.notification.StatusBarNotification,received:DiagnosticMoment) {

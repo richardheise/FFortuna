@@ -73,6 +73,7 @@ class DiagnosticCapture(private val context:Context,private val name:String="ffo
             return when(current) {
                 is DiagnosticFailure -> current.code
                 is ClassificationFailure -> "CLASSIFICATION_${current.code}"
+                is FinanceFailure -> current.code
                 else -> "DIAGNOSTIC_STORAGE"
             }
         }

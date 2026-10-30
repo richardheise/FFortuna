@@ -96,6 +96,14 @@ _Evitar_: rendimento apurado, dinheiro disponível para resgate
 Valor existente em uma conta na data escolhida para iniciar o acompanhamento, distinto das receitas e despesas ocorridas depois desse marco.
 _Evitar_: receita inicial, salário
 
+**Conferência de saldo**:
+Comparação datada entre saldo informado pelo usuário e saldo calculado pelo livro até o fim daquela data. Registra a diferença sem criar um ajuste ou classificar a divergência como receita/despesa.
+_Evitar_: importação de extrato, correção automática de saldo
+
+**Anulação de registro**:
+Correção explícita de um lançamento registrado por engano, com motivo e data. Preserva origem e contrapartidas para auditoria, mostra o registro como anulado e exclui seu efeito dos saldos e totais ativos.
+_Evitar_: estorno bancário, apagar evidência, operar na conta do banco
+
 **Compromisso inicial do cartão**:
 Valor que já estava por pagar no cartão ao iniciar o acompanhamento, associado a um vencimento e sem presumir os detalhes das compras anteriores.
 _Evitar_: gasto novo, compra parcelada identificada, fatura fechada verificada

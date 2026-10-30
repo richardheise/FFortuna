@@ -14,13 +14,18 @@ import java.time.Instant
 import java.util.UUID
 
 data class LocalRecoveryEntry(val id: String, val createdAt: String, val count: Int)
+data class RecoveryPayloadInfo(val count: Int, val contentSignature: String)
 
 /** Encrypted, device-local recovery snapshots. These copies are not portable to another installation. */
 class LocalRecoveryStore(
     context: Context,
     private val clock: Clock = Clock.systemUTC(),
     keyName: String = "ffortuna-local-recovery",
-    fileNamespace: String = "local-recovery"
+    fileNamespace: String = "local-recovery",
+    private val payloadInfo: (ByteArray) -> RecoveryPayloadInfo = { plain ->
+        val backup = InboxBackup.decode(plain)
+        RecoveryPayloadInfo(backup.observations.size, backup.contentSignature())
+    }
 ) {
     private data class IndexedEntry(val public: LocalRecoveryEntry, val contentSignature: String)
     private data class State(val entries: List<IndexedEntry>, val key: ByteArray)
@@ -52,29 +57,40 @@ class LocalRecoveryStore(
         if (!isEnabled()) throw LocalRecoveryFailure(LocalRecoveryCode.DISABLED)
         backup.validate()
         if (backup.observations.isEmpty()) return@guarded
-        val signature = backup.contentSignature()
-        withState { state ->
-            if (state.entries.firstOrNull()?.contentSignature == signature) return@withState
-            if (state.entries.isNotEmpty() && !shouldSnapshot(state.entries)) return@withState
+        val plain = backup.copy(createdAt = Instant.now(clock).toString()).encode()
+        try { maybeSavePayload(plain) } finally { plain.fill(0) }
+    }
 
-            val id = UUID.randomUUID().toString()
-            val createdAt = Instant.now(clock).toString()
-            val plain = backup.copy(createdAt = createdAt).encode()
-            var encrypted: ByteArray? = null
-            try {
-                encrypted = LocalRecoveryCodec.encryptSnapshot(state.key, id, plain)
-                val target = snapshotFile(id)
-                writeAtomic(target, encrypted)
-                verifySnapshot(state.key, id, target, signature, backup.observations.size)
+    /** Saves a validated contract payload; the input remains caller-owned and is not modified. */
+    fun maybeSavePayload(plain: ByteArray) = guarded {
+        if (!isEnabled()) throw LocalRecoveryFailure(LocalRecoveryCode.DISABLED)
+        if (plain.size > LocalRecoveryCodec.MAX_PLAINTEXT) throw LocalRecoveryFailure(LocalRecoveryCode.TOO_LARGE)
+        val ownedPlain = plain.copyOf()
+        try {
+            val info = payloadInfoForSave(ownedPlain)
+            val signature = info.contentSignature
+            withState { state ->
+                if (state.entries.firstOrNull()?.contentSignature == signature) return@withState
+                if (state.entries.isNotEmpty() && !shouldSnapshot(state.entries)) return@withState
 
-                val next = (listOf(IndexedEntry(LocalRecoveryEntry(id, createdAt, backup.observations.size), signature)) + state.entries)
-                    .take(MAX_ENTRIES)
-                writeIndex(state.key, next)
-                cleanupOrphans(next.map { it.public.id }.toSet())
-            } finally {
-                plain.fill(0); encrypted?.fill(0)
+                val id = UUID.randomUUID().toString()
+                val createdAt = Instant.now(clock).toString()
+                var encrypted: ByteArray? = null
+                try {
+                    encrypted = LocalRecoveryCodec.encryptSnapshot(state.key, id, ownedPlain)
+                    val target = snapshotFile(id)
+                    writeAtomic(target, encrypted)
+                    verifySnapshot(state.key, id, target, signature, info.count)
+
+                    val next = (listOf(IndexedEntry(LocalRecoveryEntry(id, createdAt, info.count), signature)) + state.entries)
+                        .take(MAX_ENTRIES)
+                    writeIndex(state.key, next)
+                    cleanupOrphans(next.map { it.public.id }.toSet())
+                } finally {
+                    encrypted?.fill(0)
+                }
             }
-        }
+        } finally { ownedPlain.fill(0) }
     }
 
     fun entries(): List<LocalRecoveryEntry> = guarded {
@@ -83,6 +99,13 @@ class LocalRecoveryStore(
     }
 
     fun load(id: String): InboxBackup = guarded {
+        val plain = loadPayload(id)
+        try { InboxBackup.decode(plain) } catch (_: Exception) { throw LocalRecoveryFailure(LocalRecoveryCode.SNAPSHOT_INVALID) }
+        finally { plain.fill(0) }
+    }
+
+    /** Returns authenticated plaintext owned by the caller, which must zero it when finished. */
+    fun loadPayload(id: String): ByteArray = guarded {
         requireId(id)
         if (!directory.exists()) throw LocalRecoveryFailure(LocalRecoveryCode.INVALID_INPUT)
         withState { state ->
@@ -226,27 +249,44 @@ class LocalRecoveryStore(
     }
 
     private fun authenticateEntries(key: ByteArray, entries: List<IndexedEntry>) {
-        entries.forEach { entry -> readSnapshot(key, entry) }
+        entries.forEach { entry -> readSnapshot(key, entry).fill(0) }
     }
 
     private fun verifySnapshot(key: ByteArray, id: String, file: File, signature: String, count: Int) {
         val item = IndexedEntry(LocalRecoveryEntry(id, "2000-01-01T00:00:00Z", count), signature)
-        readSnapshot(key, item, file)
+        readSnapshot(key, item, file).fill(0)
     }
 
-    private fun readSnapshot(key: ByteArray, entry: IndexedEntry, file: File = snapshotFile(entry.public.id)): InboxBackup {
+    private fun readSnapshot(key: ByteArray, entry: IndexedEntry, file: File = snapshotFile(entry.public.id)): ByteArray {
         var encrypted: ByteArray? = null
         var plain: ByteArray? = null
         try {
             encrypted = readBounded(AtomicFile(file).openRead(), LocalRecoveryCodec.MAX_CIPHERTEXT)
             plain = LocalRecoveryCodec.decryptSnapshot(key, entry.public.id, encrypted)
-            val backup = InboxBackup.decode(plain)
-            if (backup.observations.size != entry.public.count || backup.contentSignature() != entry.contentSignature)
+            val info = payloadInfoForSnapshot(plain)
+            if (info.count != entry.public.count || info.contentSignature != entry.contentSignature)
                 throw LocalRecoveryFailure(LocalRecoveryCode.SNAPSHOT_INVALID)
-            return backup
+            return plain.copyOf()
         } catch (failure: LocalRecoveryFailure) { throw failure }
         catch (_: Exception) { throw LocalRecoveryFailure(LocalRecoveryCode.SNAPSHOT_INVALID) }
         finally { encrypted?.fill(0); plain?.fill(0) }
+    }
+
+    private fun payloadInfoForSave(plain: ByteArray): RecoveryPayloadInfo {
+        val info = try { payloadInfo(plain) }
+        catch (failure: LocalRecoveryFailure) { throw failure }
+        catch (_: Exception) { throw LocalRecoveryFailure(LocalRecoveryCode.INVALID_INPUT) }
+        if (info.count !in 1..10_000 || !info.contentSignature.matches(Regex("[a-f0-9]{64}")))
+            throw LocalRecoveryFailure(LocalRecoveryCode.INVALID_INPUT)
+        return info
+    }
+
+    private fun payloadInfoForSnapshot(plain: ByteArray): RecoveryPayloadInfo {
+        val info = try { payloadInfo(plain) }
+        catch (_: Exception) { throw LocalRecoveryFailure(LocalRecoveryCode.SNAPSHOT_INVALID) }
+        if (info.count !in 1..10_000 || !info.contentSignature.matches(Regex("[a-f0-9]{64}")))
+            throw LocalRecoveryFailure(LocalRecoveryCode.SNAPSHOT_INVALID)
+        return info
     }
 
     private fun cleanupOrphans(referenced: Set<String>) {

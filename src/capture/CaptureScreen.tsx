@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Action, Card, ErrorBox, Field, ScreenScroll, styles } from '../ui/common';
 import { captureModule, type CaptureSnapshot, type LocalRecoveryEntry, type SecurityReport } from './native';
 import { DiagnosticPanel } from './DiagnosticPanel';
+import { FinancePanel } from './FinancePanel';
 import { LegalNotices } from '../legal/LegalNotices';
 
 export function CaptureScreen() {
@@ -16,6 +17,7 @@ export function CaptureScreen() {
   const [password, setPassword] = useState('');
   const [confirmation, setConfirmation] = useState('');
   const [advancedOpen, setAdvancedOpen] = useState(false);
+  const [toolsOpen, setToolsOpen] = useState(false);
   const [localEntries, setLocalEntries] = useState<LocalRecoveryEntry[]>([]);
   const refresh = useCallback(async () => {
     if(!native) return;
@@ -74,11 +76,13 @@ export function CaptureScreen() {
     !state.notificationsAllowed && 'Toque em “Permitir notificações do emissor fictício” e autorize a publicação.',
   ].filter((reason): reason is string => typeof reason === 'string') : ['Aguardando o diagnóstico. Se não carregar, toque em “Atualizar estado” na seção 1.'];
   return <SafeAreaView style={styles.page}><ScreenScroll>
-    <Text style={styles.title}>Tique · Captura nativa</Text>
-    <Text style={styles.warning}>PROVA DE CAPTURA · Exemplos são sintéticos. Diagnóstico real somente mediante ativação explícita nas configurações avançadas.</Text>
+    <Text style={styles.title}>Tique · {toolsOpen ? 'Ferramentas de captura' : 'Finanças'}</Text>
+    <Action secondary title={toolsOpen ? 'Voltar ao livro financeiro' : 'Ferramentas de captura e verificações'} disabled={busy} onPress={() => { setPassword('');setConfirmation('');setToolsOpen(value => !value); }} />
+    {native && !toolsOpen && <FinancePanel native={native} busy={busy} run={run} />}
+    {toolsOpen && <Text style={styles.warning}>Exemplos abaixo são sintéticos. Diagnóstico real somente mediante ativação explícita nas configurações avançadas.</Text>}
     {state?.diagnostic?.active && <Text style={styles.warning}>Diagnóstico real ativo até {state.diagnostic.expiresAt ? new Date(state.diagnostic.expiresAt).toLocaleString() : "expirar"}. Fonte: Nubank. Pare a coleta nas configurações avançadas.</Text>}
     <ErrorBox message={error ?? state?.lastError ?? null} />
-    {!native ? <Card><Text style={styles.body}>Este diagnóstico exige o APK próprio. A demonstração financeira continua disponível no Expo Go.</Text></Card> : <>
+    {!native ? <Card><Text style={styles.body}>Este modo exige o APK próprio. A demonstração financeira continua disponível no Expo Go.</Text></Card> : toolsOpen && <>
       <Card><Text style={styles.heading}>1. Preparar e autorizar</Text>
         <Text style={styles.body}>O Android concede acesso amplo ao serviço. Para os exemplos abaixo, o app filtra o próprio pacote antes de ler conteúdo e aceita só fixtures marcadas. O diagnóstico real tem consentimento separado nas configurações avançadas. Fonte dos exemplos: {state?.sourcePackage ?? 'carregando'}.</Text>
         <Text style={styles.body}>Caixa cifrada: {!state ? 'verificando' : state.storageReady ? `pronta · SQLCipher ${state.cipherVersion}` : 'indisponível'}</Text>

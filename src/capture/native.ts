@@ -37,6 +37,21 @@ export interface CaptureSnapshot {
 }
 export type BackupResult = { status: 'saved' | 'restored' | 'cancelled' | 'error'; code?: string; count?: number; unavailable?: number };
 export interface CaptureModule {
+  financeSnapshot(month: string): Promise<FinanceResult>;
+  setupFinance(fieldsJson: string): Promise<FinanceResult>;
+  createFinanceTransaction(fieldsJson: string): Promise<FinanceResult>;
+  recordFinanceBalance(fieldsJson: string): Promise<FinanceResult>;
+  cancelFinanceTransaction(fieldsJson: string): Promise<FinanceResult>;
+  restartFinance(): Promise<FinanceResult>;
+  confirmDiagnosticCandidate(id: string, fieldsJson: string): Promise<FinanceResult>;
+  exportFinanceBackup(password: string): Promise<BackupResult>;
+  restoreFinanceBackup(password: string): Promise<BackupResult>;
+  financeRecoveryEntries(): Promise<LocalRecoveryEntry[]>;
+  restoreFinanceRecovery(id: string): Promise<BackupResult>;
+  setFinanceRecoveryEnabled(enabled: boolean): Promise<void>;
+  clearFinanceRecovery(): Promise<void>;
+  switchPreviousFinance(): Promise<FinanceResult>;
+  discardPreviousFinance(): Promise<FinanceResult>;
   snapshot(): Promise<CaptureSnapshot>;
   setEnabled(value: boolean): Promise<CaptureSnapshot>;
   emit(scenario: 'single' | 'same' | 'update' | 'group' | 'delayed'): Promise<void>;
@@ -72,6 +87,20 @@ export interface CaptureModule {
   excludeDiagnosticReview(id: string): Promise<DiagnosticResult>;
   verifyDiagnosticExport(password: string): Promise<DiagnosticResult>;
   exportDiagnostic(password: string): Promise<DiagnosticResult>;
+}
+export interface FinanceResult { status: 'ok' | 'error'; code?: string; snapshot?: FinanceSnapshot; transactionId?: string }
+export interface FinanceTransaction {
+  id: string; kind: 'income' | 'expense'; amountCents: number; effectiveDate: string; description: string;
+  categoryId: string | null; category: string; tagIds: string[]; tags: string[]; sourceEventId: string | null;
+  voided: boolean; cancellationReason: string | null;
+}
+export interface FinanceSnapshot {
+  configured: boolean; profile: { openingDate: string; openingBalanceCents: number } | null;
+  balanceCents: number; month: string; incomeCents: number; expenseCents: number; total: number;
+  byCategory: Array<{ categoryId: string | null; name: string; amountCents: number }>;
+  transactions: FinanceTransaction[];
+  balanceCheck: { date: string; amountCents: number; calculatedCents: number; differenceCents: number } | null;
+  recovery: LocalRecoveryStatus; previousAvailable: boolean; securityChecksPassed: boolean;
 }
 
 /** Never look up a custom native module in Expo Go. Only the PoC screen calls this. */
@@ -119,5 +148,6 @@ export interface NotificationCandidate {
     reasonCode: string; reason: string; automaticPostingAllowed: false;
   };
   original: DiagnosticFields; review: NotificationCandidateReview | null; reviewedAt: string | null;
-  previousSampleId: string | null; relatedReviewExists: boolean; hasLaterRevision: boolean; temporary: true; transactionId: null;
+  previousSampleId: string | null; relatedReviewExists: boolean; hasLaterRevision: boolean; temporary: true; transactionId: string | null;
+  financialReview?: NotificationCandidateFields | null;
 }
