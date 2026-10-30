@@ -2,11 +2,14 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import * as Crypto from 'expo-crypto';
 import { Alert, AppState, Text, View } from 'react-native';
 import { formatBRL, parseBRL } from '../core/money';
-import { Action, Card, Chip, ErrorBox, Field, formatMonth, styles } from '../ui/common';
+import { Action, Card, Chip, ErrorBox, Field, formatMonth, colors, styles } from '../ui/common';
 import { ClassificationPanel } from './ClassificationPanel';
+import { FinanceDashboard } from './FinanceDashboard';
+import { categoryKey, filterTransactions } from './dashboard';
 import type { BackupResult, CaptureModule, FinanceResult, FinanceSnapshot, FinanceTransaction, LocalRecoveryEntry } from './native';
 
-type Props = { native: CaptureModule; busy: boolean; run: (task: () => Promise<unknown>) => Promise<void> };
+export type FinanceView = 'home' | 'transactions' | 'entry' | 'more' | 'balance' | 'categories';
+type Props = { native: CaptureModule; busy: boolean; run: (task: () => Promise<unknown>) => Promise<void>; view: FinanceView; onNavigate: (view: FinanceView) => void; onTools: () => void; entryKind?: 'income' | 'expense'; entryRequest?: number; valuesHidden: boolean; onToggleValues: () => void };
 type ClassificationSelection = { categoryId: string | null; category: string; tagIds: string[] };
 
 const todayLocal = () => {
@@ -78,10 +81,13 @@ const errorMessages: Record<string, string> = {
 };
 function failure(code?: string) { return code ? `${errorMessages[code] ?? 'Operação não concluída.'} (${code})` : 'Operação não concluída.'; }
 
-export function FinancePanel({ native, busy, run }: Props) {
+export function FinancePanel({ native, busy, run, view, onNavigate, onTools, entryKind, entryRequest, valuesHidden, onToggleValues }: Props) {
   const [month, setMonth] = useState(currentMonthLocal);
   const [visibleCount, setVisibleCount] = useState(50);
   const [catalogEpoch, setCatalogEpoch] = useState(0);
+  const [historyKind, setHistoryKind] = useState<'all' | 'income' | 'expense'>('all');
+  const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
+  const [query, setQuery] = useState('');
   const [snapshot, setSnapshot] = useState<FinanceSnapshot | null>(null);
   const [loading, setLoading] = useState(true);
   const [localBusy, setLocalBusy] = useState(false);
@@ -147,7 +153,7 @@ export function FinancePanel({ native, busy, run }: Props) {
       setClassification({ categoryId: null, category: 'A classificar', tagIds: [] }); setBalanceAmount('');
       setOpeningDate(todayLocal()); setEffectiveDate(todayLocal()); setBalanceDate(todayLocal()); setKind('expense');
       setRecoveryPassword(''); setBackupPassword(''); setBackupConfirmation(''); setAdvanced(false);
-      setError(null); setMessage(null); setLoading(false); setLocalBusy(false);
+      setError(null); setMessage(null); setQuery(''); setCategoryFilter(null); setHistoryKind('all'); setLoading(false); setLocalBusy(false);
     }
   }, []);
 
@@ -163,6 +169,11 @@ export function FinancePanel({ native, busy, run }: Props) {
   }, [clearPrivate, refresh]);
 
   useEffect(() => { if (mounted.current && active.current) void refresh(month); }, [month, refresh]);
+  useEffect(() => {
+    if (!entryKind) return;
+    commandId.current = null;setKind(entryKind);setAmount('');setDescription('');setEffectiveDate(todayLocal());
+    setClassification({ categoryId: null, category: 'A classificar', tagIds: [] });
+  }, [entryKind, entryRequest]);
 
   const loadRecoveryEntries = useCallback(async () => {
     const request = generation.current;
@@ -184,6 +195,7 @@ export function FinancePanel({ native, busy, run }: Props) {
 
   function resetAfterBoxChange() {
     commandId.current = null;
+    setHistoryKind('all');setCategoryFilter(null);setQuery('');
     setAmount('');setDescription('');setEffectiveDate(todayLocal());
     setClassification({ categoryId: null, category: 'A classificar', tagIds: [] });
     setCancellationId(null);setCancellationReason('');setBalanceAmount('');setBalanceDate(todayLocal());
@@ -245,6 +257,7 @@ export function FinancePanel({ native, busy, run }: Props) {
     void perform(() => nativeRef.current.createFinanceTransaction(payloadJson), result => {
       if (result && 'status' in result && result.status === 'ok') {
         commandId.current = null; setAmount(''); setDescription(''); setClassification({ categoryId: null, category: 'A classificar', tagIds: [] });
+        setHistoryKind('all');setCategoryFilter(null);setQuery('');setVisibleCount(50);onNavigate('transactions');
       }
     }, 'Movimento manual salvo.').finally(() => { payloadJson = ''; });
   }
@@ -351,55 +364,55 @@ export function FinancePanel({ native, busy, run }: Props) {
   }
 
   const blocked = busy || localBusy || loading;
-  const transactions = snapshot?.transactions.slice(0, visibleCount) ?? [];
-
+  const ready = snapshot?.configured && snapshot.month === month;
+  const filtered = snapshot ? filterTransactions(snapshot.transactions, { kind: historyKind, category: categoryFilter, query }) : [];
+  const transactions = filtered.slice(0, visibleCount);
+  const selectedCategory = snapshot?.byCategory.find(row => categoryKey(row.categoryId, row.name) === categoryFilter)?.name;
+  function openMovements(kind: 'all' | 'income' | 'expense' = 'all', category: string | null = null) {
+    setHistoryKind(kind);setCategoryFilter(category);setQuery('');setVisibleCount(50);onNavigate('transactions');
+  }
+  function monthStep(step: number) { setVisibleCount(50);setCategoryFilter(null);setMonth(value => moveMonth(value, step)); }
   return <>
-    <Card>
-      <Text style={styles.heading}>Livro financeiro cifrado</Text>
-      <Text style={styles.body}>Livro local protegido, separado do diagnóstico temporário. Confira saldos manualmente agora; importação de extrato fica para uma etapa futura. Contas de crédito, faturas, aportes e estornos ainda não são aceitos.</Text>
-      <ErrorBox message={error} />
-      {error && <Action title="Tentar novamente" secondary disabled={busy || localBusy || loading} onPress={() => void refresh(monthRef.current)} />}
-      {message && <Text style={styles.small}>{message}</Text>}
-      {loading && <Text style={styles.small}>Carregando livro…</Text>}
-      {snapshot && !snapshot.configured && <>
-        <Text style={styles.warning}>O saldo de abertura é anterior aos movimentos a partir da data escolhida. Não inclui caixinhas nem crédito. Esta ação inicia o livro real e exige consentimento explícito.</Text>
-        {!snapshot.securityChecksPassed && <Text style={styles.warning}>Execute as verificações nativas necessárias antes de configurar o livro financeiro.</Text>}
-        <Field label="Data de abertura (AAAA-MM-DD)" value={openingDate} onChangeText={setOpeningDate} editable={!blocked} maxLength={10} autoCorrect={false} autoComplete="off" importantForAutofill="no" />
-        <Field label="Saldo de abertura em BRL (pode ser negativo)" value={openingBalance} onChangeText={setOpeningBalance} editable={!blocked} keyboardType="decimal-pad" maxLength={32} autoCorrect={false} autoComplete="off" importantForAutofill="no" />
-        <Action title="Concordo e configurar livro financeiro" disabled={blocked || !snapshot.securityChecksPassed || !validDate(openingDate) || !openingBalance.trim()} onPress={consentSetup} />
-      </>}
-      {snapshot?.configured && <>
-        <Text style={styles.title}>Saldo atual: {formatBRL(snapshot.balanceCents)}</Text>
-        <Text style={styles.small}>Saldo de abertura em {localDateLabel(snapshot.profile?.openingDate ?? '')}: {formatBRL(snapshot.profile?.openingBalanceCents ?? 0)}</Text>
-        <View style={styles.wrap}>
-          <Action title="Mês anterior" secondary disabled={blocked} onPress={() => { setVisibleCount(50);setMonth(value => moveMonth(value, -1)); }} />
-          <Text style={[styles.body, { alignSelf: 'center' }]}>{formatMonth(month)}</Text>
-          <Action title="Próximo mês" secondary disabled={blocked} onPress={() => { setVisibleCount(50);setMonth(value => moveMonth(value, 1)); }} />
-        </View>
-        <Text style={styles.body}>Receitas: {formatBRL(snapshot.incomeCents)} · Despesas: {formatBRL(snapshot.expenseCents)}</Text>
-        <Text style={styles.heading}>Despesas por categoria</Text>
-        {snapshot.byCategory.length === 0 ? <Text style={styles.small}>Sem despesas neste mês.</Text> : snapshot.byCategory.map((row, index) => <Text key={`${row.categoryId ?? row.name}-${index}`} style={styles.body}>{row.name}: {formatBRL(row.amountCents)}</Text>)}
-        <Text style={styles.heading}>Histórico do mês</Text>
-        {transactions.length === 0 ? <Text style={styles.small}>Nenhum movimento neste mês.</Text> : transactions.map((item: FinanceTransaction) => <View key={item.id} style={{ borderTopWidth: 1, borderColor: '#DCE3D9', paddingTop: 8, gap: 3 }}>
-          <Text style={styles.label}>{localDateLabel(item.effectiveDate)} · {item.kind === 'income' ? 'Receita' : 'Despesa'} · {formatBRL(item.amountCents)}</Text>
-          <Text style={styles.body}>{item.description || '—'}</Text>
-          <Text style={styles.small}>{item.category}{item.tags.length ? ` · ${item.tags.join(', ')}` : ''}</Text>
-          {item.voided
-            ? <Text style={styles.warning}>Anulado · {item.cancellationReason || 'motivo não disponível'}</Text>
-            : <Action title="Anular registro" secondary disabled={blocked} onPress={() => requestCancellation(item)} />}
-          {cancellationId === item.id && <View style={{ gap: 8 }}>
-            <Field label="Motivo da anulação" value={cancellationReason} onChangeText={setCancellationReason} editable={!blocked} maxLength={500} multiline autoCorrect={false} autoComplete="off" importantForAutofill="no" />
-            <View style={styles.wrap}>
-              <Action title="Confirmar anulação" disabled={blocked || !cancellationReason.trim()} onPress={submitCancellation} />
-              <Action title="Voltar" secondary disabled={blocked} onPress={() => { setCancellationId(null); setCancellationReason(''); }} />
-            </View>
-          </View>}
-        </View>)}
-        {snapshot.total > transactions.length && <><Text style={styles.small}>Exibindo {transactions.length} de {snapshot.total} movimentos deste mês.</Text><Action secondary title="Mostrar mais movimentos" disabled={blocked} onPress={() => setVisibleCount(count => count + 50)} /></>}
-      </>}
-    </Card>
-
-    {snapshot?.configured && <>
+    {error && <Card><ErrorBox message={error} /><Action title="Tentar novamente" secondary disabled={blocked} onPress={() => void refresh(monthRef.current)} /></Card>}
+    {message && <Text accessibilityRole="alert" style={styles.small}>{message}</Text>}
+    {loading && <Text style={styles.small}>Carregando registros…</Text>}
+    {snapshot && !snapshot.configured && view !== 'more' && view !== 'categories' && <Card>
+      <Text style={styles.heading}>Comece pela sua conta</Text>
+      <Text style={styles.body}>Defina o saldo antes dos movimentos que vai registrar a partir da data escolhida. Não inclua caixinhas ou limite de crédito.</Text>
+      {!snapshot.securityChecksPassed && <><Text style={styles.warning}>Antes de configurar, execute as verificações nativas em Mais → Avançado.</Text><Action secondary title="Abrir verificações" disabled={blocked} onPress={onTools} /></>}
+      <Field label="Data de abertura (AAAA-MM-DD)" value={openingDate} onChangeText={setOpeningDate} editable={!blocked} maxLength={10} autoCorrect={false} autoComplete="off" importantForAutofill="no" />
+      <Field label="Saldo de abertura em BRL" value={openingBalance} onChangeText={setOpeningBalance} editable={!blocked} keyboardType="decimal-pad" maxLength={32} autoCorrect={false} autoComplete="off" importantForAutofill="no" />
+      <Action title="Concordo e configurar conta" disabled={blocked || !snapshot.securityChecksPassed || !validDate(openingDate) || !openingBalance.trim()} onPress={consentSetup} />
+    </Card>}
+    {snapshot?.configured && (view === 'home' || view === 'transactions') && <View style={[styles.row, { backgroundColor: colors.card, paddingHorizontal: 8, borderRadius: 4 }]}>
+      <Action title="‹" accessibilityLabel="Mês anterior" secondary disabled={blocked} onPress={() => monthStep(-1)} />
+      <Text style={[styles.body, { flex: 1, textAlign: 'center', textTransform: 'capitalize' }]}>{formatMonth(month)}</Text>
+      <Action title="›" accessibilityLabel="Próximo mês" secondary disabled={blocked} onPress={() => monthStep(1)} />
+    </View>}
+    {ready && view === 'home' && <FinanceDashboard snapshot={snapshot} busy={blocked} hidden={valuesHidden} onToggleValues={onToggleValues}
+      onCategory={key => openMovements('expense', key)} onMovements={kind => openMovements(kind)}
+      onNew={nextKind => { editKind(nextKind);onNavigate('entry'); }} onBalance={() => onNavigate('balance')} />}
+    {ready && view === 'transactions' && <Card>
+      <Text style={styles.heading}>Movimentos</Text>
+      <Field label="Buscar descrição, categoria ou tag" value={query} onChangeText={value => { setVisibleCount(50);setQuery(value); }} editable={!blocked} autoCorrect={false} autoComplete="off" importantForAutofill="no" maxLength={100} />
+      <View style={styles.wrap}>{(['all','expense','income'] as const).map(value => <Chip key={value} title={value === 'all' ? 'Tudo' : value === 'expense' ? 'Despesas' : 'Receitas'} active={historyKind === value} onPress={() => { if(!blocked) { setHistoryKind(value);setVisibleCount(50); } }} />)}</View>
+      {categoryFilter && <Action secondary title={`${selectedCategory ?? 'Categoria selecionada'} · limpar filtro`} disabled={blocked} onPress={() => setCategoryFilter(null)} />}
+      <Text style={styles.small}>{filtered.length} registros neste filtro. Anulados permanecem no histórico e não entram nos totais.</Text>
+      {transactions.length === 0 && <Text style={styles.small}>Nenhum movimento encontrado.</Text>}
+      {transactions.map((item: FinanceTransaction) => <View key={item.id} style={{ borderTopWidth: 1, borderColor: colors.line, paddingTop: 14, gap: 7 }}>
+        <View style={[styles.row, { justifyContent: 'space-between', flexWrap: 'wrap' }]}><Text style={[styles.label, { flexShrink: 1 }]}>{item.description || 'Sem descrição'}</Text><Text style={{ color: item.voided ? colors.muted : item.kind === 'income' ? colors.cyan : colors.ink, fontSize: 16, fontWeight: '600', textDecorationLine: item.voided ? 'line-through' : 'none' }}>{item.kind === 'income' ? '+ ' : '− '}{formatBRL(item.amountCents)}</Text></View>
+        <Text style={styles.small}>{localDateLabel(item.effectiveDate)} · {item.kind === 'income' ? 'Receita' : 'Despesa'} · {item.category}{item.tags.length ? ` · ${item.tags.join(', ')}` : ''}</Text>
+        <Text style={styles.small}>{item.sourceEventId ? 'Confirmado a partir de notificação' : 'Registro manual'}</Text>
+        {item.voided ? <Text style={styles.small}>Anulado · {item.cancellationReason}</Text> : <Action title="Anular registro" secondary disabled={blocked} onPress={() => requestCancellation(item)} />}
+        {cancellationId === item.id && <View style={{ gap: 8 }}>
+          <Field label="Motivo da anulação" value={cancellationReason} onChangeText={setCancellationReason} editable={!blocked} maxLength={500} multiline autoCorrect={false} autoComplete="off" importantForAutofill="no" />
+          <Action title="Confirmar anulação" disabled={blocked || !cancellationReason.trim()} onPress={submitCancellation} />
+          <Action title="Voltar" secondary disabled={blocked} onPress={() => { setCancellationId(null);setCancellationReason(''); }} />
+        </View>}
+      </View>)}
+      {filtered.length > transactions.length && <Action secondary title={`Mostrar mais (${transactions.length} de ${filtered.length})`} disabled={blocked} onPress={() => setVisibleCount(count => count + 50)} />}
+    </Card>}
+    {snapshot?.configured && view === 'entry' && <>
       <Card>
         <Text style={styles.heading}>Registrar movimento manual</Text>
         <Text style={styles.small}>Esta etapa registra somente receitas e despesas manuais. Não importa notificações ou extratos.</Text>
@@ -414,6 +427,8 @@ export function FinancePanel({ native, busy, run }: Props) {
         <Action title="Salvar movimento" disabled={blocked || !amount.trim() || !description.trim() || !validDate(effectiveDate)} onPress={submitTransaction} />
       </Card>
 
+    </>}
+    {snapshot?.configured && view === 'balance' && <>
       <Card>
         <Text style={styles.heading}>Conferir saldo de uma data</Text>
         <Text style={styles.small}>A conferência compara o saldo informado ao final da data com o calculado. Não cria ajuste, receita ou despesa.</Text>
@@ -428,10 +443,19 @@ export function FinancePanel({ native, busy, run }: Props) {
       </Card>
 
     </>}
-
+    {view === 'categories' && <ClassificationPanel key={catalogEpoch} native={native} busy={blocked} run={run} />}
+    {view === 'more' && <>
+      <Card>
+        <Text style={styles.heading}>Finanças</Text>
+        {snapshot?.profile && <Text style={styles.small}>Uma conta BRL · abertura em {localDateLabel(snapshot.profile.openingDate)}</Text>}
+        <Action title="Categorias e tags" secondary disabled={blocked} onPress={() => onNavigate('categories')} />
+        <Action title="Conferir saldo" secondary disabled={blocked || !snapshot?.configured} onPress={() => onNavigate('balance')} />
+        <Text style={styles.small}>Saldo calculado depende dos registros confirmados. Importação de extratos, cartões e caixinhas entram em próximas etapas.</Text>
+      </Card>
     <Card>
         <Action title={advanced ? 'Fechar opções avançadas' : 'Opções avançadas'} secondary disabled={busy} onPress={() => setAdvanced(value => !value)} />
         {advanced && <>
+          <Action secondary title="Avançado: captura, permissões e verificações" disabled={busy || localBusy} onPress={onTools} />
           <Text style={styles.heading}>Recuperação local cifrada</Text>
           <Text style={styles.small}>Até três cópias, no máximo uma a cada 24 horas com alterações. Cópias locais incluem livro e catálogo, não o diagnóstico; dependem desta instalação e não são backup portátil.</Text>
           <Text style={styles.small}>Estado: {snapshot?.recovery.status ?? 'indisponível'} · {snapshot?.recovery.count ?? recoveryEntries.length} cópias · {snapshot?.recovery.enabled ? 'ativada' : 'desativada'}{snapshot?.recovery.failureCode ? ` · ${snapshot.recovery.failureCode}` : ''}</Text>
@@ -440,7 +464,7 @@ export function FinancePanel({ native, busy, run }: Props) {
             <Action title="Apagar cópias locais" secondary disabled={busy || localBusy || loading || !!snapshot && snapshot.recovery.status !== 'blocked' && (snapshot.recovery.count ?? recoveryEntries.length) === 0} onPress={clearRecovery} />
             <Action title="Atualizar lista" secondary disabled={busy || localBusy || loading} onPress={() => void loadRecoveryEntries()} />
           </View>
-          {recoveryEntries.map(entry => <View key={entry.id} style={{ borderTopWidth: 1, borderColor: '#DCE3D9', paddingTop: 8, gap: 6 }}>
+          {recoveryEntries.map(entry => <View key={entry.id} style={{ borderTopWidth: 1, borderColor: colors.line, paddingTop: 8, gap: 6 }}>
             <Text style={styles.small}>{localDateLabel(entry.createdAt.slice(0, 10))} · {entry.count} registros</Text>
             <Action title="Restaurar cópia local" secondary disabled={busy || localBusy || loading || !!snapshot?.previousAvailable} onPress={() => restoreLocal(entry)} />
           </View>)}
@@ -461,5 +485,6 @@ export function FinancePanel({ native, busy, run }: Props) {
           {snapshot?.configured && <Action title="Recomeçar livro com novo saldo" secondary disabled={busy || localBusy || loading || snapshot.previousAvailable} onPress={restartBook} />}
         </>}
       </Card>
+    </>}
   </>;
 }

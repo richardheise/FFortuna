@@ -4,7 +4,7 @@ Aplicativo Android livre para organização financeira pessoal no Brasil. **Tiqu
 
 O **APK próprio** tem um livro financeiro real e cifrado para uma conta BRL: receitas/despesas manuais, confirmação de notificações revisadas, saldo, histórico, categorias/tags, conferências e backup financeiro. A captura de notificações continua sendo um diagnóstico opcional e temporário, sem postagem automática. O **Expo Go** mantém uma demonstração exclusivamente sintética, com caixinhas, compromissos de cartão e importação OFX fictícia; esses recursos ainda não estão habilitados com dados reais no APK.
 
-Pré-release **Tique 0.8.0-alpha.2 (versionCode 11)** publicada: [baixar APK](https://github.com/richardheise/Tique/releases/download/v0.8.0-alpha.2/tique-arm64.apk) · [fonte correspondente](https://github.com/richardheise/Tique/releases/download/v0.8.0-alpha.2/tique-source.tar.gz) · [roteiro no celular](docs/releases/v0.8.0-alpha.2.md). Migra o catálogo preservando chave e IDs e cria o primeiro livro permanente. A 0.7.1 foi aprovada pelo usuário no A36/Android 16; a bateria da 0.8.0 passa a 72 verificações e aguarda execução no aparelho. O candidato alpha.1 ficou como rascunho não publicado. Tags e anexos anteriores permanecem intactos.
+Incremento **Tique 0.9.0 (versionCode 12)** em preparação: dashboard, gráficos interativos de categorias e receitas/despesas, busca/filtros e nova navegação. Tema aprovado preto, âmbar, ciano e off-white, com formas retas. [Roteiro 0.9.0](docs/releases/v0.9.0-alpha.1.md). Atualiza por cima da 0.8 sem trocar banco, chave ou formato de backup. Validação física das funcionalidades financeiras e da nova interface permanece pendente; a aprovação visual não equivale a teste do núcleo.
 
 ## Executar no celular
 
@@ -21,10 +21,11 @@ Computador e celular devem estar na mesma rede. Abra o Expo Go e escaneie o QR d
 
 O projeto fixa Expo 57 / React Native 0.86 / React 19.2; foi seguida a [orientação oficial durante a transição do Expo Go](https://docs.expo.dev/get-started/create-a-project/). Se o Expo Go instalado informar incompatibilidade, use uma [versão Android compatível](https://expo.dev/go), sem misturar dependências de SDKs diferentes. A combinação foi conferida com `npx expo install --check`.
 
-Expo Go é o aplicativo hospedeiro desta demonstração. APK da prova de marca atual disponível localmente em `artifacts/tique-arm64.apk` (0.8.0, versionCode 11); a cópia imutável de conteúdo 0.6.0 está em `artifacts/releases/v0.6.0-alpha.1/`. O roteiro de captura 0.2.1 foi aprovado pelo usuário no Galaxy A36/Android 16; o roteiro de backup/restauração 0.3.0 também foi aprovado em 25/10/2026. O módulo Kotlin e o APK da prova sintética usam um [build Android próprio](https://docs.expo.dev/guides/local-app-development/); Expo Go não executa módulos nativos personalizados. Os comandos e critérios estão em [captura-nativa.md](docs/captura-nativa.md). O livro real da 0.8.0 exige o APK próprio; a demonstração Expo Go continua sintética.
+Expo Go é o aplicativo hospedeiro desta demonstração. APK da prova de marca atual disponível localmente em `artifacts/tique-arm64.apk` (0.9.0, versionCode 12); a cópia imutável de conteúdo 0.6.0 está em `artifacts/releases/v0.6.0-alpha.1/`. O roteiro de captura 0.2.1 foi aprovado pelo usuário no Galaxy A36/Android 16; o roteiro de backup/restauração 0.3.0 também foi aprovado em 25/10/2026. O módulo Kotlin e o APK da prova sintética usam um [build Android próprio](https://docs.expo.dev/guides/local-app-development/); Expo Go não executa módulos nativos personalizados. Os comandos e critérios estão em [captura-nativa.md](docs/captura-nativa.md). O livro real da 0.8.0 exige o APK próprio; a demonstração Expo Go continua sintética.
 
 ## O que funciona
 
+- No APK: dashboard com gráficos nativos, resumo mensal, busca/filtros e navegação Início/Movimentos/Revisão/Mais.
 - No APK: livro real com abertura, receitas/despesas manuais, confirmação de notificações, saldo e histórico mensal por categoria/tag. Anulação com motivo e conferência sem ajuste silencioso; backups financeiros incluem catálogo, livro e proveniência mínima.
 - Conta fictícia com data e saldo de abertura; renda mensal prevista separada dos recebimentos.
 - Receita, despesa e movimentação entre conta e caixinha; saldo atual, histórico filtrado por mês e gastos por categoria.
@@ -50,7 +51,7 @@ npm run check
 npm run export:android
 ```
 
-Executados na validação mais recente em cópia isolada: TypeScript estrito, **30 testes de comportamento aprovados** e exportação Android pelo Metro/Hermes. Os testes usam SQLite real via `node:sqlite`, incluindo banco em arquivo, reabertura, migrações, restrições do livro, limites monetários, importação atômica e processamento recuperável. A exportação produz um **bundle em `dist/`, não um APK**.
+Na validação inicial da demonstração, foram executados em cópia isolada: TypeScript estrito, **30 testes de comportamento aprovados** e exportação Android pelo Metro/Hermes. Na 0.9.0, TypeScript estrito e **38 testes** passaram; o build nativo aprovou **54 testes JVM** e compilou 70 cenários Android, sem executar o runner no servidor. Os testes usam SQLite real via `node:sqlite`, incluindo banco em arquivo, reabertura, migrações, restrições do livro, limites monetários, importação atômica e processamento recuperável. A exportação produz um **bundle em `dist/`, não um APK**.
 
 Uma checagem adicional no Chromium, com interface React Native Web e serviço real sobre SQLite em memória, percorreu os formulários, revisão, caixinhas, pagamentos, importações e licenças. Esse harness temporário não é uma plataforma web do produto e não valida módulos nativos, teclado Android ou persistência do Expo Go. O usuário testou e aprovou a demonstração no celular em 22/10/2026; modelo, versão Android e percurso detalhado não foram registrados. A correção posterior das dependências ainda precisa ser instalada e conferida no aparelho. A toolchain Android e o ADB foram instalados para a prova nativa; nenhum aparelho está conectado e os testes instrumentados ainda não foram executados. `expo-doctor` foi interrompido sem resultado; não é um check aprovado. O servidor Metro iniciou, mas a sondagem HTTP local não foi confirmada neste ambiente.
 
@@ -85,7 +86,7 @@ A 0.8.0 habilita somente o livro cifrado de uma conta com receitas/despesas revi
 
 ## Próximo incremento
 
-Prioridade confirmada: funcionalidades antes do refinamento UI/UX. Após a aprovação da 0.7.1, o usuário autorizou o primeiro livro real da 0.8.0 e propôs trazer dados exportados manualmente do Nubank. Nesta entrega há abertura e conferência de saldo, sem ajuste automático. Depois de validar o roteiro da 0.8.0, priorizar importação de um extrato exportado pelo usuário, com staging, prévia e reconciliação, respeitando o formato disponível e sem exigir que o usuário programe ou transforme dados. Nenhuma amostra real foi examinada aqui, e nenhum formato Nubank foi presumido.
+Após o primeiro livro real da 0.8.0, o usuário autorizou o dashboard e a navegação da 0.9.0. Validar no celular os gráficos, filtros, revisão e preservação do livro. Em seguida, priorizar importação de um extrato exportado pelo usuário, com staging, prévia e reconciliação, respeitando o formato disponível e sem exigir que o usuário programe ou transforme dados. Nenhuma amostra real foi examinada aqui, e nenhum formato Nubank foi presumido.
 
 ## Licença
 

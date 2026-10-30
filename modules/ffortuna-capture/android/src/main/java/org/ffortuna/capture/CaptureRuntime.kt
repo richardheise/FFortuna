@@ -190,7 +190,10 @@ object CaptureRuntime {
     }
     fun stopDiagnostic(context:Context)=call { diagnostic(context).stop() }
     fun clearDiagnostic(context:Context)=call { diagnostic(context).clear() }
-    fun diagnosticSamples(context:Context)=call { diagnostic(context).samples(DiagnosticSource.moment(context)) }
+    fun diagnosticSamples(context:Context)=call {
+        val samples=diagnostic(context).samples(DiagnosticSource.moment(context));val confirmed=catalog(context).ledger().confirmedEvents()
+        samples.map { it+mapOf("transactionId" to confirmed[it["id"]]) }
+    }
     fun diagnosticSample(context:Context,id:String)=call { diagnostic(context).sample(id,DiagnosticSource.moment(context)) }
     fun reviewDiagnostic(context:Context,id:String,json:String,confirmed:Boolean)=call { diagnostic(context).review(id,json,confirmed,DiagnosticSource.moment(context)) }
     fun excludeDiagnosticReview(context:Context,id:String)=call { diagnostic(context).excludeReview(id) }

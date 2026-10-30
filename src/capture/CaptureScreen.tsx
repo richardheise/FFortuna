@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Alert, AppState, Text, View } from 'react-native';
+import { Alert, AppState, BackHandler, Modal, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Action, Card, ErrorBox, Field, ScreenScroll, styles } from '../ui/common';
+import { Action, Card, ErrorBox, Field, ScreenScroll, colors, styles } from '../ui/common';
 import { captureModule, type CaptureSnapshot, type LocalRecoveryEntry, type SecurityReport } from './native';
 import { DiagnosticPanel } from './DiagnosticPanel';
-import { FinancePanel } from './FinancePanel';
+import { FinanceNavigation, TiqueMark, type MainTab } from './FinanceNavigation';
+import { FinancePanel, type FinanceView } from './FinancePanel';
 import { LegalNotices } from '../legal/LegalNotices';
 
 export function CaptureScreen() {
@@ -17,7 +18,12 @@ export function CaptureScreen() {
   const [password, setPassword] = useState('');
   const [confirmation, setConfirmation] = useState('');
   const [advancedOpen, setAdvancedOpen] = useState(false);
-  const [toolsOpen, setToolsOpen] = useState(false);
+  const [screen, setScreen] = useState<FinanceView | 'review' | 'tools'>('home');
+  const [newOpen, setNewOpen] = useState(false);
+  const [entryKind, setEntryKind] = useState<'income' | 'expense'>('expense');
+  const [entryRequest, setEntryRequest] = useState(0);
+  const [valuesHidden, setValuesHidden] = useState(false);
+  const toolsOpen = screen === 'tools';
   const [localEntries, setLocalEntries] = useState<LocalRecoveryEntry[]>([]);
   const refresh = useCallback(async () => {
     if(!native) return;
@@ -31,10 +37,20 @@ export function CaptureScreen() {
     void refresh().catch(() => setError('Não foi possível abrir o diagnóstico nativo.'));
     const subscription = AppState.addEventListener('change', s => {
       if(s === 'active') void refresh().catch(() => setError('Falha ao atualizar o estado nativo.'));
-      else { setPassword('');setConfirmation(''); }
+      else { setPassword('');setConfirmation('');setNewOpen(false);setValuesHidden(true); }
     });
     return () => subscription.remove();
   }, [refresh]);
+  useEffect(() => {
+    const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
+      if(screen === 'home') return false;
+      if(busy) return true;
+      setPassword('');setConfirmation('');setScreen('home');return true;
+    });
+    return () => subscription.remove();
+  }, [screen, busy]);
+  function navigate(next: FinanceView | MainTab | 'tools') { setPassword('');setConfirmation('');setScreen(next); }
+  function newEntry(kind: 'income' | 'expense') { setNewOpen(false);setEntryKind(kind);setEntryRequest(value => value + 1);setScreen('entry'); }
   async function run(task: () => Promise<unknown> | unknown) {
     if(busy) return; setBusy(true); setError(null); setMessage(null);
     try { await task(); await refresh(); }
@@ -76,12 +92,16 @@ export function CaptureScreen() {
     !state.notificationsAllowed && 'Toque em “Permitir notificações do emissor fictício” e autorize a publicação.',
   ].filter((reason): reason is string => typeof reason === 'string') : ['Aguardando o diagnóstico. Se não carregar, toque em “Atualizar estado” na seção 1.'];
   return <SafeAreaView style={styles.page}><ScreenScroll>
-    <Text style={styles.title}>Tique · {toolsOpen ? 'Ferramentas de captura' : 'Finanças'}</Text>
-    <Action secondary title={toolsOpen ? 'Voltar ao livro financeiro' : 'Ferramentas de captura e verificações'} disabled={busy} onPress={() => { setPassword('');setConfirmation('');setToolsOpen(value => !value); }} />
-    {native && !toolsOpen && <FinancePanel native={native} busy={busy} run={run} />}
+    <View style={[styles.row, { justifyContent: 'space-between', paddingVertical: 8 }]}>
+      <View style={styles.row}><TiqueMark /><Text style={styles.title}>tique</Text></View>
+      {screen !== 'home' && <Text style={styles.small}>{screen === 'transactions' ? 'Movimentos' : screen === 'review' ? 'Revisão' : screen === 'entry' ? 'Novo lançamento' : screen === 'categories' ? 'Categorias e tags' : screen === 'balance' ? 'Conferir saldo' : screen === 'tools' ? 'Avançado' : 'Mais'}</Text>}
+    </View>
+    {native && !toolsOpen && screen !== 'review' && <FinancePanel native={native} busy={busy} run={run} view={screen} onNavigate={navigate} onTools={() => navigate('tools')} entryKind={entryKind} entryRequest={entryRequest} valuesHidden={valuesHidden} onToggleValues={() => setValuesHidden(value => !value)} />}
+    {native && screen === 'review' && <DiagnosticPanel native={native} busy={busy} run={run} mode="inbox" onTools={() => navigate('tools')} />}
+    {toolsOpen && <Action title="Voltar para Mais" secondary disabled={busy} onPress={() => navigate('more')} />}
     {toolsOpen && <Text style={styles.warning}>Exemplos abaixo são sintéticos. Diagnóstico real somente mediante ativação explícita nas configurações avançadas.</Text>}
-    {state?.diagnostic?.active && <Text style={styles.warning}>Diagnóstico real ativo até {state.diagnostic.expiresAt ? new Date(state.diagnostic.expiresAt).toLocaleString() : "expirar"}. Fonte: Nubank. Pare a coleta nas configurações avançadas.</Text>}
-    <ErrorBox message={error ?? state?.lastError ?? null} />
+    {toolsOpen && state?.diagnostic?.active && <Text style={styles.warning}>Diagnóstico real ativo até {state.diagnostic.expiresAt ? new Date(state.diagnostic.expiresAt).toLocaleString() : "expirar"}. Fonte: Nubank. Pare a coleta nas configurações avançadas.</Text>}
+    <ErrorBox message={error ?? (toolsOpen ? state?.lastError ?? null : null)} />
     {!native ? <Card><Text style={styles.body}>Este modo exige o APK próprio. A demonstração financeira continua disponível no Expo Go.</Text></Card> : toolsOpen && <>
       <Card><Text style={styles.heading}>1. Preparar e autorizar</Text>
         <Text style={styles.body}>O Android concede acesso amplo ao serviço. Para os exemplos abaixo, o app filtra o próprio pacote antes de ler conteúdo e aceita só fixtures marcadas. O diagnóstico real tem consentimento separado nas configurações avançadas. Fonte dos exemplos: {state?.sourcePackage ?? 'carregando'}.</Text>
@@ -176,6 +196,15 @@ export function CaptureScreen() {
       </>}
       {state?.observations?.map(item => <Card key={item.id}><Text style={styles.heading}>Revisão {item.revision} · {item.state === 'processed' ? 'interpretada' : item.payload === null ? 'sem bruto' : 'pendente'}</Text><Text selectable style={styles.small}>ID: {item.id}{'\n'}Fonte: {item.sourceKey}{'\n'}Publicada: {item.publishedAt}{'\n'}Capturada: {item.capturedAt}{'\n'}Parser: {item.parserVersion ?? 'sem resultado'}</Text><Text selectable style={styles.small}>{item.parsedJson}</Text></Card>)}
     </>}
-    <Action title="Sobre e licenças" secondary onPress={() => setLegalOpen(true)} />
-  </ScreenScroll><LegalNotices visible={legalOpen} onClose={() => setLegalOpen(false)} /></SafeAreaView>;
+    {(screen === 'more' || !native) && <Action title="Sobre e licenças" secondary onPress={() => setLegalOpen(true)} />}
+  </ScreenScroll>
+    {native && <FinanceNavigation active={screen === 'home' || screen === 'transactions' || screen === 'review' ? screen : screen === 'entry' ? 'new' : 'more'} disabled={busy} onTab={navigate} onNew={() => setNewOpen(true)} />}
+    <Modal visible={newOpen} transparent animationType="slide" onRequestClose={() => setNewOpen(false)}>
+      <View style={{ flex: 1, backgroundColor: '#000000AA', justifyContent: 'flex-end' }}><SafeAreaView edges={['bottom']} style={{ backgroundColor: colors.card, padding: 22, gap: 12, borderTopWidth: 2, borderColor: colors.gold }}>
+        <Text style={styles.heading}>Novo lançamento</Text><Text style={styles.small}>Movimentos da conta disponível</Text>
+        <Action title="↗ Receita" disabled={busy} onPress={() => newEntry('income')} />
+        <Action title="↙ Despesa" disabled={busy} onPress={() => newEntry('expense')} />
+        <Action title="Cancelar" secondary onPress={() => setNewOpen(false)} />
+      </SafeAreaView></View>
+    </Modal><LegalNotices visible={legalOpen} onClose={() => setLegalOpen(false)} /></SafeAreaView>;
 }

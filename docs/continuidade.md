@@ -1,12 +1,20 @@
-# Continuidade — Tique 0.8.0
+# Continuidade — Tique 0.9.0
 
 Atualizado em 30/10/2026. Prioridade do usuário: funcionalidades em incrementos pequenos, depois refinamento UI/UX. A demonstração financeira e os exemplos nativos são sintéticos. A captura diagnóstica é temporária e opcional; a 0.8.0 implementa um livro permanente cifrado de uma conta, com confirmação manual e recuperação.
 
-## Proposta de interface — aguardando avaliação
+## Incremento 0.9.0 — interface aprovada e gráficos
 
-Revisão visual 02 solicitada: menos linhas curvas, amarelo mais intenso e alaranjado, manter ciano e usar off-white. A proposta ativa usa `#FFB020` (ouro âmbar), `#9DECF4` (ciano mantido), `#F3EFE6` (off-white), cantos pequenos e botão + retangular. SVG/PNG v2 em `docs/design/` foram gerados e inspecionados; a primeira proposta está preservada. Apenas documentos e artefatos visuais foram alterados, sem nova release e sem aprovação presumida da 0.8.0.
+Usuário aprovou a revisão visual 02 e autorizou implementar, acrescentando gráficos. Paleta `#080B10`/`#FFB020`/`#9DECF4`/`#F3EFE6`, cantos pequenos, ícones próprios em Views e navegação inferior Início/Movimentos/Revisão/Mais com + central. Formulários foram retirados da visão geral. Gráficos nativos de categorias e receitas/despesas, filtros ao tocar, busca sem acentos, histórico mensal paginado e conferência datada. `dashboard.ts` valida totais e calcula dinheiro/pontos-base com BigInt; larguras visuais não são cálculos de saldo. Anulados ficam fora dos totais/recentes. Ocultar valores do resumo persiste entre meses/abas e é reativado ao retornar do fundo.
 
-Usuário pediu começar o dashboard enquanto valida a 0.8.0 e depois orientou: primeiro propor estilo e menus, usando referências de finanças e paleta preto/ouro/ciano claro. Nenhum código do dashboard ou nova release foi implementado nesta rodada. [Proposta e referências](design/tique-interface-proposta.md), SVG autoral e preview PNG apresentam Início, Movimentos e Revisão com dados fictícios. Navegação sugerida: Início, Movimentos, ação central +, Revisão e Mais. Paleta solicitada registrada; composição/menus ainda aguardam aval. Não marcar o livro 0.8.0 como aprovado: o usuário disse que ainda vai validar no celular.
+Núcleo, schema 2, chaves e formato de backup da 0.8 preservados. Consulta nativa `confirmedEvents` informa à lista diagnóstica IDs financeiros já confirmados; a fila esconde confirmados/descartados e resumos de grupo, sem excluir dados. Assert do cenário financeiro existente verifica o índice. A bateria continua `isolated-native-checks/v5`, 72 checks/70 callbacks. Aparência do sistema Android configurada para ícones claros, fundo escuro e âmbar, sem nova dependência.
+
+TypeScript/38 testes aprovados, 54 JVM e 70 cenários Android compilados. Sem execução Android ou runner no servidor. Prévia auxiliar em HTML com primitivas adaptadas e dados inventados usada para composição/interação; não é Android. Logs `.local/dashboard-final-check.log`, `.local/dashboard-final-build.log`; preview local `.local/dashboard-layout-preview.png`. Build limitado a 12 GiB/16 CPUs. [Roteiro](releases/v0.9.0-alpha.1.md). Publicação em preparação; checkpoint necessário: validação no A36. A 0.8.0 continua sem aprovação física informada; somente a direção visual foi aprovada nesta rodada. Próximo incremento: validar estes fluxos e então importação de extrato exportado, com staging/prévia/reconciliação.
+
+## Histórico da proposta de interface — aprovado e implementado na 0.9.0
+
+Revisão visual 02 solicitada: menos linhas curvas, amarelo mais intenso e alaranjado, manter ciano e usar off-white. A proposta usa `#FFB020` (ouro âmbar), `#9DECF4` (ciano mantido), `#F3EFE6` (off-white), cantos pequenos e botão + retangular. SVG/PNG v2 em `docs/design/` foram gerados e inspecionados; a primeira proposta está preservada. Naquela rodada só houve documentação; a implementação foi autorizada na mensagem seguinte e está descrita acima.
+
+Usuário pediu começar o dashboard enquanto valida a 0.8.0 e depois orientou propor primeiro estilo e menus, usando referências de finanças e paleta preto/ouro/ciano claro. [Proposta e referências](design/tique-interface-proposta.md), SVG autoral e preview PNG apresentam Início, Movimentos e Revisão com dados fictícios. Composição e menus foram aprovados para implementação na 0.9.0. Não marcar o livro 0.8.0 como aprovado: o usuário disse que ainda vai validar no celular.
 
 ## Incremento 0.8.0 — livro permanente, conferência e recuperação
 

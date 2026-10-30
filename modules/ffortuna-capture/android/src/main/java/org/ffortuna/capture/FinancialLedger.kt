@@ -37,6 +37,9 @@ class FinancialLedger(private val db:SQLiteDatabase) {
         try { val result=block();validate();FinancialBackup.encode(this).fill(0);db.setTransactionSuccessful();return result } finally { db.endTransaction() }
     }
     fun configured()=db.rawQuery("SELECT COUNT(*) FROM finance_profile",null).use { it.moveToFirst();it.getInt(0)==1 }
+    fun confirmedEvents():Map<String,String> = db.rawQuery("SELECT source_event_id,id FROM finance_transactions WHERE source_event_id IS NOT NULL",null).use { rows ->
+        buildMap { while(rows.moveToNext()) put(rows.getString(0),rows.getString(1)) }
+    }
     private fun profile():Pair<String,Long> = db.rawQuery("SELECT opening_date,opening_cents FROM finance_profile WHERE id=1",null).use {
         if(!it.moveToFirst()) throw FinanceFailure("ACCOUNT_REQUIRED");it.getString(0) to it.getLong(1)
     }

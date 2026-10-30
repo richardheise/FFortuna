@@ -111,3 +111,10 @@ Nenhuma dependência nova: livro, snapshots e restauração usam SQLCipher, Keys
 
 
 Publicação final: `v0.8.0-alpha.2`, APK versionCode 11, fonte `3cd74d93a82c96b3a48b5735679375ec86db9f32` (214 arquivos conferidos byte a byte). Nove hashes/tamanhos de anexos remotos conferidos antes da publicação e download público HTTP 200 sem autenticação. O primeiro candidato, `v0.8.0-alpha.1`, foi preservado como rascunho não publicado para ajustar a recarga do catálogo após restauração; nenhuma tag ou asset histórico foi substituído. A 0.8.0 ainda aguarda execução da bateria e do roteiro no celular.
+
+
+## Incremento 0.9.0 — dashboard e navegação
+
+Sem dependências novas: gráficos e ícones próprios usam componentes nativos, sem biblioteca externa ou assets de concorrentes. Inspeção do APK final aprovou os avisos e a AGPL byte a byte, assinatura preservada, bundle offline, backup Android desabilitado, ausência de INTERNET e alinhamento de 16 KiB nas 23 bibliotecas. Inventário mantido: 71 pacotes npm, 189 coordenadas Maven, 24 suplementos C/C++, zero pendências de textos identificadas.
+
+APK 0.9.0/code 12, 46.444.824 bytes, SHA-256 `b0db3dc82bdc86fbc6424835691d3d54e00c34c9428ba03cdc78793f152f8553`. TypeScript estrito e 38 testes TypeScript, mais 54 JVM aprovados; 70 cenários Android compilados. Os 72 checks da interface, os fluxos financeiros e a nova navegação aguardam validação no A36. Não houve execução JUnit Android neste servidor. A prévia auxiliar com primitivas HTML não equivale a execução React Native. [Roteiro da entrega](releases/v0.9.0-alpha.1.md). Fonte correspondente à tag e nove anexos acompanham a publicação; distribuições anteriores ficam intactas.

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Alert, AppState, Text, View } from 'react-native';
 import { CandidatePanel } from './CandidatePanel';
 import { ClassificationPanel } from './ClassificationPanel';
-import { Action, Card, Field, styles } from '../ui/common';
+import { Action, Card, Field, colors, styles } from '../ui/common';
 import type {
   CaptureModule, DiagnosticFields, DiagnosticResult, DiagnosticSample,
   DiagnosticSampleInfo, DiagnosticStatus,
@@ -12,6 +12,8 @@ type Props = {
   native: CaptureModule;
   busy: boolean;
   run: (task: () => Promise<unknown>) => Promise<void>;
+  mode?: 'full' | 'inbox';
+  onTools?: () => void;
 };
 type PrivateReviewState = {
   sample: DiagnosticSample | null;
@@ -56,7 +58,7 @@ function failureMessage(code?: string) {
 
 function blank(value: string) { return value.length === 0 ? '—' : value; }
 
-export function DiagnosticPanel({ native, busy, run }: Props) {
+export function DiagnosticPanel({ native, busy, run, mode = 'full', onTools }: Props) {
   const [catalogOpen, setCatalogOpen] = useState(false);
   const [candidateId, setCandidateId] = useState<string | null>(null);
   const [status, setStatus] = useState<DiagnosticStatus | null>(null);
@@ -243,11 +245,22 @@ export function DiagnosticPanel({ native, busy, run }: Props) {
 
   const opened = privateState.current.sample;
   const fields = privateState.current.fields;
-  const visibleSamples = samples.slice(0, visibleCount);
+  const availableSamples = mode === 'inbox' ? samples.filter(sample => !sample.isSummary && sample.candidateReviewStatus !== 'dismissed' && !sample.transactionId) : samples;
+  const visibleSamples = availableSamples.slice(0, visibleCount);
   const source = status?.source;
   void privateRevision;
 
   return <>
+    {mode === 'inbox' && <Card>
+      <Text style={styles.heading}>Revisão</Text>
+      <Text style={styles.body}>{availableSamples.length} observações aguardando decisão</Text>
+      <Text style={styles.small}>Captura {status?.active ? 'ativa' : 'parada'}{status?.expiresAt && status.active ? ` até ${new Date(status.expiresAt).toLocaleString()}` : ''}. As notificações são temporárias; o lançamento só entra no livro após confirmação.</Text>
+      {error && <Text style={styles.error}>{error}</Text>}{message && <Text style={styles.small}>{message}</Text>}
+      {status?.processingFailureCode && <Text style={styles.warning}>Há uma interpretação pendente. Abra o original para conferir. ({status.processingFailureCode})</Text>}
+      <Action secondary title="Atualizar pendências" disabled={busy} onPress={() => void refresh()} />
+      {onTools && <Action secondary title="Configurar captura e permissões" disabled={busy} onPress={onTools} />}
+    </Card>}
+    {mode === 'full' && <>
     <Action secondary title={catalogOpen ? 'Fechar categorias e tags' : 'Gerenciar categorias e tags'} disabled={busy || !!candidateId || !!opened} onPress={() => setCatalogOpen(value => !value)} />
     {catalogOpen && <ClassificationPanel native={native} busy={busy} run={run} />}
     <Card>
@@ -279,20 +292,21 @@ export function DiagnosticPanel({ native, busy, run }: Props) {
       <Text style={styles.small}>Limites: até 24 horas, 200 observações e retenção de 7 dias. Parar não apaga. A origem não é tratada como confiável só por estar instalada.</Text>
     </Card>
 
+    </>}
     <Card>
-      <Text style={styles.heading}>Observações para revisão</Text>
-      <Text style={styles.small}>{status?.count ?? samples.length} coletadas · {status?.reviewedCount ?? samples.filter(sample => sample.hasReview).length} revisadas · exibindo {visibleSamples.length} de {samples.length} metadados.</Text>
-      {visibleSamples.length === 0 ? <Text style={styles.small}>Nenhuma observação disponível.</Text> : visibleSamples.map(info => <View key={info.id} style={{ gap: 6, borderTopWidth: 1, borderColor: '#DCE3D9', paddingTop: 10 }}>
+      <Text style={styles.heading}>{mode === 'inbox' ? 'Para revisar' : 'Observações para revisão'}</Text>
+      <Text style={styles.small}>Exibindo {visibleSamples.length} de {availableSamples.length} observações{mode === 'inbox' ? ' ainda não confirmadas ou descartadas' : ''}.</Text>
+      {visibleSamples.length === 0 ? <Text style={styles.small}>Nenhuma observação disponível.</Text> : visibleSamples.map(info => <View key={info.id} style={{ gap: 6, borderTopWidth: 1, borderColor: colors.line, paddingTop: 10 }}>
         <Text style={styles.small}>Revisão {info.revision} · capturada {new Date(info.capturedAt).toLocaleString()} · publicada {new Date(info.publishedAt).toLocaleString()}</Text>
         <Text style={styles.small}>{info.isSummary ? 'Resumo de grupo' : 'Notificação individual'} · {info.truncated ? 'texto truncado' : 'sem truncamento pelo Tique'} · {info.hasText ? 'contém texto' : 'sem texto'} · {info.hasReview ? 'revisada' : 'não revisada'}</Text>
         <Text style={styles.small}>{info.candidateParsedAt ? `Prévia interpretada ${new Date(info.candidateParsedAt).toLocaleString()}` : 'Original ainda sem prévia'}{info.candidateReviewStatus ? ` · revisão local: ${info.candidateReviewStatus}` : ''}</Text>
         <View style={styles.wrap}>
           {!info.isSummary && <Action title="Interpretar original" secondary disabled={busy} onPress={() => { clearPrivateState();setCandidateId(info.id); }} />}
-          <Action title="Preparar cópia para exportação" secondary disabled={busy} onPress={() => void openSample(info)} />
-          {info.hasReview && <Action title="Excluir revisão" secondary disabled={busy} onPress={() => confirmExclude(info)} />}
+          {mode === 'full' && <Action title="Preparar cópia para exportação" secondary disabled={busy} onPress={() => void openSample(info)} />}
+          {mode === 'full' && info.hasReview && <Action title="Excluir revisão" secondary disabled={busy} onPress={() => confirmExclude(info)} />}
         </View>
       </View>)}
-      {samples.length > visibleCount && <Action title="Mostrar mais" secondary disabled={busy} onPress={() => setVisibleCount(count => count + PAGE_SIZE)} />}
+      {availableSamples.length > visibleCount && <Action title="Mostrar mais" secondary disabled={busy} onPress={() => setVisibleCount(count => count + PAGE_SIZE)} />}
     </Card>
 
     {candidateId && <CandidatePanel key={candidateId} native={native} busy={busy} run={run} sampleId={candidateId} onClose={() => { setCandidateId(null);void refresh(); }} />}
@@ -317,7 +331,7 @@ export function DiagnosticPanel({ native, busy, run }: Props) {
       </View>
     </Card>}
 
-    <Card>
+    {mode === 'full' && <Card>
       <Text style={styles.heading}>Exportar somente revisões</Text>
       <Text style={styles.body}>Gera um arquivo .ffortuna-samples cifrado localmente. Inclui apenas campos revisados e confirmados. Não compartilha nem envia o arquivo. Este formato é independente dos backups da caixa sintética.</Text>
       <Field label="Senha (12 a 128 caracteres)" value={privateState.current.password} onChangeText={value => { privateState.current.password = value; setPrivateRevision(revision => revision + 1); }} editable={!busy} secureTextEntry autoCapitalize="none" autoCorrect={false} autoComplete="off" importantForAutofill="no" maxLength={128} />
@@ -330,6 +344,6 @@ export function DiagnosticPanel({ native, busy, run }: Props) {
         });
       }} />
       <Action title="Exportar revisões cifradas" disabled={busy || !!opened || !!candidateId || privateState.current.password.length < 12 || privateState.current.password.length > 128 || privateState.current.password !== privateState.current.confirmation || (status?.reviewedCount ?? 0) === 0} onPress={exportReviewed} />
-    </Card>
+    </Card>}
   </>;
 }

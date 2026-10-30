@@ -1,5 +1,15 @@
-const { withAndroidManifest, withAppBuildGradle, withProjectBuildGradle, withMainActivity } = require('expo/config-plugins');
+const { withAndroidManifest, withAndroidStyles, withAppBuildGradle, withProjectBuildGradle, withMainActivity } = require('expo/config-plugins');
 module.exports = function withCapturePoc(config) {
+  config = withAndroidStyles(config, (mod) => {
+    const theme = mod.modResults.resources.style.find(style => style.$.name === 'AppTheme');
+    if (!theme) throw new Error('AppTheme missing; dark system UI cannot be configured.');
+    theme.item ??= [];
+    for (const [name, value] of Object.entries({ 'android:windowLightStatusBar': 'false', 'android:windowLightNavigationBar': 'false', 'android:windowBackground': '#080B10', colorAccent: '#FFB020' })) {
+      theme.item = theme.item.filter(item => item.$.name !== name);
+      theme.item.push({ $: { name }, _: value });
+    }
+    return mod;
+  });
   config = withAndroidManifest(config, (mod) => {
     const application = mod.modResults.manifest.application[0].$;
     application['android:allowBackup'] = 'false';

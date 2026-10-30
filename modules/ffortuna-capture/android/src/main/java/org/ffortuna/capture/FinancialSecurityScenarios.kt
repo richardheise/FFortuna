@@ -147,6 +147,7 @@ class FinancialSecurityScenarios(private val context: Context) {
                 val id = ledger.post(request, source)
                 expect(ledger.post(request, source) == id, "FINANCE_SOURCE_RETRY")
                 expect(ledger.transactionForEvent(event)?.get("id") == id, "FINANCE_SOURCE_LINK")
+                expect(ledger.confirmedEvents()[event] == id && ledger.confirmedEvents().size == 1, "FINANCE_SOURCE_INBOX_INDEX")
                 expect(ledger.rows("finance_transactions").size == 2, "FINANCE_SOURCE_DUPLICATE")
                 ledger.validate()
             }

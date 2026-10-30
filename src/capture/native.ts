@@ -121,6 +121,7 @@ export interface DiagnosticStatus {
 }
 export interface DiagnosticFields { title: string; text: string; bigText: string; subText: string; textLines: string[] }
 export interface DiagnosticSampleInfo {
+  transactionId?: string | null;
   id: string; revision: number; publishedAt: string; capturedAt: string;
   isSummary: boolean; truncated: boolean; hasText: boolean; hasReview: boolean; candidateParsedAt?: string | null; candidateReviewStatus?: string | null;
 }

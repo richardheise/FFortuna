@@ -1,6 +1,6 @@
 # Tique — proposta visual e de navegação, revisão 02
 
-Status: **proposta para discussão, ainda não aplicada ao APK**. O usuário pediu menos curvas, um amarelo mais intenso puxando para laranja, manutenção do ciano e uso de off-white. A revisão 02 aplica essa direção; hierarquia, menus e composição continuam em avaliação. A validação física do livro 0.8.0 continua pendente e não deve ser considerada aprovada por esta discussão.
+Status: **revisão 02 aprovada pelo usuário e implementada na 0.9.0; validação visual no aparelho pendente**. O usuário pediu menos curvas, um amarelo mais intenso puxando para laranja, manutenção do ciano e uso de off-white. A revisão 02 aplica essa direção; o usuário aprovou essa direção e pediu gráficos no app. A validação física do livro 0.8.0 continua pendente e não deve ser considerada aprovada por esta discussão.
 
 ![Três telas conceituais, com dados fictícios](tique-interface-proposta-v2.png)
 
@@ -57,7 +57,7 @@ Na revisão, o resumo abre o formulário para conferir valor, natureza, categori
 
 ## Histórico visual
 
-A [primeira proposta](tique-interface-proposta.png) e seu [SVG](tique-interface-proposta.svg) foram preservados para comparação. A revisão 02 substitui o dourado suave e os cartões arredondados por ouro âmbar mais saturado, off-white e geometria mais reta. O ciano e os destinos de navegação foram mantidos. Nenhuma mudança foi aplicada ao código do produto ou ao APK.
+A [primeira proposta](tique-interface-proposta.png) e seu [SVG](tique-interface-proposta.svg) foram preservados para comparação. A revisão 02 substitui o dourado suave e os cartões arredondados por ouro âmbar mais saturado, off-white e geometria mais reta. O ciano e os destinos de navegação foram mantidos. A 0.9.0 aplica o conceito com gráficos, filtros e navegação; as imagens permanecem como referência conceitual com dados fictícios, não como capturas do APK.
 
 ## Referências consultadas
 
