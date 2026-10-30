@@ -6,7 +6,7 @@ Atualizado em 30/10/2026. Prioridade do usuário: funcionalidades em incrementos
 
 O aplicativo e repositório passam a se chamar **Tique**, em referência à deusa grega da fortuna. A identidade anterior FFortuna e a tag de conteúdo `v0.6.0-alpha.1` permanecem no histórico. O repositório atual é [github.com/richardheise/Tique](https://github.com/richardheise/Tique). O snapshot da versão de conteúdo 0.6.0 está preservado em `artifacts/releases/v0.6.0-alpha.1/`.
 
-O build de marca 0.6.1 usa versionCode 7 e os artefatos locais `artifacts/tique-arm64.apk` e `artifacts/tique-source.tar.gz`; a tag prevista é `v0.6.1-alpha.1`. A pré-release ainda não foi publicada e a versão 0.6.1 não foi validada no aparelho. Os registros de validação são os mesmos 50 testes JVM e 30 TypeScript aprovados, 46 cenários Android compilados e roteiro de 48 verificações nativas pendente. Não interpretar esses dados como aprovação de aparelho da 0.6.1.
+O build de marca 0.6.1 usa versionCode 7 e os artefatos locais `artifacts/tique-arm64.apk` e `artifacts/tique-source.tar.gz`; a tag imutável é `v0.6.1-alpha.1`. A pré-release foi publicada; a versão 0.6.1 ainda não foi validada no aparelho. Os registros de validação são os mesmos 50 testes JVM e 30 TypeScript aprovados, 46 cenários Android compilados e roteiro de 48 verificações nativas pendente. Não interpretar esses dados como aprovação de aparelho da 0.6.1.
 
 Para permitir atualização por cima das instalações anteriores, foram preservados o application ID `org.ffortuna.capturepoc`, certificado de assinatura, bancos, chaves, formatos e protocolos internos, variáveis de ambiente e o caminho de trabalho local `/home/heise/FFortuna`. Esses nomes antigos são identificadores de compatibilidade, não a marca atual.
 
@@ -88,12 +88,12 @@ Toolchain ignorada em `.local/android-toolchain`: Temurin 17.0.21+9, SDK 36, Bui
 
 ```sh
 (cd artifacts && sha256sum -c SHA256SUMS)
-GH_CONFIG_DIR=/home/heise/FFortuna/.local/github-cli/config .local/github-cli/gh release view v0.5.0-alpha.1 --repo richardheise/Tique
+GH_CONFIG_DIR=/home/heise/FFortuna/.local/github-cli/config .local/github-cli/gh release view v0.6.1-alpha.1 --repo richardheise/Tique
 ```
 
 ## Git e publicação
 
-Branch main, origin fetch HTTPS e push SSH `git@github.com:richardheise/Tique.git`. Fonte/nota/roteiro enviados e tag `v0.5.0-alpha.1` publicada. Atualizações posteriores da documentação não mudam a tag ou o fonte do APK. Usar outra tag para nova compilação distribuída; não mover tags/substituir anexos anteriores.
+Branch main, origin fetch HTTPS e push SSH `git@github.com:richardheise/Tique.git`. Fonte/nota/roteiro enviados e tag `v0.6.1-alpha.1` publicada. Atualizações posteriores da documentação não mudam a tag ou o fonte do APK. Usar outra tag para nova compilação distribuída; não mover tags/substituir anexos anteriores.
 
 GitHub CLI autenticado como `richardheise`: `.local/github-cli/gh`, sempre com `GH_CONFIG_DIR=/home/heise/FFortuna/.local/github-cli/config`. Configuração restrita/ignorada; não imprimir/copiar credenciais. Essa autenticação é independente das contas Codex. Notas atuais em [releases/v0.5.0-alpha.1.md](releases/v0.5.0-alpha.1.md). Artefatos permanentes em `artifacts/`, com snapshots por versão em `artifacts/releases/`.
 
@@ -106,3 +106,5 @@ Na prova 0.2.0, o A36 autorizou/conectou o listener, mas a caixa falhou por `exe
 O usuário aprovou os oito passos manuais da 0.3.0 no A36/Android 16 em 25/10, incluindo senha errada, caixas anteriores, reinstalação sem a chave antiga e persistência/integridade. Isso não equivale a executar os testes instrumentados nem valida a 0.4.0. Não pedir repetição integral da 0.3.0 sem mudança relevante/falha. Tag anterior `v0.3.0-alpha.1` no commit `11174020cc5df9236041674fd44783b2f3225a2c` preservada com seus nove anexos em `artifacts/releases/v0.3.0-alpha.1/`.
 
 Permanecem 18 alertas npm altos de duas falhas upstream sem patch na auditoria de 22/10; zero moderados após a correção aplicada. [Dependências](dependencias.md). Não usar audit fix --force indiscriminadamente. Expo-doctor não foi aprovado. Nenhum código/asset Finan+ ou PennyWise foi copiado; original AGPL-3.0-only, avisos de terceiros preservados.
+
+Publicação Tique 0.6.1 concluída em 30/10/2026: [release](https://github.com/richardheise/Tique/releases/tag/v0.6.1-alpha.1) e [APK direto](https://github.com/richardheise/Tique/releases/download/v0.6.1-alpha.1/tique-arm64.apk). Nove anexos comparados por tamanho/SHA-256 remoto; download público HTTP 200. Fonte dos 194 arquivos da tag no commit `0d42e2abc3e0f8d2527d9e7e5760182535631dd2`, conferido byte a byte. Fonte/artefatos locais em `artifacts/releases/v0.6.1-alpha.1/`. APK anterior 0.6.0 também consultado no repositório renomeado e seu hash original permaneceu igual. Nome/marca atualizados, protocolos/assinatura/dados legados preservados no código; teste de atualização e roteiro de 48 verificações no A36 seguem pendentes.
