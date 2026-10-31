@@ -16,6 +16,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 class FFortunaCaptureModule:Module() {
     private lateinit var createBackup:AppContextActivityResultLauncher<String,Uri?>
+    private lateinit var openStatement:AppContextActivityResultLauncher<String,Uri?>
     private lateinit var openBackup:AppContextActivityResultLauncher<String,Uri?>
     private val backupBusy=AtomicBoolean(false)
     private fun context() = requireNotNull(appContext.reactContext).applicationContext
@@ -25,7 +26,7 @@ class FFortunaCaptureModule:Module() {
         catch(error:Exception) {
             var cause:Throwable=error
             while((cause is java.util.concurrent.ExecutionException || cause is java.util.concurrent.CompletionException) && cause.cause!=null) cause=cause.cause!!
-            mapOf("status" to "error","code" to when(cause) { is BackupFailure -> cause.problem.name;is LocalRecoveryFailure -> cause.code;is FinanceFailure -> cause.code;is DiagnosticFailure -> cause.code;else -> "STORAGE" })
+            mapOf("status" to "error","code" to when(cause) { is BackupFailure -> cause.problem.name;is LocalRecoveryFailure -> cause.code;is FinanceFailure -> cause.code;is DiagnosticFailure -> cause.code;is StatementFailure -> cause.code;else -> "STORAGE" })
         }
         finally { backupBusy.set(false) }
     }
@@ -36,7 +37,25 @@ class FFortunaCaptureModule:Module() {
         RegisterActivityContracts {
             createBackup=registerForActivityResult(BackupDocumentContract(true))
             openBackup=registerForActivityResult(BackupDocumentContract(false))
+            openStatement=registerForActivityResult(StatementDocumentContract())
         }
+        AsyncFunction("reconnectCapture") {
+            android.service.notification.NotificationListenerService.requestRebind(android.content.ComponentName(context(),SyntheticNotificationListener::class.java))
+        }
+        AsyncFunction("openBankApp") {
+            val launch=context().packageManager.getLaunchIntentForPackage(DiagnosticPolicy.PACKAGE) ?: throw DiagnosticFailure("SOURCE_MISSING")
+            context().startActivity(launch.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+        }
+        AsyncFunction("dailyState") { diagnosticAction { CaptureRuntime.dailyState(context()) } }
+        AsyncFunction("startTracking") { diagnosticAction { mapOf("status" to "ok","snapshot" to CaptureRuntime.startTracking(context())) } }
+        AsyncFunction("startDailyCapture") { signer:String -> diagnosticAction { CaptureRuntime.startDailyCapture(context(),signer);mapOf("status" to "ok") } }
+        AsyncFunction("linkObserved") { id:String,transactionId:String -> diagnosticAction { mapOf("status" to "ok","snapshot" to CaptureRuntime.linkObserved(context(),id,transactionId)) } }
+        AsyncFunction("dismissSharedStatement") { StatementIntake.clear() }
+        AsyncFunction("importSharedStatement") Coroutine { -> backupAction { withContext(Dispatchers.IO) { StatementIntake.importPending(context()) as Map<String,Any> } } }
+        AsyncFunction("chooseStatement") Coroutine { -> backupAction {
+            val uri=withContext(Dispatchers.Main) { openStatement.launch("open") }
+            if(uri==null) mapOf("status" to "cancelled") else withContext(Dispatchers.IO) { StatementIntake.read(context(),uri) as Map<String,Any> }
+        } }
         AsyncFunction("financeSnapshot") { month:String -> diagnosticAction { mapOf("status" to "ok","snapshot" to CaptureRuntime.financeSnapshot(context(),month)) } }
         AsyncFunction("setupFinance") { json:String -> diagnosticAction { mapOf("status" to "ok","snapshot" to CaptureRuntime.setupFinance(context(),json)) } }
         AsyncFunction("createFinanceTransaction") { json:String -> diagnosticAction { mapOf("status" to "ok")+CaptureRuntime.createFinanceTransaction(context(),json) } }

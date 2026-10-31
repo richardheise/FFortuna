@@ -120,3 +120,10 @@ Sem dependências novas: gráficos e ícones próprios usam componentes nativos,
 APK 0.9.0/code 12, 46.444.824 bytes, SHA-256 `b0db3dc82bdc86fbc6424835691d3d54e00c34c9428ba03cdc78793f152f8553`. TypeScript estrito e 38 testes TypeScript, mais 54 JVM aprovados; 70 cenários Android compilados. Os 72 checks da interface, os fluxos financeiros e a nova navegação aguardam validação no A36. Não houve execução JUnit Android neste servidor. A prévia auxiliar com primitivas HTML não equivale a execução React Native. [Roteiro da entrega](releases/v0.9.0-alpha.1.md). Fonte correspondente à tag e nove anexos acompanham a publicação; distribuições anteriores ficam intactas.
 
 Pré-release [`v0.9.0-alpha.1`](https://github.com/richardheise/Tique/releases/tag/v0.9.0-alpha.1) publicada com nove anexos; tamanhos e digests remotos conferidos, API pública e download HTTP 200 sem autenticação. Fonte correspondente ao commit `8c32fcdc8b428058496197837eb0fe1803950acc`, 224 arquivos comparados byte a byte. Hash do arquivo fonte `5ca09ae9f075e0ba251f0e64b73acbc38a6357b8eecc73aa53f8b53d67a4521d`; release ID `429567586`. Snapshot local preservado. Publicação não equivale à validação física.
+
+
+## Incremento 0.10.0 — uso diário e extratos opcionais
+
+Sem novas dependências, código/assets de terceiros ou serviços externos. Inventário `--check` mantido: 71 pacotes npm, 189 coordenadas Maven, 23 bibliotecas nativas e 24 suplementos C/C++, zero pendências de textos identificadas. Avisos/AGPL no APK conferidos byte a byte; assinatura preservada, bundle offline, backup Android desabilitado, sem INTERNET e alinhamento de 16 KiB nas bibliotecas.
+
+APK 0.10.0/code 13: 46484428 bytes, SHA-256 `fd044bc9ee76cc483d62661224ecd483909ca8af4e6059c89a4e9be42d037452`. TypeScript estrito e 38 testes TypeScript, 61 JVM aprovados; 76 testes Android compilados, não executados no servidor. Source map comparado com 12 arquivos finais de captura/interface. A avaliação física será pelo uso cotidiano, sem novo roteiro ou aprovação presumida. [Notas](releases/v0.10.0-alpha.1.md). Fonte exato da tag e nove anexos acompanham a distribuição; releases anteriores preservadas.

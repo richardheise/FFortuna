@@ -23,10 +23,10 @@ class CandidateStore(private val db:SQLiteDatabase) {
             "INPUT_LIMIT" to "O texto excede os limites do parser.","EVIDENCE_LIMIT" to "Há ocorrências demais para escolher um valor seguro.")
     }
     private data class Source(val id:String,val sourceKey:String,val revision:Int,val publishedAt:String,val capturedAt:String,
-        val payload:String?,val summary:Boolean,val truncated:Boolean)
-    private fun source(id:String):Source=db.rawQuery("SELECT id,source_key,revision,published_at,captured_at,payload,is_summary,truncated FROM samples WHERE id=?",arrayOf(id)).use {
+        val payload:String?,val summary:Boolean,val truncated:Boolean,val mode:String,val origin:String?)
+    private fun source(id:String):Source=db.rawQuery("SELECT id,source_key,revision,published_at,captured_at,payload,is_summary,truncated,mode,origin_json FROM samples WHERE id=?",arrayOf(id)).use {
         if(!it.moveToFirst()) throw DiagnosticFailure("SAMPLE_MISSING")
-        Source(it.getString(0),it.getString(1),it.getInt(2),it.getString(3),it.getString(4),if(it.isNull(5)) null else it.getString(5),it.getInt(6)==1,it.getInt(7)==1)
+        Source(it.getString(0),it.getString(1),it.getInt(2),it.getString(3),it.getString(4),if(it.isNull(5)) null else it.getString(5),it.getInt(6)==1,it.getInt(7)==1,it.getString(8),if(it.isNull(9)) null else it.getString(9))
     }
     private fun original(source:Source):DiagnosticFields {
         if(source.summary) throw DiagnosticFailure("GROUP_SUMMARY")
@@ -54,7 +54,7 @@ class CandidateStore(private val db:SQLiteDatabase) {
     fun processCurrentSession(now:Instant):Int {
         val pending=mutableListOf<String>()
         db.rawQuery("""SELECT s.id FROM samples s LEFT JOIN candidate_parses p ON p.sample_id=s.id
-            WHERE s.session_id=(SELECT session_id FROM session WHERE id=1) AND s.is_summary=0 AND s.payload IS NOT NULL
+            WHERE (s.session_id=(SELECT session_id FROM session WHERE id=1) OR s.mode IN ('daily','import')) AND s.is_summary=0 AND s.payload IS NOT NULL AND s.origin_json IS NULL
             AND (p.sample_id IS NULL OR p.parser_version!=?) ORDER BY s.rowid""",arrayOf(BrlNotificationParser.VERSION)).use {
             while(it.moveToNext()) pending.add(it.getString(0))
         }
@@ -62,9 +62,13 @@ class CandidateStore(private val db:SQLiteDatabase) {
         return pending.size
     }
     fun detail(id:String,now:Instant,force:Boolean=false):Map<String,Any?> {
-        val source=source(id);val original=original(source)
+        val source=source(id)
+        if(source.summary) throw DiagnosticFailure("GROUP_SUMMARY")
+        val original=source.payload?.let(DiagnosticFields::decode) ?: DiagnosticFields()
         val version=db.rawQuery("SELECT parser_version FROM candidate_parses WHERE sample_id=?",arrayOf(id)).use { if(it.moveToFirst()) it.getString(0) else null }
-        if(force || version!=BrlNotificationParser.VERSION) parse(source,now)
+        if(source.origin==null && (force || version!=BrlNotificationParser.VERSION) && source.payload!=null) parse(source,now)
+        if(version==null && source.payload==null) throw DiagnosticFailure("PAYLOAD_UNAVAILABLE")
+        if(force && source.payload==null) throw DiagnosticFailure("PAYLOAD_UNAVAILABLE")
         val parsed=db.rawQuery("SELECT result_json,parsed_at FROM candidate_parses WHERE sample_id=?",arrayOf(id)).use {
             check(it.moveToFirst());JSONObject(it.getString(0)) to it.getString(1)
         }
@@ -79,7 +83,9 @@ class CandidateStore(private val db:SQLiteDatabase) {
         return mapOf("id" to id,"eventId" to id,"sourceKey" to source.sourceKey,"revision" to source.revision,"publishedAt" to source.publishedAt,"capturedAt" to source.capturedAt,
             "parsedAt" to parsed.second,"parsed" to jsonMap(parsed.first),"original" to original.toMap(),
             "review" to edit?.let { jsonMap(it.first) },"reviewedAt" to edit?.second,"previousSampleId" to previous,
-            "relatedReviewExists" to related,"hasLaterRevision" to later,"temporary" to true,"transactionId" to null)
+            "relatedReviewExists" to related,"hasLaterRevision" to later,"temporary" to (source.mode=="diagnostic"),"transactionId" to null,
+            "originalAvailable" to (source.payload!=null),"origin" to (if(source.origin==null) "notification" else "statement"),
+            "importInfo" to source.origin?.let { jsonMap(JSONObject(it)) })
     }
     fun save(id:String,json:String,now:Instant):Map<String,Any?> {
         if(json.length>8192) throw DiagnosticFailure("INVALID_CANDIDATE_REVIEW")

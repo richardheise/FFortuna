@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import * as Crypto from 'expo-crypto';
-import { Alert, AppState, Text, View } from 'react-native';
+import { Alert, AppState, Pressable, Text, View } from 'react-native';
 import { formatBRL, parseBRL } from '../core/money';
 import { Action, Card, Chip, ErrorBox, Field, formatMonth, colors, styles } from '../ui/common';
 import { ClassificationPanel } from './ClassificationPanel';
@@ -9,7 +9,7 @@ import { categoryKey, filterTransactions } from './dashboard';
 import type { BackupResult, CaptureModule, FinanceResult, FinanceSnapshot, FinanceTransaction, LocalRecoveryEntry } from './native';
 
 export type FinanceView = 'home' | 'transactions' | 'entry' | 'more' | 'balance' | 'categories';
-type Props = { native: CaptureModule; busy: boolean; run: (task: () => Promise<unknown>) => Promise<void>; view: FinanceView; onNavigate: (view: FinanceView) => void; onTools: () => void; entryKind?: 'income' | 'expense'; entryRequest?: number; valuesHidden: boolean; onToggleValues: () => void };
+type Props = { native: CaptureModule; busy: boolean; run: (task: () => Promise<unknown>) => Promise<void>; view: FinanceView; onNavigate: (view: FinanceView) => void; onTools: () => void; entryKind?: 'income' | 'expense'; entryRequest?: number; valuesHidden: boolean; onToggleValues: () => void; epoch?: number; onChanged?: () => void };
 type ClassificationSelection = { categoryId: string | null; category: string; tagIds: string[] };
 
 const todayLocal = () => {
@@ -81,13 +81,15 @@ const errorMessages: Record<string, string> = {
 };
 function failure(code?: string) { return code ? `${errorMessages[code] ?? 'Operação não concluída.'} (${code})` : 'Operação não concluída.'; }
 
-export function FinancePanel({ native, busy, run, view, onNavigate, onTools, entryKind, entryRequest, valuesHidden, onToggleValues }: Props) {
+export function FinancePanel({ native, busy, run, view, onNavigate, onTools, entryKind, entryRequest, valuesHidden, onToggleValues, epoch, onChanged }: Props) {
   const [month, setMonth] = useState(currentMonthLocal);
   const [visibleCount, setVisibleCount] = useState(50);
   const [catalogEpoch, setCatalogEpoch] = useState(0);
   const [historyKind, setHistoryKind] = useState<'all' | 'income' | 'expense'>('all');
   const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
   const [query, setQuery] = useState('');
+  const [detailsId, setDetailsId] = useState<string | null>(null);
+  const previousBook = useRef<string | undefined>(undefined);
   const [snapshot, setSnapshot] = useState<FinanceSnapshot | null>(null);
   const [loading, setLoading] = useState(true);
   const [localBusy, setLocalBusy] = useState(false);
@@ -168,7 +170,11 @@ export function FinancePanel({ native, busy, run, view, onNavigate, onTools, ent
     return () => { subscription.remove(); mounted.current = false; clearPrivate(false); };
   }, [clearPrivate, refresh]);
 
-  useEffect(() => { if (mounted.current && active.current) void refresh(month); }, [month, refresh]);
+  useEffect(() => { if (mounted.current && active.current) void refresh(month); }, [month, refresh, epoch]);
+  useEffect(() => {
+    if (snapshot?.bookId && previousBook.current && snapshot.bookId !== previousBook.current) resetAfterBoxChange();
+    if (snapshot?.bookId) previousBook.current = snapshot.bookId;
+  }, [snapshot?.bookId]);
   useEffect(() => {
     if (!entryKind) return;
     commandId.current = null;setKind(entryKind);setAmount('');setDescription('');setEffectiveDate(todayLocal());
@@ -216,13 +222,13 @@ export function FinancePanel({ native, busy, run, view, onNavigate, onTools, ent
           if (result && 'status' in result && result.status === 'error') setError(failure(result.code));
           else {
             if(result && 'status' in result && result.status === 'restored') resetAfterBoxChange();
-            if (after) after(result); if (success) setMessage(success);
+            if (after) after(result); if (success) setMessage(success); onChanged?.();
           }
         } catch {
           if (mounted.current && active.current && generation.current === request) setError('Não foi possível concluir a operação financeira.');
         }
       });
-      if (mounted.current && active.current && generation.current === request) await refresh(monthRef.current);
+      if (mounted.current && active.current) { await refresh(monthRef.current); onChanged?.(); }
     } catch {
       if (mounted.current && active.current && generation.current === request) setError('Não foi possível concluir a operação financeira.');
     } finally {
@@ -377,12 +383,9 @@ export function FinancePanel({ native, busy, run, view, onNavigate, onTools, ent
     {message && <Text accessibilityRole="alert" style={styles.small}>{message}</Text>}
     {loading && <Text style={styles.small}>Carregando registros…</Text>}
     {snapshot && !snapshot.configured && view !== 'more' && view !== 'categories' && <Card>
-      <Text style={styles.heading}>Comece pela sua conta</Text>
-      <Text style={styles.body}>Defina o saldo antes dos movimentos que vai registrar a partir da data escolhida. Não inclua caixinhas ou limite de crédito.</Text>
-      {!snapshot.securityChecksPassed && <><Text style={styles.warning}>Antes de configurar, execute as verificações nativas em Mais → Avançado.</Text><Action secondary title="Abrir verificações" disabled={blocked} onPress={onTools} /></>}
-      <Field label="Data de abertura (AAAA-MM-DD)" value={openingDate} onChangeText={setOpeningDate} editable={!blocked} maxLength={10} autoCorrect={false} autoComplete="off" importantForAutofill="no" />
-      <Field label="Saldo de abertura em BRL" value={openingBalance} onChangeText={setOpeningBalance} editable={!blocked} keyboardType="decimal-pad" maxLength={32} autoCorrect={false} autoComplete="off" importantForAutofill="no" />
-      <Action title="Concordo e configurar conta" disabled={blocked || !snapshot.securityChecksPassed || !validDate(openingDate) || !openingBalance.trim()} onPress={consentSetup} />
+      <Text style={styles.heading}>Seu histórico começa aqui</Text>
+      <Text style={styles.small}>Registre entradas e despesas sem informar saldo bancário.</Text>
+      <Action title="Começar" disabled={blocked} onPress={() => void perform(() => nativeRef.current.startTracking(), undefined, 'Pronto para registrar.')} />
     </Card>}
     {snapshot?.configured && (view === 'home' || view === 'transactions') && <View style={[styles.row, { backgroundColor: colors.card, paddingHorizontal: 8, borderRadius: 4 }]}>
       <Action title="‹" accessibilityLabel="Mês anterior" secondary disabled={blocked} onPress={() => monthStep(-1)} />
@@ -393,17 +396,20 @@ export function FinancePanel({ native, busy, run, view, onNavigate, onTools, ent
       onCategory={key => openMovements('expense', key)} onMovements={kind => openMovements(kind)}
       onNew={nextKind => { editKind(nextKind);onNavigate('entry'); }} onBalance={() => onNavigate('balance')} />}
     {ready && view === 'transactions' && <Card>
-      <Text style={styles.heading}>Movimentos</Text>
       <Field label="Buscar descrição, categoria ou tag" value={query} onChangeText={value => { setVisibleCount(50);setQuery(value); }} editable={!blocked} autoCorrect={false} autoComplete="off" importantForAutofill="no" maxLength={100} />
       <View style={styles.wrap}>{(['all','expense','income'] as const).map(value => <Chip key={value} title={value === 'all' ? 'Tudo' : value === 'expense' ? 'Despesas' : 'Receitas'} active={historyKind === value} onPress={() => { if(!blocked) { setHistoryKind(value);setVisibleCount(50); } }} />)}</View>
+      <Chip title="A classificar" active={categoryFilter === categoryKey(null, 'A classificar')} onPress={() => { setCategoryFilter(value => value === categoryKey(null, 'A classificar') ? null : categoryKey(null, 'A classificar'));setVisibleCount(50); }} />
       {categoryFilter && <Action secondary title={`${selectedCategory ?? 'Categoria selecionada'} · limpar filtro`} disabled={blocked} onPress={() => setCategoryFilter(null)} />}
-      <Text style={styles.small}>{filtered.length} registros neste filtro. Anulados permanecem no histórico e não entram nos totais.</Text>
+      <Text style={styles.small}>{filtered.length} registros</Text>
       {transactions.length === 0 && <Text style={styles.small}>Nenhum movimento encontrado.</Text>}
-      {transactions.map((item: FinanceTransaction) => <View key={item.id} style={{ borderTopWidth: 1, borderColor: colors.line, paddingTop: 14, gap: 7 }}>
+      {transactions.map((item: FinanceTransaction, index: number) => <View key={item.id} style={{ borderTopWidth: 1, borderColor: colors.line, paddingTop: 14, gap: 7 }}>
+        {index === 0 || transactions[index-1]?.effectiveDate !== item.effectiveDate ? <Text style={styles.small}>{localDateLabel(item.effectiveDate)}</Text> : null}
+        <Pressable accessibilityRole="button" accessibilityLabel={`Detalhes de ${item.description}`} onPress={() => setDetailsId(value => value === item.id ? null : item.id)} style={{ minHeight: 48, justifyContent: 'center', gap: 6 }}>
         <View style={[styles.row, { justifyContent: 'space-between', flexWrap: 'wrap' }]}><Text style={[styles.label, { flexShrink: 1 }]}>{item.description || 'Sem descrição'}</Text><Text style={{ color: item.voided ? colors.muted : item.kind === 'income' ? colors.cyan : colors.ink, fontSize: 16, fontWeight: '600', textDecorationLine: item.voided ? 'line-through' : 'none' }}>{item.kind === 'income' ? '+ ' : '− '}{formatBRL(item.amountCents)}</Text></View>
-        <Text style={styles.small}>{localDateLabel(item.effectiveDate)} · {item.kind === 'income' ? 'Receita' : 'Despesa'} · {item.category}{item.tags.length ? ` · ${item.tags.join(', ')}` : ''}</Text>
-        <Text style={styles.small}>{item.sourceEventId ? 'Confirmado a partir de notificação' : 'Registro manual'}</Text>
-        {item.voided ? <Text style={styles.small}>Anulado · {item.cancellationReason}</Text> : <Action title="Anular registro" secondary disabled={blocked} onPress={() => requestCancellation(item)} />}
+        <Text style={styles.small}>{item.kind === 'income' ? 'Receita' : 'Despesa'} · {item.category}{item.tags.length ? ` · ${item.tags.join(', ')}` : ''}</Text>
+        <Text style={styles.small}>{item.sourceType === 'statement' ? 'Extrato' : item.sourceEventId ? 'Notificação' : 'Manual'}</Text>
+        </Pressable>
+        {detailsId === item.id && (item.voided ? <Text style={styles.small}>Anulado · {item.cancellationReason}</Text> : <Action title="Anular registro" secondary disabled={blocked} onPress={() => requestCancellation(item)} />)}
         {cancellationId === item.id && <View style={{ gap: 8 }}>
           <Field label="Motivo da anulação" value={cancellationReason} onChangeText={setCancellationReason} editable={!blocked} maxLength={500} multiline autoCorrect={false} autoComplete="off" importantForAutofill="no" />
           <Action title="Confirmar anulação" disabled={blocked || !cancellationReason.trim()} onPress={submitCancellation} />
@@ -415,7 +421,7 @@ export function FinancePanel({ native, busy, run, view, onNavigate, onTools, ent
     {snapshot?.configured && view === 'entry' && <>
       <Card>
         <Text style={styles.heading}>Registrar movimento manual</Text>
-        <Text style={styles.small}>Esta etapa registra somente receitas e despesas manuais. Não importa notificações ou extratos.</Text>
+
         <View style={styles.wrap}>
           <Chip title="Despesa" active={kind === 'expense'} onPress={() => editKind('expense')} />
           <Chip title="Receita" active={kind === 'income'} onPress={() => editKind('income')} />
@@ -446,15 +452,15 @@ export function FinancePanel({ native, busy, run, view, onNavigate, onTools, ent
     {view === 'categories' && <ClassificationPanel key={catalogEpoch} native={native} busy={blocked} run={run} />}
     {view === 'more' && <>
       <Card>
-        <Text style={styles.heading}>Finanças</Text>
-        {snapshot?.profile && <Text style={styles.small}>Uma conta BRL · abertura em {localDateLabel(snapshot.profile.openingDate)}</Text>}
+        <Text style={styles.heading}>Seus registros</Text>
+
         <Action title="Categorias e tags" secondary disabled={blocked} onPress={() => onNavigate('categories')} />
-        <Action title="Conferir saldo" secondary disabled={blocked || !snapshot?.configured} onPress={() => onNavigate('balance')} />
-        <Text style={styles.small}>Saldo calculado depende dos registros confirmados. Importação de extratos, cartões e caixinhas entram em próximas etapas.</Text>
+        <Text style={styles.small}>Dados cifrados neste aparelho.</Text>
       </Card>
     <Card>
         <Action title={advanced ? 'Fechar opções avançadas' : 'Opções avançadas'} secondary disabled={busy} onPress={() => setAdvanced(value => !value)} />
         {advanced && <>
+          <Action title="Conferência de saldo (opcional)" secondary disabled={blocked || !snapshot?.configured} onPress={() => onNavigate('balance')} />
           <Action secondary title="Avançado: captura, permissões e verificações" disabled={busy || localBusy} onPress={onTools} />
           <Text style={styles.heading}>Recuperação local cifrada</Text>
           <Text style={styles.small}>Até três cópias, no máximo uma a cada 24 horas com alterações. Cópias locais incluem livro e catálogo, não o diagnóstico; dependem desta instalação e não são backup portátil.</Text>

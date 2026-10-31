@@ -12,6 +12,7 @@ class SyntheticNotificationListener : NotificationListenerService() {
     override fun onListenerConnected() {
         instance=this; CaptureRuntime.connected=true
         CaptureRuntime.enqueue(this) { it.processPending() }
+        CaptureRuntime.recoverObserved(this)
         replayActive()
     }
     override fun onListenerDisconnected() { instance=null; CaptureRuntime.connected=false }

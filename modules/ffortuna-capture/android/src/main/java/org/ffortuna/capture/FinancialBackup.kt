@@ -14,12 +14,13 @@ object FinancialBackup {
         "finance_entries" to listOf("transaction_id","resource","cents"),
         "finance_tags" to listOf("transaction_id","tag_id"),
         "finance_balance_checks" to listOf("id","effective_date","amount","created_at"),
-        "finance_cancellations" to listOf("transaction_id","reason","cancelled_at"))
+        "finance_cancellations" to listOf("transaction_id","reason","cancelled_at"),
+        "finance_observation_links" to listOf("event_id","transaction_id","source_json"))
     private val integers=setOf("archived","opening_cents","amount","cents")
     private val nullable=setOf("category_id","source_event_id","source_json")
     fun encode(ledger:FinancialLedger):ByteArray {
         val data=FinancialLedger.tables.associateWith { ledger.rows(it) }
-        val plain=JSONObject(linkedMapOf("format" to "tique.financial-book","version" to 1,"rawPayloadsIncluded" to false,"data" to data)).toString().toByteArray(Charsets.UTF_8)
+        val plain=JSONObject(linkedMapOf("format" to "tique.financial-book","version" to 2,"rawPayloadsIncluded" to false,"data" to data)).toString().toByteArray(Charsets.UTF_8)
         if(plain.size>BackupCodec.MAX_PLAINTEXT) { plain.fill(0);throw FinanceFailure("TRANSACTION_LIMIT") }
         return plain
     }
@@ -28,11 +29,12 @@ object FinancialBackup {
             if(plain.size>BackupCodec.MAX_PLAINTEXT) throw BackupFailure(BackupProblem.TOO_LARGE)
             val root=JSONObject(Charsets.UTF_8.newDecoder().decode(ByteBuffer.wrap(plain)).toString())
             require(root.keys().asSequence().toSet()==setOf("format","version","rawPayloadsIncluded","data"))
-            require(root.getString("format")=="tique.financial-book" && root.get("version")==1 && root.get("rawPayloadsIncluded")==false)
-            val data=root.getJSONObject("data");require(data.keys().asSequence().toSet()==columns.keys)
+            require(root.getString("format")=="tique.financial-book" && root.get("version") in setOf(1,2) && root.get("rawPayloadsIncluded")==false)
+            val data=root.getJSONObject("data");val legacy=root.get("version")==1
+            require(data.keys().asSequence().toSet()==(if(legacy) columns.keys-setOf("finance_observation_links") else columns.keys))
             return columns.mapValues { (table,names) ->
-                val rows=data.getJSONArray(table)
-                val limit=when(table) { "classifications" -> 200;"finance_profile" -> 1;"finance_transactions","finance_cancellations" -> 10_000;"finance_entries" -> 20_000;"finance_tags" -> 200_000;else -> 1000 }
+                val rows=if(table=="finance_observation_links" && legacy) org.json.JSONArray() else data.getJSONArray(table)
+                val limit=when(table) { "classifications" -> 200;"finance_profile" -> 1;"finance_transactions","finance_cancellations","finance_observation_links" -> 10_000;"finance_entries" -> 20_000;"finance_tags" -> 200_000;else -> 1000 }
                 require(rows.length()<=limit)
                 (0 until rows.length()).map { index ->
                     val row=rows.getJSONObject(index);require(row.keys().asSequence().toSet()==names.toSet())
@@ -43,7 +45,7 @@ object FinancialBackup {
                             require(value is Int || value is Long);(value as Number).toLong()
                         } else {
                             require(value is String && value.length<=8192)
-                            if(key in setOf("id","transaction_id","tag_id","category_id","source_event_id") && !(table=="finance_profile" && key=="id")) require(UUID.fromString(value).toString()==value)
+                            if(key in setOf("id","transaction_id","tag_id","category_id","source_event_id","event_id") && !(table=="finance_profile" && key=="id")) require(UUID.fromString(value).toString()==value)
                             value
                         }
                     }

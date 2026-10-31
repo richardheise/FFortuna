@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Alert, AppState, Text, View } from 'react-native';
-import { Action, Card, Chip, ErrorBox, Field, styles } from '../ui/common';
+import { Action, Card, Chip, ErrorBox, Field, colors, styles } from '../ui/common';
 import { formatBRL, moneyInput, parseBRL } from '../core/money';
 import { ClassificationPanel } from './ClassificationPanel';
 import type {
-  CaptureModule, DiagnosticResult, NotificationCandidate, NotificationCandidateFields,
+  CaptureModule, DiagnosticFields, DiagnosticResult, FinanceResult, NotificationCandidate, NotificationCandidateFields,
 } from './native';
 
 type Props = {
@@ -15,6 +15,13 @@ type Props = {
   onClose: () => void;
 };
 type Editor = { amount: string; kind: NotificationCandidateFields['kind']; effectiveDate: string; description: string; category: string; categoryId: string | null; tagIds: string[] };
+type ReviewCandidate = Omit<NotificationCandidate, 'temporary' | 'original'> & {
+  temporary: boolean;
+  original?: DiagnosticFields;
+  originalAvailable?: boolean;
+  origin?: 'notification' | 'statement';
+  possibleMatches?: Array<{ id: string; description: string; amountCents: number; effectiveDate: string; kind: string }>;
+};
 
 const kinds: Array<{ value: NonNullable<Editor['kind']>; label: string }> = [
   { value: 'income', label: 'Receita' }, { value: 'expense', label: 'Despesa' },
@@ -43,8 +50,17 @@ const codeMessages: Record<string, string> = {
   TRANSACTION_LIMIT: 'O livro atingiu o limite desta entrega. Exporte um backup e mantenha os dados.',
   INVALID_SOURCE: 'Os metadados da origem não puderam ser validados.',
 };
-const confidenceLabel = (value: string) => value === 'certain' ? 'extração consistente' : value === 'missing' ? 'ausente' : 'incerta';
 const safeError = (code?: string) => code ? `${codeMessages[code] ?? 'Não foi possível concluir a operação.'} (${code})` : 'Não foi possível concluir a operação.';
+
+function todayValue() {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+}
+
+function displayDate(value: string) {
+  const dateOnly = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+  return dateOnly ? `${dateOnly[3]}/${dateOnly[2]}/${dateOnly[1]}` : value;
+}
 
 function toEditor(fields: NotificationCandidateFields): Editor {
   let amount = '';
@@ -68,7 +84,7 @@ function validDate(value: string): boolean {
 }
 
 export function CandidatePanel({ native, busy, run, sampleId, onClose }: Props) {
-  const [candidate, setCandidate] = useState<NotificationCandidate | null>(null);
+  const [candidate, setCandidate] = useState<ReviewCandidate | null>(null);
   const [editor, setEditor] = useState<Editor | null>(null);
   const [baseline, setBaseline] = useState<NotificationCandidateFields | null>(null);
   const [loading, setLoading] = useState(true);
@@ -76,13 +92,16 @@ export function CandidatePanel({ native, busy, run, sampleId, onClose }: Props) 
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [affectsAccount, setAffectsAccount] = useState(false);
+  const [originOpen, setOriginOpen] = useState(false);
   const generation = useRef(0);
   const mounted = useRef(false);
   const active = useRef(AppState.currentState !== 'background' && AppState.currentState !== 'inactive');
   const nativeRef = useRef(native);
   const runRef = useRef(run);
+  const busyRef = useRef(busy);
   nativeRef.current = native;
   runRef.current = run;
+  busyRef.current = busy;
 
   const clearSensitive = useCallback((rerender = true) => {
     generation.current += 1;
@@ -93,6 +112,7 @@ export function CandidatePanel({ native, busy, run, sampleId, onClose }: Props) 
       setError(null);
       setMessage(null);
       setAffectsAccount(false);
+      setOriginOpen(false);
       setLoading(false);setSaving(false);
     }
   }, []);
@@ -100,7 +120,7 @@ export function CandidatePanel({ native, busy, run, sampleId, onClose }: Props) 
   const applyCandidate = useCallback((value: NotificationCandidate) => {
     const fields = value.financialReview ?? value.review ?? value.parsed.draft;
     const next = toEditor(fields);
-    setCandidate(value);
+    setCandidate(value as ReviewCandidate);
     setEditor(next);
     setBaseline(fields);
     setError(null);
@@ -160,11 +180,11 @@ export function CandidatePanel({ native, busy, run, sampleId, onClose }: Props) 
   }
 
   function save(status: 'reviewed' | 'dismissed', preserveEdits: boolean) {
-    if (!candidate || !editor) return;
-    const fields = preserveEdits ? currentFields : (candidate.review ?? candidate.parsed.draft);
+    if (!candidate || (status === 'reviewed' && !editor)) return;
+    const fields = status === 'dismissed' ? (candidate.review ?? candidate.parsed.draft) : preserveEdits ? currentFields : (candidate.review ?? candidate.parsed.draft);
     if (!fields) { setError(safeError('INVALID_AMOUNT')); return; }
-    if (fields.description.length > 500 || fields.category.length > 80) { setError(safeError('TEXT_LIMIT')); return; }
-    if (!validDate(fields.effectiveDate ?? '')) { setError(safeError('INVALID_DATE')); return; }
+    if (status === 'reviewed' && (fields.description.length > 500 || fields.category.length > 80)) { setError(safeError('TEXT_LIMIT')); return; }
+    if (status === 'reviewed' && !validDate(fields.effectiveDate ?? '')) { setError(safeError('INVALID_DATE')); return; }
     const payload = {
       amountCents: fields.amountCents,
       kind: fields.kind,
@@ -200,7 +220,7 @@ export function CandidatePanel({ native, busy, run, sampleId, onClose }: Props) 
   }
 
   function confirmFinancial() {
-    if(!candidate || !currentFields || !affectsAccount || candidate.transactionId) return;
+    if(!candidate || !currentFields || candidate.transactionId) return;
     if(!currentFields.effectiveDate || !validDate(currentFields.effectiveDate) || currentFields.amountCents === null || currentFields.amountCents <= 0 || !['income','expense'].includes(currentFields.kind ?? '')) {
       setError('Para confirmar, informe valor positivo, data efetiva e natureza Receita ou Despesa.');return;
     }
@@ -208,88 +228,120 @@ export function CandidatePanel({ native, busy, run, sampleId, onClose }: Props) 
       effectiveDate: currentFields.effectiveDate, description: currentFields.description, category: currentFields.category,
       categoryId: currentFields.categoryId ?? null, tagIds: currentFields.tagIds ?? [], affectsAccount: true });
     const id = candidate.id;const request = generation.current;
-    Alert.alert('Confirmar no livro financeiro?', 'O lançamento será permanente e afetará o saldo da conta. Confira os campos. Compras no crédito, pagamento de fatura, transferências, aportes e estornos ainda não devem ser lançados por este fluxo.', [
+    Alert.alert('Confirmar receita ou despesa?', 'Este movimento entrará nas análises. Compras no cartão, pagamento de fatura, transferências, aportes e estornos precisam de tratamento próprio; mantenha esses casos em revisão.', [
       { text: 'Cancelar', style: 'cancel' },
-      { text: 'Confirmar lançamento', onPress: () => {
-        if(!mounted.current || !active.current || generation.current !== request) return;
+      { text: 'Confirmo receita/despesa', onPress: () => {
+        if(!mounted.current || !active.current || generation.current !== request || busyRef.current) return;
         setSaving(true);setError(null);
+        let confirmed = false;
         void runRef.current(async () => {
           try {
-            const result = await nativeRef.current.confirmDiagnosticCandidate(id, payload);
+            const result: FinanceResult = await nativeRef.current.confirmDiagnosticCandidate(id, payload);
             if(!mounted.current || !active.current || generation.current !== request) return;
             if(result.status === 'error') { setError(safeError(result.code));return; }
-            const updated = await nativeRef.current.diagnosticCandidate(id, false);
-            if(!mounted.current || !active.current || generation.current !== request) return;
-            if(updated.candidate) applyCandidate(updated.candidate);
-            setMessage('Lançamento confirmado. Volte ao livro financeiro para conferir o saldo e o histórico.');
+            confirmed = true;
           } catch { if(mounted.current && active.current && generation.current === request) setError('Não foi possível concluir. Reabra a prévia para conferir antes de repetir.'); }
           finally { if(mounted.current && active.current && generation.current === request) setSaving(false); }
-        });
+        }).then(() => { if (confirmed && mounted.current && active.current && generation.current === request) setTimeout(() => { if (mounted.current && active.current && generation.current === request) onClose(); }, 0); });
+      } },
+    ]);
+  }
+
+  function linkObserved(matchId: string) {
+    if (!candidate || !mounted.current || !active.current || busyRef.current || saving) return;
+    const id = candidate.id;
+    const request = generation.current;
+    Alert.alert('Vincular lançamento existente?', 'Valor igual não prova duplicidade. O vínculo apenas relaciona esta observação ao lançamento selecionado e não altera os dados financeiros.', [
+      { text: 'Cancelar', style: 'cancel' },
+      { text: 'Vincular', onPress: () => {
+        if (!mounted.current || !active.current || generation.current !== request || busyRef.current) return;
+        setSaving(true);setError(null);
+        let linked = false;
+        void runRef.current(async () => {
+          try {
+            const module = nativeRef.current as CaptureModule & { linkObserved: (sampleId: string, transactionId: string) => Promise<FinanceResult> };
+            const result = await module.linkObserved(id, matchId);
+            if (!mounted.current || !active.current || generation.current !== request) return;
+            if (result.status === 'error') { setError(safeError(result.code));return; }
+            linked = true;
+          } catch {
+            if (mounted.current && active.current && generation.current === request) setError('Não foi possível vincular. Confira o histórico antes de tentar novamente.');
+          } finally {
+            if (mounted.current && active.current && generation.current === request) setSaving(false);
+          }
+        }).then(() => { if (linked && mounted.current && active.current && generation.current === request) setTimeout(() => { if (mounted.current && active.current && generation.current === request) onClose(); }, 0); });
       } },
     ]);
   }
 
   const formatAmount = (value: number | null) => value === null || !Number.isSafeInteger(value) ? 'Não definido' : formatBRL(value);
-  const reason = candidate?.parsed.reasonCode ?? '';
+  const originLabel = candidate?.origin === 'statement' ? 'Extrato' : 'Notificação';
+  const originalAvailable = candidate?.originalAvailable !== false;
+  const matches = candidate?.possibleMatches ?? [];
 
   return <Card>
-    <Text style={styles.heading}>Candidatura temporária para revisão</Text>
-    <Text style={styles.warning}>A prévia e o original expiram após 7 dias. Salvar revisão não altera saldo. Confirmar no livro financeiro cria um lançamento permanente, com vínculo de origem e campos revisados, incluído no backup financeiro. O parser BRL é genérico e não infere automaticamente movimentação.</Text>
+    <Text style={styles.heading}>Revisar movimento</Text>
     <ErrorBox message={error} />
     {message && <Text style={styles.small}>{message}</Text>}
     {loading && <Text style={styles.small}>Carregando candidatura…</Text>}
     {candidate && <>
-      <Text style={styles.small}>Observação {candidate.revision} · analisada {new Date(candidate.parsedAt).toLocaleString()} · parser {candidate.parsed.parserVersion}</Text>
-      {candidate.previousSampleId && <Text style={styles.warning}>A identidade Android foi reutilizada. Pode ser uma atualização ou outra movimentação; confira cada observação separadamente.</Text>}
-      {candidate.relatedReviewExists && <Text style={styles.warning}>Já existe uma revisão relacionada; ela não foi alterada por esta análise.</Text>}
-      {candidate.hasLaterRevision && <Text style={styles.warning}>Existe uma observação posterior com a mesma identidade Android. Isso não prova que sejam a mesma movimentação.</Text>}
+      <Text style={styles.small}>{originLabel}</Text>
+      {candidate.temporary && <Text style={styles.warning}>Prévia do diagnóstico: expira em 7 dias.</Text>}
+      {candidate.previousSampleId && <Text style={styles.warning}>{candidate.origin === 'statement' ? 'Este identificador aparece em outra versão do extrato. Confira o registro anterior.' : 'Pode ser atualização ou outra movimentação. Confira separadamente.'}</Text>}
+      {candidate.relatedReviewExists && <Text style={styles.small}>Há outra revisão relacionada; ela não foi alterada.</Text>}
+      {candidate.hasLaterRevision && <Text style={styles.small}>Há uma observação posterior com a mesma identidade Android. Isso não prova que seja a mesma movimentação.</Text>}
+      {candidate.review && <Text style={styles.small}>{candidate.review.status === 'dismissed' ? 'Marcada para descartar.' : 'Revisão salva.'}</Text>}
+      {candidate.transactionId && <Text style={styles.warning}>Este movimento já foi lançado. A revisão não altera o lançamento existente.</Text>}
 
-      {candidate.review && <Text style={styles.small}>Revisão temporária: {candidate.review.status === 'dismissed' ? 'marcada para descartar' : 'salva'}{candidate.reviewedAt ? ` · ${new Date(candidate.reviewedAt).toLocaleString()}` : ''}.{!candidate.transactionId ? ' Ainda sem lançamento confirmado.' : ''}</Text>}
-      {candidate.transactionId && <Text style={styles.warning}>Lançamento financeiro já confirmado. Reprocessar não duplica nem altera o lançamento. Apagar o diagnóstico preserva o histórico financeiro.</Text>}
-      <Text style={styles.small}>Publicada: {new Date(candidate.publishedAt).toLocaleString()} · capturada: {new Date(candidate.capturedAt).toLocaleString()}</Text>
-      <Text style={styles.heading}>Original da notificação · valores reais</Text>
-      <Text style={styles.label}>Título</Text><Text selectable={false} style={styles.body}>{candidate.original.title || '—'}</Text>
-      <Text style={styles.label}>Texto</Text><Text selectable={false} style={styles.body}>{candidate.original.text || '—'}</Text>
-      <Text style={styles.label}>Texto expandido</Text><Text selectable={false} style={styles.body}>{candidate.original.bigText || '—'}</Text>
-      <Text style={styles.label}>Subtexto</Text><Text selectable={false} style={styles.body}>{candidate.original.subText || '—'}</Text>
-      <Text style={styles.label}>Linhas</Text><Text selectable={false} style={styles.body}>{candidate.original.textLines.join('\n') || '—'}</Text>
+      <Field label="Valor" value={editor?.amount ?? ''} onChangeText={value => update('amount', value)} editable={!busy && !saving && !candidate.transactionId} keyboardType="decimal-pad" autoCorrect={false} autoComplete="off" importantForAutofill="no" maxLength={32} placeholder="0,00" />
 
-      <Text style={styles.heading}>Prévia do parser</Text>
-      <Text style={styles.body}>Valor candidato: {formatAmount(candidate.parsed.draft.amountCents)}</Text>
-      <Text style={styles.small}>Motivo: {candidate.parsed.reason} · confiança da extração: valor {confidenceLabel(candidate.parsed.confidence.amount)}, natureza {confidenceLabel(candidate.parsed.confidence.nature)}, movimentação {confidenceLabel(candidate.parsed.confidence.movement)}, conta {confidenceLabel(candidate.parsed.confidence.account)}, data {confidenceLabel(candidate.parsed.confidence.date)}, categoria {confidenceLabel(candidate.parsed.confidence.category)}</Text>
-      {candidate.parsed.amountEvidence.map((item, index) => <View key={`${item.sourceField}-${item.start}-${index}`} style={{ gap: 3 }}>
-        <Text style={styles.label}>Evidência {index + 1} · {item.sourceField} · {item.start}–{item.end} · {formatAmount(item.amountCents)}</Text>
-        <Text selectable={false} style={styles.body}>{item.observedText}</Text>
-      </View>)}
-      {candidate.parsed.amountEvidence.length === 0 && <Text style={styles.small}>Nenhum valor com evidência reconhecida.</Text>}
-
-      <Text style={styles.heading}>Revisar campos</Text>
-      <Field label="Valor (BRL; vazio = desconhecido)" value={editor?.amount ?? ''} onChangeText={value => update('amount', value)} editable={!busy && !saving && !candidate.transactionId} keyboardType="decimal-pad" autoCorrect={false} autoComplete="off" importantForAutofill="no" maxLength={32} placeholder="12,34" />
-      <Text style={styles.small}>Valor sugerido pelo parser: {formatAmount(candidate.parsed.draft.amountCents)} · motivo: {reason}</Text>
-      <Text style={styles.label}>Natureza (não inferida automaticamente)</Text>
+      <Text style={styles.label}>Natureza</Text>
       <View style={styles.wrap}>
         <Chip title="Não definida" active={editor?.kind === null} onPress={() => { if(!busy && !saving && !candidate.transactionId) update('kind', null); }} />
         {kinds.map(item => <Chip key={item.value} title={item.label} active={editor?.kind === item.value} onPress={() => { if(!busy && !saving && !candidate.transactionId) update('kind', item.value); }} />)}
       </View>
-      <Field label="Data efetiva (opcional, AAAA-MM-DD)" value={editor?.effectiveDate ?? ''} onChangeText={value => update('effectiveDate', value)} editable={!busy && !saving && !candidate.transactionId} autoCorrect={false} autoComplete="off" importantForAutofill="no" maxLength={10} placeholder="AAAA-MM-DD" />
-      <Text style={styles.small}>A data de publicação não é preenchida automaticamente. Transferência, pagamento de fatura, estorno e aporte não devem ser classificados como receita ou despesa comum.</Text>
       <Field label="Descrição" value={editor?.description ?? ''} onChangeText={value => update('description', value)} editable={!busy && !saving && !candidate.transactionId} autoCorrect={false} autoComplete="off" importantForAutofill="no" maxLength={500} />
+      <View style={styles.wrap}>
+        <View style={{ flexGrow: 1, flexBasis: 190 }}><Field label="Data efetiva" value={editor?.effectiveDate ?? ''} onChangeText={value => update('effectiveDate', value)} editable={!busy && !saving && !candidate.transactionId} autoCorrect={false} autoComplete="off" importantForAutofill="no" maxLength={10} placeholder="AAAA-MM-DD" /></View>
+        {!editor?.effectiveDate && <Action title="Usar hoje" secondary disabled={busy || saving || !!candidate.transactionId} onPress={() => update('effectiveDate', todayValue())} />}
+      </View>
+
       {editor && <ClassificationPanel native={native} busy={busy || saving || !!candidate.transactionId} run={run} selection={{ categoryId: editor.categoryId, category: editor.category, tagIds: editor.tagIds }} onChange={selection => {
         setEditor(current => current ? { ...current, ...selection } : current);setAffectsAccount(false);setError(null);setMessage(null);
       }} />}
       {!candidate.transactionId && <>
-        <Text style={styles.small}>Para confirmar, configure primeiro o saldo de abertura no livro financeiro. Este fluxo aceita somente receita ou despesa efetivamente na conta disponível; os demais tipos ficam em revisão.</Text>
-        <Chip title="Conferi: esta movimentação afeta o saldo da conta disponível" active={affectsAccount} onPress={() => { if(!busy && !saving) setAffectsAccount(value => !value); }} />
-        <Action title="Confirmar no livro financeiro" disabled={busy || saving || loading || !affectsAccount || !currentFields || !currentFields.effectiveDate || !['income','expense'].includes(currentFields.kind ?? '')} onPress={confirmFinancial} />
+        {!!currentFields?.kind && !['income','expense'].includes(currentFields.kind) && <Text style={styles.small}>Este tipo precisa de tratamento próprio. Mantenha a pendência salva para revisar depois.</Text>}
+        <Action title="Confirmar" disabled={busy || saving || loading || !currentFields || !currentFields.effectiveDate || !['income','expense'].includes(currentFields.kind ?? '')} onPress={confirmFinancial} />
       </>}
+      {matches.length > 0 && <View style={{ gap: 8 }}>
+        <Text style={styles.heading}>Possíveis vínculos</Text>
+        <Text style={styles.small}>Valor igual não prova duplicidade.</Text>
+        {matches.map(match => <View key={match.id} style={{ borderTopWidth: 1, borderColor: colors.line, paddingTop: 10, gap: 4 }}>
+          <Text numberOfLines={2} style={styles.label}>{match.description || 'Sem descrição'}</Text>
+          <Text style={styles.small}>{displayDate(match.effectiveDate)} · {formatAmount(match.amountCents)} · {match.kind === 'income' ? 'Receita' : match.kind === 'expense' ? 'Despesa' : match.kind}</Text>
+          <Action title="Vincular" secondary disabled={busy || saving || loading || !!candidate.transactionId} onPress={() => linkObserved(match.id)} />
+        </View>)}
+      </View>}
+      <View style={{ gap: 6 }}>
+        <Action title={originOpen ? 'Ocultar origem' : 'Ver origem'} secondary onPress={() => setOriginOpen(value => !value)} />
+        {originOpen && (originalAvailable && candidate.original ? <View style={{ gap: 5 }}>
+          <Text style={styles.label}>{originLabel} original</Text>
+          <Text style={styles.body}>{candidate.original.title || '—'}</Text>
+          <Text style={styles.body}>{candidate.original.text || '—'}</Text>
+          {!!candidate.original.bigText && candidate.original.bigText !== candidate.original.text && <Text style={styles.body}>{candidate.original.bigText}</Text>}
+          {candidate.original.textLines.filter(line => line !== candidate.original?.text && line !== candidate.original?.bigText).map((line, index) => <Text key={index} style={styles.body}>{line}</Text>)}
+          <Text style={styles.small}>{candidate.origin === 'statement' ? 'Campos extraídos do arquivo. ' : 'A publicação da notificação não define a data do movimento. '}Original por até {candidate.temporary ? '7' : '30'} dias.</Text>
+          {candidate.original.subText ? <Text style={styles.small}>{candidate.original.subText}</Text> : null}
+        </View> : <Text style={styles.small}>A origem bruta expirou ou não está disponível.</Text>)}
+      </View>
       <View style={styles.wrap}>
         <Action title="Salvar revisão" disabled={busy || saving || loading || !!candidate.transactionId || !editor || !currentFields || !validDate(editor?.effectiveDate ?? '')} onPress={() => save('reviewed', true)} />
-        <Action title="Descartar candidatura" secondary disabled={busy || saving || loading || !!candidate.transactionId || !candidate} onPress={() => save('dismissed', false)} />
-        <Action title="Reprocessar" secondary disabled={busy || saving || loading || dirty || !candidate} onPress={() => void load(true)} />
-        <Action title="Fechar candidatura" secondary disabled={busy || saving} onPress={() => { clearSensitive(); onClose(); }} />
+        <Action title="Descartar pendência" secondary disabled={busy || saving || loading || !!candidate.transactionId || !candidate} onPress={() => save('dismissed', false)} />
+        <Action title="Reprocessar" secondary disabled={busy || saving || loading || dirty || !candidate || !originalAvailable} onPress={() => void load(true)} />
+        <Action title="Fechar" secondary disabled={busy || saving} onPress={() => { clearSensitive(); onClose(); }} />
       </View>
     </>}
-    {!candidate && !loading && <Text style={styles.small}>A candidatura não está aberta. Atualize a observação ou feche este painel.</Text>}
+    {!candidate && !loading && <Text style={styles.small}>Não foi possível abrir esta pendência.</Text>}
     {!candidate && <View style={styles.wrap}><Action title="Tentar novamente" secondary disabled={busy || loading} onPress={() => void load(false)} /><Action title="Fechar" secondary disabled={busy || loading} onPress={onClose} /></View>}
   </Card>;
 }

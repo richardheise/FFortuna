@@ -1,210 +1,157 @@
-import { useCallback, useEffect, useState } from 'react';
-import { Alert, AppState, BackHandler, Modal, Text, View } from 'react-native';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { Alert, AppState, Modal, Pressable, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Action, Card, ErrorBox, Field, ScreenScroll, colors, styles } from '../ui/common';
-import { captureModule, type CaptureSnapshot, type LocalRecoveryEntry, type SecurityReport } from './native';
-import { DiagnosticPanel } from './DiagnosticPanel';
+import { Action, Chip, ErrorBox, ScreenScroll, colors, styles } from '../ui/common';
+import { captureModule, type DailyState, type StatementResult } from './native';
 import { FinanceNavigation, TiqueMark, type MainTab } from './FinanceNavigation';
 import { FinancePanel, type FinanceView } from './FinancePanel';
-import { LegalNotices } from '../legal/LegalNotices';
+import { SourcesPanel } from './SourcesPanel';
+import { DailyInbox } from './DailyInbox';
+import { CaptureTools } from './CaptureTools';
 
+const errors: Record<string, string> = {
+  ACCESS_REQUIRED: 'Autorize o acesso no Android e aguarde a conexão.',
+  SOURCE_CHANGED: 'Confira se o Nubank está instalado e habilitado.',
+  SAMPLE_LIMIT: 'A caixa de entrada atingiu sua capacidade. A captura foi pausada; seus registros foram preservados.',
+  INVALID_STATEMENT: 'Este arquivo não pôde ser lido. Escolha um extrato CSV ou OFX da conta, sem editar o arquivo.',
+  STATEMENT_TOO_LARGE: 'O extrato excede 2 MiB. Exporte um período menor.',
+  STATEMENT_IO: 'Não foi possível abrir o arquivo. Baixe-o no aparelho e tente novamente.',
+  NO_SHARED_FILE: 'Compartilhe o arquivo novamente ou use Importar extrato.',
+  RECOVERY_BLOCKED: 'A recuperação local precisa de atenção nas configurações.',
+  DIAGNOSTIC_STORAGE: 'Não foi possível abrir os dados protegidos. Eles foram preservados.',
+};
 export function CaptureScreen() {
   const [native] = useState(captureModule);
-  const [state, setState] = useState<CaptureSnapshot | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [message, setMessage] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
-  const [legalOpen, setLegalOpen] = useState(false);
-  const [password, setPassword] = useState('');
-  const [confirmation, setConfirmation] = useState('');
-  const [advancedOpen, setAdvancedOpen] = useState(false);
-  const [screen, setScreen] = useState<FinanceView | 'review' | 'tools'>('home');
-  const [newOpen, setNewOpen] = useState(false);
+  const [tab, setTab] = useState<MainTab>('sources');
+  const [state, setState] = useState<DailyState | null>(null);
+  const [overlay, setOverlay] = useState<FinanceView | 'tools' | null>(null);
+  const [movementMode, setMovementMode] = useState<'pending' | 'confirmed'>('pending');
   const [entryKind, setEntryKind] = useState<'income' | 'expense'>('expense');
   const [entryRequest, setEntryRequest] = useState(0);
-  const [valuesHidden, setValuesHidden] = useState(false);
-  const toolsOpen = screen === 'tools';
-  const [localEntries, setLocalEntries] = useState<LocalRecoveryEntry[]>([]);
+  const [epoch, setEpoch] = useState(0);
+  const [busy, setBusy] = useState(false);
+  const [hidden, setHidden] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
+  const busyRef = useRef(false);
+  const overlayRef = useRef(overlay);
+  overlayRef.current = overlay;
+  const initialized = useRef(false);
+  const hadShared = useRef(false);
+  const active = useRef(AppState.currentState !== 'background');
+  const alive = useRef(true);
+  const generation = useRef(0);
+  const changed = useCallback(() => setEpoch(value => value + 1), []);
   const refresh = useCallback(async () => {
-    if(!native) return;
-    setState(await native.snapshot());
-    if(advancedOpen) {
-      try { setLocalEntries(await native.localRecoveryEntries()); }
-      catch { setLocalEntries([]); }
-    }
-  }, [native, advancedOpen]);
+    if (!native) return;
+    const token = ++generation.current;
+    const next = await native.dailyState();
+    if (!alive.current || !active.current || token !== generation.current) return;
+    if (next.status === 'error') throw new Error(next.code ?? 'STORAGE');
+    setState(next);
+    if (!initialized.current) { initialized.current = true; setTab(next.configured ? 'transactions' : 'sources'); }
+    if (next.incomingFile && !hadShared.current && !overlayRef.current && !busyRef.current) { setTab('sources'); hadShared.current = true; }
+    if (!next.incomingFile) hadShared.current = false;
+  }, [native]);
   useEffect(() => {
-    void refresh().catch(() => setError('Não foi possível abrir o diagnóstico nativo.'));
-    const subscription = AppState.addEventListener('change', s => {
-      if(s === 'active') void refresh().catch(() => setError('Falha ao atualizar o estado nativo.'));
-      else { setPassword('');setConfirmation('');setNewOpen(false);setValuesHidden(true); }
+    alive.current = true;
+    void refresh().catch(() => setError('Não foi possível abrir os dados protegidos. Acesse as configurações para recuperação.'));
+    const listener = AppState.addEventListener('change', value => {
+      active.current = value === 'active';
+      if (!active.current) { generation.current++; setHidden(true); setError(null); setMessage(null); }
+      else { changed(); void refresh().catch(() => setError('Não foi possível atualizar o estado da captura.')); }
     });
-    return () => subscription.remove();
+    const timer = setInterval(() => { if (active.current && !busyRef.current) void refresh().catch(() => {}); }, 15_000);
+    return () => { alive.current = false; generation.current++; listener.remove(); clearInterval(timer); };
+  }, [changed, refresh]);
+  useEffect(() => {
+    if (state?.incomingFile && !hadShared.current && !overlay && !busy) { setTab('sources'); hadShared.current = true; }
+  }, [state?.incomingFile, overlay, busy]);
+  const run = useCallback(async (task: () => Promise<unknown>) => {
+    if (busyRef.current) throw new Error('BUSY');
+    busyRef.current = true; setBusy(true);
+    try { await task(); try { await refresh(); } catch { if (active.current) setError('Não foi possível atualizar a captura.'); } }
+    finally { busyRef.current = false; if (alive.current) setBusy(false); }
   }, [refresh]);
-  useEffect(() => {
-    const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
-      if(screen === 'home') return false;
-      if(busy) return true;
-      setPassword('');setConfirmation('');setScreen('home');return true;
-    });
-    return () => subscription.remove();
-  }, [screen, busy]);
-  function navigate(next: FinanceView | MainTab | 'tools') { setPassword('');setConfirmation('');setScreen(next); }
-  function newEntry(kind: 'income' | 'expense') { setNewOpen(false);setEntryKind(kind);setEntryRequest(value => value + 1);setScreen('entry'); }
-  async function run(task: () => Promise<unknown> | unknown) {
-    if(busy) return; setBusy(true); setError(null); setMessage(null);
-    try { await task(); await refresh(); }
-    catch {
-      setError('Operação não concluída. Confira autorização e armazenamento abaixo.');
-      try { await refresh(); } catch { /* Keep the last available state. */ }
+  async function act(task: () => Promise<{ status?: string; code?: string } | void>, success?: string) {
+    if (!native || busyRef.current) return;
+    setError(null); setMessage(null);
+    try {
+      await run(async () => {
+        const result = await task();
+        if (result?.status === 'error') throw new Error(result.code ?? 'STORAGE');
+      });
+      changed(); if (active.current && success) setMessage(success);
+    } catch (failure) {
+      if (active.current) setError(errors[failure instanceof Error ? failure.message : ''] ?? 'Não foi possível concluir. Seus dados foram preservados.');
     }
-    finally { setBusy(false); }
   }
-  function backup(mode: 'export' | 'restore') {
-    const secret = password;
-    setPassword('');setConfirmation('');
-    void run(async () => {
-      const result = mode === 'export' ? await native!.exportBackup(secret) : await native!.restoreBackup(secret);
-      if(result.status === 'error') {
-        const errors: Record<string, string> = {
-          PASSWORD_LENGTH: 'Use uma senha de 12 a 128 caracteres, sem caracteres inválidos.',
-          INVALID_FILE: 'Arquivo incompleto ou formato de backup não suportado.',
-          AUTH_FAILED: 'Senha incorreta ou arquivo alterado. Nenhuma caixa foi substituída.',
-          TOO_LARGE: 'Backup excede os limites desta prova: 8 MiB ou 10 mil observações.',
-          INVALID_DATA: 'Os registros do backup são inválidos ou pertencem a outro formato.',
-          PREVIOUS_EXISTS: 'Já existe uma caixa anterior preservada. Volte a ela ou descarte-a antes de outra restauração.',
-          IO: 'Falha ao acessar o arquivo. Confira o armazenamento local; um arquivo incompleto pode ter ficado no destino.',
-          BUSY: 'Já existe uma operação de backup em andamento.',
-          STORAGE: 'Não foi possível preparar a caixa cifrada. Confira o diagnóstico; não apague os dados como tentativa de reparo.',
-        };
-        setError(errors[result.code ?? ''] ?? 'Não foi possível concluir o backup/restauração.');
-      } else if(result.status === 'saved') setMessage('Backup cifrado salvo. Guarde a senha separadamente: ela é necessária mesmo em outro aparelho.');
-      else if(result.status === 'restored') setMessage(`Restauradas ${result.count ?? 0} observações em uma nova caixa. ${result.unavailable ?? 0} ficaram sem bruto e não podem ser reprocessadas. A caixa anterior foi preservada. A captura está desativada; ative-a novamente quando quiser.`);
-      else setMessage('Seleção cancelada. Nenhuma caixa foi alterada.');
+  async function manual(kind: 'income' | 'expense' = 'expense') {
+    if (!native) return;
+    if (!state?.configured) {
+      let prepared = false;
+      await act(async () => { const result = await native.startTracking(); prepared = result.status === 'ok'; return result; });
+      if (!prepared) return;
+    }
+    setEntryKind(kind); setEntryRequest(value => value + 1); setOverlay('entry');
+  }
+  function navigate(view: FinanceView) {
+    if (view === 'home' || view === 'transactions') {
+      setOverlay(null); setTab(view); if (view === 'transactions') setMovementMode('confirmed'); changed();
+    } else setOverlay(view);
+  }
+  function activate() {
+    if (!native || !state?.source.signer) return;
+    const signer = state.source.signer;
+    Alert.alert('Receber notificações do Nubank?', 'O Tique guardará no aparelho as notificações recebidas a partir da ativação, mesmo com o app fechado. O original fica cifrado por até 30 dias; pendências e registros ficam até você removê-los. Você pode pausar em Fontes ou revogar o acesso no Android. Notificações podem faltar; nenhum lançamento será confirmado automaticamente.', [
+      { text: 'Cancelar', style: 'cancel' },
+      { text: 'Ativar', onPress: () => void act(() => native.startDailyCapture(signer), 'Captura ativada.') },
+    ]);
+  }
+  async function importFile(shared: boolean) {
+    let result: StatementResult | null = null;
+    await act(async () => {
+      result = await (shared ? native!.importSharedStatement() : native!.chooseStatement());
+      return result;
     });
+    const received = result as StatementResult | null;
+    if (received?.status === 'ok') {
+      setTab('transactions'); setMovementMode('pending');
+      setMessage(received.count ? `${received.count} movimentos para revisar.` : 'Este arquivo já foi recebido. Nenhum registro duplicado.');
+    }
   }
-  const retentionBlocked = state?.retention?.blocked ?? true;
-  const blockers = state ? [
-    !state.storageReady && 'A caixa cifrada está indisponível. Confira a mensagem de erro acima.',
-    retentionBlocked && 'A retenção de dados brutos está bloqueada. A captura permanece pausada até a limpeza ser verificada.',
-    !state.enabled && 'Toque em “Concordo: ativar captura somente sintética” na seção 1.',
-    !state.authorized && 'Toque em “Abrir acesso às notificações no Android” e conceda o acesso ao Tique.',
-    !state.notificationsAllowed && 'Toque em “Permitir notificações do emissor fictício” e autorize a publicação.',
-  ].filter((reason): reason is string => typeof reason === 'string') : ['Aguardando o diagnóstico. Se não carregar, toque em “Atualizar estado” na seção 1.'];
-  return <SafeAreaView style={styles.page}><ScreenScroll>
-    <View style={[styles.row, { justifyContent: 'space-between', paddingVertical: 8 }]}>
+  const goReview = () => { setTab('transactions'); setMovementMode('pending'); changed(); };
+  if (!native) return <SafeAreaView style={styles.page}><Text style={styles.body}>Abra o APK Tique para usar seus registros. O Expo Go oferece somente a demonstração.</Text></SafeAreaView>;
+  return <SafeAreaView style={styles.page}>
+    <View style={[styles.row, { justifyContent: 'space-between', paddingHorizontal: 20, paddingVertical: 8 }]}>
       <View style={styles.row}><TiqueMark /><Text style={styles.title}>tique</Text></View>
-      {screen !== 'home' && <Text style={styles.small}>{screen === 'transactions' ? 'Movimentos' : screen === 'review' ? 'Revisão' : screen === 'entry' ? 'Novo lançamento' : screen === 'categories' ? 'Categorias e tags' : screen === 'balance' ? 'Conferir saldo' : screen === 'tools' ? 'Avançado' : 'Mais'}</Text>}
+      <Pressable accessibilityRole="button" accessibilityLabel="Configurações" disabled={busy} onPress={() => setOverlay('more')} style={{ minWidth: 48, minHeight: 48, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: colors.gold, fontSize: 26 }}>⚙</Text></Pressable>
     </View>
-    {native && !toolsOpen && screen !== 'review' && <FinancePanel native={native} busy={busy} run={run} view={screen} onNavigate={navigate} onTools={() => navigate('tools')} entryKind={entryKind} entryRequest={entryRequest} valuesHidden={valuesHidden} onToggleValues={() => setValuesHidden(value => !value)} />}
-    {native && screen === 'review' && <DiagnosticPanel native={native} busy={busy} run={run} mode="inbox" onTools={() => navigate('tools')} />}
-    {toolsOpen && <Action title="Voltar para Mais" secondary disabled={busy} onPress={() => navigate('more')} />}
-    {toolsOpen && <Text style={styles.warning}>Exemplos abaixo são sintéticos. Diagnóstico real somente mediante ativação explícita nas configurações avançadas.</Text>}
-    {toolsOpen && state?.diagnostic?.active && <Text style={styles.warning}>Diagnóstico real ativo até {state.diagnostic.expiresAt ? new Date(state.diagnostic.expiresAt).toLocaleString() : "expirar"}. Fonte: Nubank. Pare a coleta nas configurações avançadas.</Text>}
-    <ErrorBox message={error ?? (toolsOpen ? state?.lastError ?? null : null)} />
-    {!native ? <Card><Text style={styles.body}>Este modo exige o APK próprio. A demonstração financeira continua disponível no Expo Go.</Text></Card> : toolsOpen && <>
-      <Card><Text style={styles.heading}>1. Preparar e autorizar</Text>
-        <Text style={styles.body}>O Android concede acesso amplo ao serviço. Para os exemplos abaixo, o app filtra o próprio pacote antes de ler conteúdo e aceita só fixtures marcadas. O diagnóstico real tem consentimento separado nas configurações avançadas. Fonte dos exemplos: {state?.sourcePackage ?? 'carregando'}.</Text>
-        <Text style={styles.body}>Caixa cifrada: {!state ? 'verificando' : state.storageReady ? `pronta · SQLCipher ${state.cipherVersion}` : 'indisponível'}</Text>
-        <Text style={styles.body}>Consentimento local: {state?.enabled ? 'ativo' : 'desativado'} · acesso Android: {state?.authorized ? 'concedido' : 'não concedido'} · conexão: {state?.connected ? 'conectado' : 'desconectado'}</Text>
-        <Action title={state?.enabled ? 'Desativar captura sintética' : 'Concordo: ativar captura somente sintética'} disabled={busy || (!state?.storageReady && !state?.enabled) || (!state?.enabled && retentionBlocked)} onPress={() => void run(() => native.setEnabled(!state?.enabled))} />
-        {state?.retention && <Text style={state.retention.blocked ? styles.warning : styles.small}>
-          Retenção do bruto: ativa {state.retention.active?.status ?? 'indisponível'}{state.retention.active?.remaining === undefined ? '' : ` · ${state.retention.active.remaining} com bruto`}; anterior {state.retention.previous?.status ?? 'indisponível'}{state.retention.previous?.remaining === undefined ? '' : ` · ${state.retention.previous.remaining} com bruto`}{state.retention.blocked ? ' · captura bloqueada até a limpeza ser verificada.' : ''}
-        </Text>}
-        {state && !state.retention && <Text style={styles.warning}>Estado da retenção indisponível. A ativação da captura está bloqueada até a verificação carregar.</Text>}
-        <Action title="Abrir acesso às notificações no Android" secondary disabled={busy} onPress={() => void run(() => native.openSettings())} />
-        <Action title="Permitir notificações do emissor fictício" secondary disabled={busy} onPress={() => void run(() => native.requestPostPermission())} />
-        <Text style={styles.small}>Emissor: {state?.notificationsAllowed ? 'autorizado' : 'sem permissão'}. A permissão de publicar exemplos e o acesso para ler notificações são autorizações diferentes. O consentimento local também precisa estar ativo.</Text>
-        <Action title="Atualizar estado" secondary disabled={busy} onPress={() => void run(refresh)} />
-        <Text style={styles.small}>Ao voltar das configurações, o estado é atualizado. Se necessário, toque Atualizar estado.</Text>
-      </Card>
-      <Card><Text style={styles.heading}>2. Publicar exemplos</Text>
-        <Text style={styles.body}>Cada publicação cria uma identidade própria. Atualizar reutiliza a última identidade; o resumo de grupo é ignorado. Nenhum evento altera o saldo financeiro.</Text>
-        {blockers.length > 0 && <Text accessibilityRole="alert" style={styles.warning}>Para liberar os exemplos:{'\n'}{blockers.map(reason => `• ${reason}`).join('\n')}</Text>}
-        {busy && <Text style={styles.small}>Operação em andamento. Aguarde para publicar outro exemplo.</Text>}
-        <View style={styles.wrap}>{([
-          ['single','Publicar exemplo'],['same','Duas compras iguais'],['update','Atualizar último exemplo'],['group','Dois filhos + resumo'],['delayed','Agendar exemplo com app fechado'],
-        ] as const).map(([scenario, title]) => <Action key={scenario} title={title} secondary disabled={busy || blockers.length > 0} onPress={() => void run(async () => { await native.emit(scenario); if(scenario === 'delayed') setMessage('Agendado a partir de 15 segundos; pode atrasar por política do Android. Vá à tela inicial, bloqueie a tela e aguarde. Não use force-stop.'); })} />)}</View>
-        <Text style={styles.small}>Após publicar, aguarde e atualize. A gravação ocorre em Kotlin, independentemente desta tela e do JavaScript. A prova não promete captura sem perdas.</Text>
-      </Card>
-      <Card><Text style={styles.heading}>3. Recuperar e conferir</Text>
-        <View style={styles.wrap}>
-          <Action title="Reler notificações ativas" secondary disabled={busy} onPress={() => void run(() => native.replay())} />
-          <Action title="Reprocessar pendências" secondary disabled={busy} onPress={() => void run(() => native.recover())} />
-          <Action title="Verificar cifra e integridade" secondary disabled={busy} onPress={() => void run(async () => { await native.verify(); setMessage('SQLCipher e integridade verificados; o arquivo principal não tem cabeçalho SQLite em claro. Isso não valida sozinho todos os arquivos nem o backup.'); })} />
+    <ScreenScroll>
+      <ErrorBox message={error} />
+      {message && <Text accessibilityRole="alert" style={styles.small}>{message}</Text>}
+      {tab === 'sources' && <SourcesPanel state={state} busy={busy} onActivate={activate} onPause={() => void act(() => native.stopDiagnostic(), 'Captura pausada.')} onPermission={() => native.openSettings()} onReconnect={() => void act(() => native.reconnectCapture())} onImport={() => void importFile(false)} onBank={() => void act(() => native.openBankApp())} onReceive={() => void importFile(true)} onDismissShared={() => void act(() => native.dismissSharedStatement())} onManual={() => void manual()} onReview={goReview} />}
+      {tab === 'transactions' && <>
+        <View style={[styles.row, { justifyContent: 'space-between' }]}>
+          <Text style={styles.heading}>Movimentos</Text>
+          <Action title="+" accessibilityLabel="Adicionar gasto ou ganho" disabled={busy} onPress={() => void manual()} />
         </View>
-        <Text style={styles.body}>Observações persistidas: {state?.total ?? 0} · pendentes: {state?.pending ?? 0} · esquema: {state?.schemaVersion ?? '—'}</Text>
-        {(state?.unavailablePending ?? 0) > 0 && <Text style={styles.warning}>{state?.unavailablePending} observações estão sem bruto por retenção ou restauração de backup e não podem ser reprocessadas. Os registros foram preservados e não entram na contagem de pendentes processáveis.</Text>}
-        <Text style={styles.small}>Publicação, captura e data efetiva são campos separados. Exibindo as últimas 30 observações; dispensar uma notificação não apaga seu registro.</Text>
-      </Card>
-      {message && <Card><Text style={styles.body}>{message}</Text></Card>}
-      <Card><Text style={styles.heading}>Recuperação local automática</Text>
-        <Text style={styles.body}>O app mantém até 3 cópias cifradas dos registros sintéticos, no máximo uma a cada 24 horas quando os dados mudam. Não inclui conteúdo bruto. As cópias usam uma chave deste aparelho e são perdidas se o app for desinstalado.</Text>
-        <Text style={state?.localRecovery?.status === 'blocked' ? styles.warning : styles.small}>
-          Estado: {state?.localRecovery?.status ?? 'verificando'} · cópias: {state?.localRecovery?.count ?? 0}{state?.localRecovery?.latestAt ? ` · mais recente ${new Date(state.localRecovery.latestAt).toLocaleString()}` : ''}{state?.localRecovery?.failureCode ? ` · código ${state.localRecovery.failureCode}` : ''}
-        </Text>
-      </Card>
-      <Action title={advancedOpen ? 'Fechar configurações avançadas' : 'Configurações avançadas'} secondary disabled={busy} onPress={() => { setPassword('');setConfirmation('');setAdvancedOpen(value => !value); }} />
-      {advancedOpen && <>
-      <DiagnosticPanel native={native} busy={busy} run={run} />
-      <Card><Text style={styles.heading}>Backup portátil e caixas</Text>
-        <Text style={styles.body}>Salva registros e resultados de parsing, sem os payloads brutos. Escolha uma pasta neste aparelho. O arquivo é cifrado com sua senha, independente da chave local. A senha não é salva e não tem recuperação. Salvo fora do app, este backup pode ser restaurado após desinstalação ou em outro aparelho.</Text>
-        <Field label="Senha do backup (12 a 128 caracteres)" value={password} onChangeText={setPassword} secureTextEntry autoCapitalize="none" autoCorrect={false} autoComplete="off" importantForAutofill="no" maxLength={128} />
-        <Field label="Repita a senha para criar um backup" value={confirmation} onChangeText={setConfirmation} secureTextEntry autoCapitalize="none" autoCorrect={false} autoComplete="off" importantForAutofill="no" maxLength={128} />
-        <Action title="Criar backup cifrado" disabled={busy || !state?.storageReady || password.length < 12 || password !== confirmation} onPress={() => backup('export')} />
-        <Action title="Restaurar backup em nova caixa" secondary disabled={busy || password.length < 12 || !!state?.previousBoxAvailable} onPress={() => Alert.alert('Restaurar backup?', 'O arquivo será validado antes de ativar uma nova caixa. A caixa atual será preservada, sem mesclar registros, e a captura será desativada. A senha do primeiro campo será usada.', [{ text: 'Cancelar', style: 'cancel' }, { text: 'Escolher arquivo', onPress: () => backup('restore') }])} />
-        {state?.previousBoxAvailable && <>
-          <Text style={styles.warning}>Há uma caixa anterior preservada. Descarte-a explicitamente antes de restaurar outro backup. Voltar a ela troca a caixa ativa e desativa a captura.</Text>
-          <Action title="Voltar à caixa anterior" secondary disabled={busy} onPress={() => Alert.alert('Trocar de caixa?', 'A caixa anterior será verificada antes da troca. A atual ficará preservada e a captura será desativada.', [{ text:'Cancelar',style:'cancel' }, { text:'Trocar',onPress:() => void run(async () => { await native.switchPreviousBox();setMessage('Caixa anterior ativada; a captura está desativada.'); }) }])} />
-          <Action title="Descartar caixa anterior" secondary disabled={busy} onPress={() => Alert.alert('Descartar caixa anterior?', 'Apaga definitivamente apenas a caixa anterior e sua chave. A caixa ativa e os backups externos permanecem.', [{ text:'Cancelar',style:'cancel' },{ text:'Descartar',style:'destructive',onPress:() => void run(() => native.discardPreviousBox()) }])} />
-        </>}
-      </Card>
-      <Card><Text style={styles.heading}>Gerenciar recuperação local</Text>
-        <Text style={styles.body}>Ativar ou desativar a criação automática não apaga as cópias já existentes.</Text>
-        <Action title={state?.localRecovery?.enabled ? 'Desativar cópias automáticas' : 'Ativar cópias automáticas'} secondary disabled={busy || !state?.localRecovery || (state.localRecovery.status === 'blocked' && !state.localRecovery.enabled)} onPress={() => void run(() => native.setLocalRecoveryEnabled(!state?.localRecovery?.enabled))} />
-        {localEntries.length === 0 ? <Text style={state?.localRecovery?.status === 'blocked' ? styles.warning : styles.small}>{state?.localRecovery?.status === 'blocked' ? 'Lista indisponível enquanto a recuperação estiver bloqueada.' : 'Nenhuma cópia local disponível.'}</Text> : localEntries.map(entry => <View key={entry.id}>
-          <Text style={styles.small}>{new Date(entry.createdAt).toLocaleString()} · {entry.count} observações</Text>
-          <Action title="Restaurar esta cópia local" secondary disabled={busy || !!state?.previousBoxAvailable} onPress={() => Alert.alert('Restaurar cópia local?', 'A cópia será verificada antes de ativar uma nova caixa. A caixa atual será preservada e a captura será desativada.', [{ text: 'Cancelar', style: 'cancel' }, { text: 'Restaurar', onPress: () => void run(async () => {
-            const result = await native.restoreLocalRecovery(entry.id);
-            if(result.status === 'restored') setMessage(`Cópia restaurada: ${result.count ?? entry.count} observações. A captura está desativada; ative-a quando quiser.`);
-            else if(result.status === 'error') setError('A cópia local não pôde ser restaurada. A caixa ativa foi preservada.');
-          }) }])} />
-        </View>)}
-        <Action title="Apagar cópias locais e desativar" secondary disabled={busy || ((state?.localRecovery?.count ?? 0) === 0 && state?.localRecovery?.status !== 'blocked')} onPress={() => Alert.alert('Apagar cópias locais?', 'Apaga somente as cópias cifradas desta instalação e desativa a recuperação automática. As caixas ativa/anterior e os backups portáteis não serão apagados.', [{ text: 'Cancelar', style: 'cancel' }, { text: 'Apagar cópias', style: 'destructive', onPress: () => void run(() => native.clearLocalRecovery()) }])} />
-      </Card>
-      <Card><Text style={styles.heading}>Retenção e diagnóstico de segurança</Text>
-        <Text style={state?.retention?.blocked ? styles.warning : styles.body}>
-          Caixa ativa: {state?.retention?.active?.status ?? 'indisponível'} · anterior: {state?.retention?.previous?.status ?? 'indisponível'}{state?.retention?.active?.failureCode ? ` · ativa: ${state.retention.active.failureCode}` : ''}{state?.retention?.previous?.failureCode ? ` · anterior: ${state.retention.previous.failureCode}` : ''}{state?.retention?.blocked ? ' · limpeza bloqueada; captura pausada. Se a chave anterior estiver indisponível, o descarte explícito fica acima.' : ''}
-        </Text>
-        <Action title="Verificar retenção agora" secondary disabled={busy} onPress={() => void run(() => native.maintainRetention())} />
-        <Text style={styles.small}>A bateria usa dados isolados. A checagem de logs cobre apenas uma janela do próprio processo; indisponibilidade fica como não verificado. Não habilita dados reais.</Text>
-        <Action title="Executar verificações nativas isoladas" secondary disabled={busy} onPress={() => Alert.alert('Executar diagnóstico?', 'A captura será pausada. As verificações usam somente dados sintéticos isolados e não alteram a caixa ativa.', [{ text: 'Cancelar', style: 'cancel' }, { text: 'Executar', onPress: () => void run(async () => {
-          const report: SecurityReport = await native.runSecurityChecks();
-          setMessage(`Diagnóstico concluído: ${report.passed} aprovadas, ${report.failed} falhas e ${report.notVerified} não verificadas. A captura permanece pausada.`);
-        }) }])} />
-        {state?.securityReport && <>
-          <Text style={styles.body}>Última execução: {new Date(state.securityReport.ranAt).toLocaleString()} · Android API {state.securityReport.sdk} · {state.securityReport.passed} aprovadas · {state.securityReport.failed} falhas · {state.securityReport.notVerified} não verificadas.</Text>
-          {state.securityReport.cases.map(testCase => <Text key={testCase.id} style={testCase.status === 'failed' ? styles.warning : styles.small}>
-            {testCase.status === 'passed' ? 'Aprovado' : testCase.status === 'failed' ? 'Falhou' : 'Não verificado'} · {testCase.title} ({testCase.id}){testCase.code ? ` · ${testCase.code}` : ''}
-          </Text>)}
-        </>}
-      </Card>
-      <Card><Text style={styles.heading}>Apagar caixa sintética ativa</Text>
-        <Text style={styles.body}>Apaga a caixa ativa e sua chave. A caixa anterior, as cópias locais e os backups portáteis permanecem.</Text>
-        <Action title="Apagar caixa ativa" secondary disabled={busy} onPress={() => Alert.alert('Apagar a caixa ativa?', 'Apaga a caixa ativa e sua chave. A caixa anterior, as cópias locais e os backups portáteis permanecem. Sem uma cópia disponível, os dados apagados não podem ser recuperados.', [{ text:'Cancelar',style:'cancel' },{ text:'Apagar',style:'destructive',onPress:() => void run(() => native.reset()) }])} />
-      </Card>
+        <View style={styles.wrap}><Chip title="A revisar" active={movementMode === 'pending'} onPress={() => setMovementMode('pending')} /><Chip title="Registrados" active={movementMode === 'confirmed'} onPress={() => setMovementMode('confirmed')} /></View>
       </>}
-      {state?.observations?.map(item => <Card key={item.id}><Text style={styles.heading}>Revisão {item.revision} · {item.state === 'processed' ? 'interpretada' : item.payload === null ? 'sem bruto' : 'pendente'}</Text><Text selectable style={styles.small}>ID: {item.id}{'\n'}Fonte: {item.sourceKey}{'\n'}Publicada: {item.publishedAt}{'\n'}Capturada: {item.capturedAt}{'\n'}Parser: {item.parserVersion ?? 'sem resultado'}</Text><Text selectable style={styles.small}>{item.parsedJson}</Text></Card>)}
-    </>}
-    {(screen === 'more' || !native) && <Action title="Sobre e licenças" secondary onPress={() => setLegalOpen(true)} />}
-  </ScreenScroll>
-    {native && <FinanceNavigation active={screen === 'home' || screen === 'transactions' || screen === 'review' ? screen : screen === 'entry' ? 'new' : 'more'} disabled={busy} onTab={navigate} onNew={() => setNewOpen(true)} />}
-    <Modal visible={newOpen} transparent animationType="slide" onRequestClose={() => setNewOpen(false)}>
-      <View style={{ flex: 1, backgroundColor: '#000000AA', justifyContent: 'flex-end' }}><SafeAreaView edges={['bottom']} style={{ backgroundColor: colors.card, padding: 22, gap: 12, borderTopWidth: 2, borderColor: colors.gold }}>
-        <Text style={styles.heading}>Novo lançamento</Text><Text style={styles.small}>Movimentos da conta disponível</Text>
-        <Action title="↗ Receita" disabled={busy} onPress={() => newEntry('income')} />
-        <Action title="↙ Despesa" disabled={busy} onPress={() => newEntry('expense')} />
-        <Action title="Cancelar" secondary onPress={() => setNewOpen(false)} />
-      </SafeAreaView></View>
-    </Modal><LegalNotices visible={legalOpen} onClose={() => setLegalOpen(false)} /></SafeAreaView>;
+      <View style={tab === 'transactions' && movementMode === 'pending' ? undefined : { display: 'none' }}>
+        <DailyInbox native={native} busy={busy} run={run} epoch={epoch} onChanged={changed} />
+      </View>
+      {tab === 'home' && !!state?.pendingCount && <Action title={`A revisar (${state.pendingCount})`} secondary disabled={busy} onPress={goReview} />}
+      <View style={tab === 'home' || (tab === 'transactions' && movementMode === 'confirmed') ? undefined : { display: 'none' }}>
+        <FinancePanel native={native} busy={busy} run={run} view={tab === 'home' ? 'home' : 'transactions'} onNavigate={navigate} onTools={() => setOverlay('tools')} valuesHidden={hidden} onToggleValues={() => setHidden(value => !value)} epoch={epoch} onChanged={changed} />
+      </View>
+    </ScreenScroll>
+    <FinanceNavigation active={tab} disabled={busy} onTab={next => { setTab(next); setMessage(null); setError(null); }} />
+    <Modal visible={overlay !== null} animationType="slide" onRequestClose={() => { if (!busyRef.current) { setOverlay(null); changed(); } }}>
+      {overlay === 'tools' ? <CaptureTools onClose={() => { setOverlay('more'); changed(); void refresh().catch(() => {}); }} /> : <SafeAreaView style={styles.page}>
+        <View style={[styles.row, { justifyContent: 'space-between', padding: 16 }]}><Text style={styles.heading}>{overlay === 'entry' ? 'Novo movimento' : overlay === 'categories' ? 'Categorias e tags' : overlay === 'balance' ? 'Conferência avançada' : 'Configurações'}</Text><Action title="×" accessibilityLabel="Fechar painel" secondary disabled={busy} onPress={() => { setOverlay(null); changed(); }} /></View>
+        <ScreenScroll><FinancePanel native={native} busy={busy} run={run} view={overlay ?? 'more'} onNavigate={navigate} onTools={() => setOverlay('tools')} entryKind={entryKind} entryRequest={entryRequest} valuesHidden={hidden} onToggleValues={() => setHidden(value => !value)} onChanged={changed} /></ScreenScroll>
+      </SafeAreaView>}
+    </Modal>
+  </SafeAreaView>;
 }

@@ -119,19 +119,20 @@ class CandidateSecurityScenarios(private val context:Context,private val recordP
                 for(table in listOf("candidate_parses","candidate_edits")) db.rawQuery("SELECT COUNT(*) FROM $table",null).use { it.moveToFirst();expect(it.getInt(0)==0,"CANDIDATE_RETENTION_CASCADE") }
             }
         },
-        case("candidate-migration","Migração 1 para 2 preserva dados e pausa consentimento antigo") { s ->
+        case("candidate-migration","Migração 1 para 3 preserva dados e pausa consentimento antigo") { s ->
             val name=s.newName();var id=""
             DiagnosticStore(s.context,name,true).use { db ->
                 db.start(signer,now);id=observe(db);db.review(id,fields("Fixture exportada R$ 12,34").encode(),true,now)
             }
             val wrapped=File(s.context.noBackupFilesDir,"$name.wrapped");val before=wrapped.readBytes()
-            sql(s,name) { db -> db.execSQL("DROP TABLE candidate_edits");db.execSQL("DROP TABLE candidate_parses");db.version=1 }
+            sql(s,name) { db -> db.execSQL("DROP TABLE candidate_edits");db.execSQL("DROP TABLE candidate_parses");db.execSQL("DROP TABLE statement_batches")
+                db.execSQL("ALTER TABLE session DROP COLUMN mode");db.execSQL("ALTER TABLE samples DROP COLUMN mode");db.execSQL("ALTER TABLE samples DROP COLUMN origin_json");db.version=1 }
             DiagnosticStore(s.context,name).use { db ->
                 expect(db.state(now)["active"]==false && db.samples(now).single()["id"]==id,"CANDIDATE_MIGRATION_SOURCE")
                 expect(db.state(now)["reviewedCount"]==1 && amount(db.candidate(id,now))?.toLong()==9990L,"CANDIDATE_MIGRATION_REVIEW")
                 expect(before.contentEquals(wrapped.readBytes()),"CANDIDATE_MIGRATION_KEY")
             }
-            sql(s,name) { expect(it.version==2,"CANDIDATE_MIGRATION_VERSION") }
+            sql(s,name) { expect(it.version==3,"CANDIDATE_MIGRATION_VERSION") }
         }
     )
 }

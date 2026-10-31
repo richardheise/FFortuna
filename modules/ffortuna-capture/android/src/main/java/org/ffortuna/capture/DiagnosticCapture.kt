@@ -23,6 +23,7 @@ class DiagnosticCapture(private val context:Context,private val name:String="ffo
         val absent=mapOf("status" to "absent","active" to false,"startedAt" to null,"expiresAt" to null,"count" to 0,"reviewedCount" to 0,"limitReached" to false,"failureCode" to null)
         return try {
             if(!exists()) absent else {
+                store().processCandidates(now)
                 val current=store().state(now)
                 if(current["active"]==true) store().validateSource(if(source["installed"]==true && source["enabled"]==true) source["signer"] as? String else null)
                 val state=store().state(now)
@@ -30,9 +31,9 @@ class DiagnosticCapture(private val context:Context,private val name:String="ffo
             }
         } catch(error:Exception) { absent+mapOf("status" to "blocked","failureCode" to safeCode(error)) }
     }
-    fun start(expectedSigner:String,source:Map<String,Any?>,now:DiagnosticMoment) {
+    fun start(expectedSigner:String,source:Map<String,Any?>,now:DiagnosticMoment,daily:Boolean=false) {
         if(source["installed"]!=true || source["enabled"]!=true || source["signer"]!=expectedSigner) throw DiagnosticFailure("SOURCE_CHANGED")
-        store(true).start(expectedSigner,now);failure=null
+        store(true).start(expectedSigner,now,daily);failure=null;processingFailure=null
     }
     fun stop() { if(exists()) store().stop() }
     fun clear() {
@@ -59,7 +60,11 @@ class DiagnosticCapture(private val context:Context,private val name:String="ffo
                 catch (_:Exception) { processingFailure="CANDIDATE_PROCESSING" }
         } catch(error:Exception) { failure=safeCode(error);try { opened?.stop() } catch (_:Exception) { } }
     }
-    fun samples(now:DiagnosticMoment)=if(exists()) store().samples(now) else emptyList()
+    fun recover(now:DiagnosticMoment) { if(exists()) store().processCandidates(now) }
+    fun pendingIds()=if(exists()) store().pendingIds() else emptyList()
+    fun statementBatches()=if(exists()) store().statementBatches() else emptyList()
+    fun stageStatement(document:StatementDocument,digest:String,now:DiagnosticMoment)=store(true).stageStatement(document,digest,now)
+    fun samples(now:DiagnosticMoment)=if(exists()) { store().processCandidates(now);store().samples(now) } else emptyList()
     fun sample(id:String,now:DiagnosticMoment)=store().sample(id,now)
     fun review(id:String,json:String,confirmed:Boolean,now:DiagnosticMoment)=store().review(id,json,confirmed,now)
     fun excludeReview(id:String)=store().excludeReview(id)
@@ -74,6 +79,7 @@ class DiagnosticCapture(private val context:Context,private val name:String="ffo
                 is DiagnosticFailure -> current.code
                 is ClassificationFailure -> "CLASSIFICATION_${current.code}"
                 is FinanceFailure -> current.code
+                is StatementFailure -> current.code
                 else -> "DIAGNOSTIC_STORAGE"
             }
         }

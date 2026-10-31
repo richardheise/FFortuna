@@ -15,6 +15,16 @@ module.exports = function withCapturePoc(config) {
     application['android:allowBackup'] = 'false';
     application['android:fullBackupContent'] = '@xml/ffortuna_backup_rules';
     application['android:dataExtractionRules'] = '@xml/ffortuna_data_extraction_rules';
+    const activity = mod.modResults.manifest.application[0].activity.find(item => item.$['android:name'] === '.MainActivity');
+    if (!activity) throw new Error('MainActivity missing; statement intake unavailable.');
+    activity['intent-filter'] ??= [];
+    for (const action of ['android.intent.action.SEND', 'android.intent.action.VIEW']) {
+      activity['intent-filter'].push({
+        action: [{ $: { 'android:name': action } }],
+        category: [{ $: { 'android:name': 'android.intent.category.DEFAULT' } }],
+        data: ['text/csv', 'text/comma-separated-values', 'text/plain', 'application/x-ofx', 'application/ofx', 'application/x-qfx', 'application/octet-stream'].map(mime => ({ $: { 'android:mimeType': mime, ...(action.endsWith('VIEW') ? { 'android:scheme': 'content' } : {}) } })),
+      });
+    }
     return mod;
   });
   config = withMainActivity(config, (mod) => {
@@ -22,6 +32,17 @@ module.exports = function withCapturePoc(config) {
       const marker = 'super.onCreate(null)';
       if (!mod.modResults.contents.includes(marker)) throw new Error('MainActivity creation hook missing; secure window is required.');
       mod.modResults.contents = mod.modResults.contents.replace(marker, `${marker}\n    window.addFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE)`);
+    }
+    if (!mod.modResults.contents.includes('StatementIntake.receive')) {
+      mod.modResults.contents = mod.modResults.contents.replace('super.onCreate(null)', 'if (org.ffortuna.capture.StatementIntake.receive(intent)) setIntent(android.content.Intent(android.content.Intent.ACTION_MAIN))\n    super.onCreate(null)');
+      const end = mod.modResults.contents.lastIndexOf('}');
+      mod.modResults.contents = mod.modResults.contents.slice(0, end) + `
+  override fun onNewIntent(intent: android.content.Intent) {
+    val safeIntent = if (org.ffortuna.capture.StatementIntake.receive(intent)) android.content.Intent(android.content.Intent.ACTION_MAIN) else intent
+    super.onNewIntent(safeIntent)
+    setIntent(safeIntent)
+  }
+` + mod.modResults.contents.slice(end);
     }
     return mod;
   });

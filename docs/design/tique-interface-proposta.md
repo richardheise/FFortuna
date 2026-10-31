@@ -2,7 +2,7 @@
 
 ## Direção atual — registro de movimentações e três telas
 
-Em 30/10/2026, o usuário pediu usar o aplicativo por alguns dias e anotar suas percepções, sem novos roteiros específicos de teste. Pediu três telas, navegação simples, pouco texto e prioridade para ícones. Esclareceu que quer **registrar a movimentação do dinheiro**, sem reproduzir exatamente seu dinheiro ou exigir que o saldo calculado coincida com o banco. Este recorte orienta a proposta abaixo; não constitui implementação nem aprovação física da 0.9.0.
+Em 30/10/2026, o usuário pediu usar o aplicativo por alguns dias e anotar suas percepções, sem novos roteiros específicos de teste. Pediu três telas, navegação simples, pouco texto e prioridade para ícones. Esclareceu que quer **registrar a movimentação do dinheiro**, sem reproduzir exatamente seu dinheiro ou exigir que o saldo calculado coincida com o banco. Este recorte foi autorizado para implementação na 0.10.0; não constitui aprovação física da 0.9.0. O usuário reforçou que extratos são opcionais e quer compartilhá-los para o Tique.
 
 Manter preto, âmbar alaranjado, ciano e off-white, com formas retas. O livro interno e os dados existentes continuam preservados. A abertura e a conferência bancária deixam de ser a tarefa central da interface; a experiência proposta não exige informar patrimônio, saldo inicial real ou ajustar diferenças para começar a registrar. Importações ainda devem respeitar datas e regras do livro; implementar esse começo simples requer resolver essas restrições no serviço, sem forjar saldos nem descartar o histórico.
 

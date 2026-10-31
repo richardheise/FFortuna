@@ -10,7 +10,7 @@ import java.util.UUID
 /** One permanent BRL book, on the catalog owner's connection and serial executor. */
 class FinancialLedger(private val db:SQLiteDatabase) {
     companion object {
-        val tables=listOf("classifications","finance_profile","finance_transactions","finance_entries","finance_tags","finance_balance_checks","finance_cancellations")
+        val tables=listOf("classifications","finance_profile","finance_transactions","finance_entries","finance_tags","finance_balance_checks","finance_cancellations","finance_observation_links")
         fun createSchema(db:SQLiteDatabase) {
             db.execSQL("CREATE TABLE finance_profile(id INTEGER PRIMARY KEY CHECK(id=1),opening_date TEXT NOT NULL,opening_cents INTEGER NOT NULL)")
             db.execSQL("""CREATE TABLE finance_transactions(id TEXT PRIMARY KEY,command_key TEXT UNIQUE NOT NULL,request_json TEXT NOT NULL,
@@ -23,6 +23,9 @@ class FinancialLedger(private val db:SQLiteDatabase) {
                 tag_id TEXT NOT NULL REFERENCES classifications(id),PRIMARY KEY(transaction_id,tag_id))""")
             db.execSQL("CREATE TABLE finance_balance_checks(id TEXT PRIMARY KEY,effective_date TEXT NOT NULL,amount INTEGER NOT NULL,created_at TEXT NOT NULL)")
             db.execSQL("CREATE TABLE finance_cancellations(transaction_id TEXT PRIMARY KEY REFERENCES finance_transactions(id),reason TEXT NOT NULL,cancelled_at TEXT NOT NULL)")
+        }
+        fun createLinksSchema(db:SQLiteDatabase) {
+            db.execSQL("CREATE TABLE finance_observation_links(event_id TEXT PRIMARY KEY,transaction_id TEXT NOT NULL REFERENCES finance_transactions(id),source_json TEXT NOT NULL)")
         }
         fun jsonMap(root:JSONObject):Map<String,Any?> = root.keys().asSequence().associateWith { key -> jsonValue(root.get(key)) }
         private fun jsonValue(value:Any?):Any?=when(value) {
@@ -38,7 +41,35 @@ class FinancialLedger(private val db:SQLiteDatabase) {
     }
     fun configured()=db.rawQuery("SELECT COUNT(*) FROM finance_profile",null).use { it.moveToFirst();it.getInt(0)==1 }
     fun confirmedEvents():Map<String,String> = db.rawQuery("SELECT source_event_id,id FROM finance_transactions WHERE source_event_id IS NOT NULL",null).use { rows ->
-        buildMap { while(rows.moveToNext()) put(rows.getString(0),rows.getString(1)) }
+        buildMap { while(rows.moveToNext()) put(rows.getString(0),rows.getString(1));db.rawQuery("SELECT event_id,transaction_id FROM finance_observation_links",null).use { links -> while(links.moveToNext()) put(links.getString(0),links.getString(1)) } }
+    }
+    fun startTracking() { if(!configured()) setup("{\"openingDate\":\"0001-01-01\",\"openingBalanceCents\":0}") }
+    fun matching(amount:Long?,date:String?):List<Map<String,Any?>> {
+        if(amount==null) return emptyList()
+        val cancelled=rows("finance_cancellations").map { it["transaction_id"] }.toSet()
+        return rows("finance_transactions").asReversed().filter { it["kind"]!="opening" && it["id"] !in cancelled && it["amount"]==amount && (date==null || it["effective_date"]==date) }.take(10).map {
+            mapOf("id" to it["id"],"description" to it["description"],"amountCents" to it["amount"],"effectiveDate" to it["effective_date"],"kind" to it["kind"])
+        }
+    }
+    fun statementMatches(key:String):List<Map<String,Any?>> {
+        val candidates=rows("finance_transactions").filter { row ->
+            (row["source_json"] as? String)?.let { val source=JSONObject(it);source.optString("packageName")=="org.tique.statement" && source.optString("sourceKey")==key }==true
+        }.map { it["id"] }.toMutableSet()
+        for(link in rows("finance_observation_links")) {
+            val source=JSONObject(link["source_json"] as String)
+            if(source.optString("packageName")=="org.tique.statement" && source.optString("sourceKey")==key) candidates.add(link["transaction_id"])
+        }
+        val voided=rows("finance_cancellations").map { it["transaction_id"] }.toSet()
+        return rows("finance_transactions").filter { it["id"] in candidates && it["id"] !in voided }.map {
+            mapOf("id" to it["id"],"description" to it["description"],"amountCents" to it["amount"],"effectiveDate" to it["effective_date"],"kind" to it["kind"])
+        }
+    }
+    fun linkObservation(id:String,transactionId:String,source:Map<String,Any?>)=atomic {
+        val current=confirmedEvents()[id]
+        if(current!=null) { if(current!=transactionId) throw FinanceFailure("CONFIRMATION_CONFLICT");return@atomic }
+        if(rows("finance_transactions").none { it["id"]==transactionId && it["kind"]!="opening" } || rows("finance_cancellations").any { it["transaction_id"]==transactionId }) throw FinanceFailure("NOT_FOUND")
+        if(source["packageName"]=="org.tique.statement" && statementMatches(source["sourceKey"] as String).any { it["id"]!=transactionId }) throw FinanceFailure("IMPORT_CONFLICT")
+        db.execSQL("INSERT INTO finance_observation_links VALUES(?,?,?)",arrayOf(id,transactionId,JSONObject(source).toString()))
     }
     private fun profile():Pair<String,Long> = db.rawQuery("SELECT opening_date,opening_cents FROM finance_profile WHERE id=1",null).use {
         if(!it.moveToFirst()) throw FinanceFailure("ACCOUNT_REQUIRED");it.getString(0) to it.getLong(1)
@@ -70,7 +101,7 @@ class FinancialLedger(private val db:SQLiteDatabase) {
     private fun catalog():List<Map<String,Any?>> = db.rawQuery("SELECT id,kind,name,archived FROM classifications ORDER BY id",null).use { rows ->
         buildList { while(rows.moveToNext()) add(mapOf("id" to rows.getString(0),"kind" to rows.getString(1),"name" to rows.getString(2),"archived" to (rows.getInt(3)==1))) }
     }
-    fun transactionForEvent(id:String):Map<String,Any?>?=db.rawQuery("SELECT id,request_json,category_legacy FROM finance_transactions WHERE source_event_id=?",arrayOf(id)).use {
+    fun transactionForEvent(id:String):Map<String,Any?>?=db.rawQuery("SELECT id,request_json,category_legacy FROM finance_transactions WHERE id=(SELECT transaction_id FROM finance_observation_links WHERE event_id=?) OR source_event_id=?",arrayOf(id,id)).use {
         if(!it.moveToFirst()) null else {
             val fields=JSONObject(it.getString(1));val categoryId=if(fields.isNull("categoryId")) null else fields.getString("categoryId")
             val label=catalog().firstOrNull { option -> option["id"]==categoryId }?.get("name") ?: it.getString(2)
@@ -79,7 +110,7 @@ class FinancialLedger(private val db:SQLiteDatabase) {
         }
     }
     fun post(json:String,source:Map<String,Any?>?=null):String = atomic {
-        val opening=profile().first
+        profile()
         val manual=source==null
         val keys=setOf("amountCents","kind","effectiveDate","description","category","categoryId","tagIds")+(if(manual) setOf("commandId") else emptySet())
         val root=root(json,keys)
@@ -88,7 +119,6 @@ class FinancialLedger(private val db:SQLiteDatabase) {
         val amount=FinanceRules.cents(root.get("amountCents"));val kind=string(root,"kind")
         if(kind !in setOf("income","expense")) throw FinanceFailure("UNSUPPORTED_MOVEMENT")
         val date=string(root,"effectiveDate");currentDate(date)
-        if(date<opening) throw FinanceFailure("DATE_BEFORE_OPENING")
         val description=FinanceRules.text(string(root,"description"),500)
         val existing=db.rawQuery("SELECT id,request_json FROM finance_transactions WHERE command_key=?",arrayOf(key)).use {
             if(it.moveToFirst()) it.getString(0) to it.getString(1) else null
@@ -106,6 +136,7 @@ class FinancialLedger(private val db:SQLiteDatabase) {
             if(JSONObject(existing.second).toString()!=JSONObject(request).toString()) throw FinanceFailure("CONFIRMATION_CONFLICT")
             return@atomic existing.first
         }
+        if(source?.get("packageName")=="org.tique.statement" && statementMatches(source["sourceKey"] as String).isNotEmpty()) throw FinanceFailure("IMPORT_CONFLICT")
         if(rows("finance_transactions").size>=10_000) throw FinanceFailure("TRANSACTION_LIMIT")
         val id=UUID.randomUUID().toString();val sourceJson=source?.let { JSONObject(it).toString() }
         if(sourceJson!=null && sourceJson.length>4096) throw FinanceFailure("INVALID_SOURCE")
@@ -169,7 +200,7 @@ class FinancialLedger(private val db:SQLiteDatabase) {
             },"transactions" to allCurrent.sortedWith(compareByDescending<Map<String,Any?>> { it["effective_date"] as String }.thenByDescending { it["created_at"] as String }).map { row ->
                 val tagIds=tags.filter { it["transaction_id"]==row["id"] }.map { it["tag_id"] }
                 mapOf("id" to row["id"],"kind" to row["kind"],"amountCents" to row["amount"],"effectiveDate" to row["effective_date"],"description" to row["description"],
-                    "categoryId" to row["category_id"],"category" to category(row),"tagIds" to tagIds,"tags" to tagIds.map { options[it]?.get("name") },"sourceEventId" to row["source_event_id"],"voided" to (row["id"] in cancelled),"cancellationReason" to cancelled[row["id"]]?.get("reason"))
+                    "categoryId" to row["category_id"],"category" to category(row),"tagIds" to tagIds,"tags" to tagIds.map { options[it]?.get("name") },"sourceEventId" to row["source_event_id"],"sourceType" to (if(row["source_json"]==null) "manual" else if(JSONObject(row["source_json"] as String).getString("packageName")=="org.tique.statement") "statement" else "notification"),"voided" to (row["id"] in cancelled),"cancellationReason" to cancelled[row["id"]]?.get("reason"))
             },"balanceCheck" to check)
     }
     /** Also used to reject malformed restored books before activating them. */
@@ -177,13 +208,13 @@ class FinancialLedger(private val db:SQLiteDatabase) {
         val profile=rows("finance_profile");val transactions=rows("finance_transactions");val entries=rows("finance_entries");val tags=rows("finance_tags");val options=catalog().associateBy { it["id"] }
         val cancellations=rows("finance_cancellations");val cancelled=cancellations.map { it["transaction_id"] }.toSet()
         if(profile.size>1 || transactions.size>10_000 || rows("finance_balance_checks").size>1000) throw FinanceFailure("INVALID_STATE")
-        if(profile.isEmpty()) { if(transactions.isNotEmpty() || entries.isNotEmpty() || tags.isNotEmpty() || cancellations.isNotEmpty() || rows("finance_balance_checks").isNotEmpty()) throw FinanceFailure("INVALID_STATE");return }
+        if(profile.isEmpty()) { if(transactions.isNotEmpty() || entries.isNotEmpty() || tags.isNotEmpty() || cancellations.isNotEmpty() || rows("finance_observation_links").isNotEmpty() || rows("finance_balance_checks").isNotEmpty()) throw FinanceFailure("INVALID_STATE");return }
         val start=FinanceRules.date(profile.single()["opening_date"] as String);val initial=FinanceRules.cents(profile.single()["opening_cents"],true)
         if(transactions.count { it["kind"]=="opening" }!=1) throw FinanceFailure("INVALID_STATE")
         val totals=mutableListOf<Long>();val groupedEntries=entries.groupBy { it["transaction_id"] };val groupedTags=tags.groupBy { it["transaction_id"] }
         val transactionIds=transactions.map { it["id"] }.toSet()
         for(row in transactions) {
-            val date=FinanceRules.date(row["effective_date"] as String);if(date<start) throw FinanceFailure("INVALID_STATE")
+            val date=FinanceRules.date(row["effective_date"] as String)
             val opening=row["kind"]=="opening";val amount=FinanceRules.cents(row["amount"],signed=opening)
             val cash=when(row["kind"]) { "opening" -> initial;"income" -> amount;"expense" -> -amount;else -> throw FinanceFailure("INVALID_STATE") }
             if(opening && (date!=start || amount!=kotlin.math.abs(initial) || row["command_key"]!="opening" || row["request_json"]!="{}" || row["source_event_id"]!=null || row["source_json"]!=null || row["category_id"]!=null || row["category_legacy"]!="" || row["description"]!="Saldo de abertura" || !groupedTags[row["id"]].isNullOrEmpty())) throw FinanceFailure("INVALID_STATE")
@@ -213,6 +244,14 @@ class FinancialLedger(private val db:SQLiteDatabase) {
             if(transactions.none { it["id"]==row["transaction_id"] && it["kind"]!="opening" } || FinanceRules.text(row["reason"] as String,500).isBlank()) throw FinanceFailure("INVALID_STATE")
             Instant.parse(row["cancelled_at"] as String)
         }
+        val linked=rows("finance_observation_links")
+        if(linked.size>10_000) throw FinanceFailure("TRANSACTION_LIMIT")
+        for(link in linked) {
+            val event=link["event_id"] as String
+            if(UUID.fromString(event).toString()!=event || link["transaction_id"] !in transactionIds || transactions.any { it["source_event_id"]==event }) throw FinanceFailure("INVALID_STATE")
+            val source=JSONObject(link["source_json"] as String);validateSource(source)
+            if(source.getString("eventId")!=event) throw FinanceFailure("INVALID_SOURCE")
+        }
         val active=transactions.filter { it["id"] !in cancelled }
         if(entries.size!=transactions.size*2 || tags.any { options[it["tag_id"]]?.get("kind")!="tag" || it["transaction_id"] !in transactionIds }) throw FinanceFailure("INVALID_STATE")
         FinanceRules.sum(totals)
@@ -228,7 +267,7 @@ class FinancialLedger(private val db:SQLiteDatabase) {
     }
     private fun validateSource(source:JSONObject) {
         val keys=setOf("eventId","packageName","sourceKey","revision","publishedAt","capturedAt","parserVersion","fieldEvidence","confidence")
-        if(source.keys().asSequence().toSet()!=keys || source.getString("packageName")!=DiagnosticPolicy.PACKAGE || source.toString().length>4096) throw FinanceFailure("INVALID_SOURCE")
+        if(source.keys().asSequence().toSet()!=keys || source.getString("packageName") !in setOf(DiagnosticPolicy.PACKAGE,"org.tique.statement") || source.toString().length>4096) throw FinanceFailure("INVALID_SOURCE")
         val id=source.getString("eventId");if(UUID.fromString(id).toString()!=id) throw FinanceFailure("INVALID_SOURCE")
         val revision=source.get("revision");if((revision !is Int && revision !is Long) || (revision as Number).toLong()<1) throw FinanceFailure("INVALID_SOURCE")
         FinanceRules.text(source.getString("sourceKey"),1024);FinanceRules.text(source.getString("parserVersion"),80)

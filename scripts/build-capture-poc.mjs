@@ -88,5 +88,5 @@ if (!testOnly && !configureOnly) {
   copyFileSync(source,apk);
   const digest = createHash('sha256').update(readFileSync(apk)).digest('hex');
   writeFileSync(apk+'.sha256', `${digest}  tique-arm64.apk\n`);
-  console.log(`APK local (exemplos sintéticos e diagnóstico real opcional): ${apk}\nSHA-256: ${digest}`);
+  console.log(`APK local (uso diário; notificações consentidas e extratos opcionais): ${apk}\nSHA-256: ${digest}`);
 }

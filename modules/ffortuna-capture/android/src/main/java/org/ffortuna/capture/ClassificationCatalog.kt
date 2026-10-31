@@ -17,7 +17,7 @@ class ClassificationCatalog(
 ) : AutoCloseable {
     companion object {
         const val DEFAULT_NAME = "ffortuna-classifications-v1"
-        private const val VERSION = 2
+        private const val VERSION = 3
         private val seedCategories = listOf("Comida", "Lazer", "Contas", "Transporte", "Saúde", "Educação", "Compras", "Outros")
 
         private fun createSchema(db: SQLiteDatabase) {
@@ -69,6 +69,7 @@ class ClassificationCatalog(
                     db.version = 1
                 }
                 if(db.version==1) { FinancialLedger.createSchema(db);db.version=2 }
+                if(db.version==2) { FinancialLedger.createLinksSchema(db);db.version=3 }
                 db.setTransactionSuccessful()
             } finally { db.endTransaction() }
             verify()
@@ -89,6 +90,7 @@ class ClassificationCatalog(
         return items
     }
 
+    fun identity()=name
     fun ledger()=FinancialLedger(db)
     fun exportFinance():ByteArray { validateCatalog();ledger().validate();return FinancialBackup.encode(ledger()) }
     fun importFinance(plain:ByteArray) { FinancialBackup.restore(db,plain);validateCatalog();verify() }
@@ -175,6 +177,7 @@ class ClassificationCatalog(
     private fun requireKind(kind: String) { if (kind != "category" && kind != "tag") throw ClassificationFailure("INVALID_KIND") }
     private fun checkOpen() { if (closed) throw ClassificationFailure("CLOSED") }
 
+    fun verifyForUse() { verify();ledger().validate() }
     private fun verify() {
         db.rawQuery("PRAGMA cipher_integrity_check", null).use { check(!it.moveToFirst()) { "CLASSIFICATION_INTEGRITY" } }
         check(file.inputStream().use { input ->

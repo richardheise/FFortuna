@@ -12,6 +12,14 @@ _Evitar_: réplica da conta bancária, extrato completo garantido
 Diferença entre receitas e despesas confirmadas no recorte selecionado. Depende dos registros disponíveis e não representa saldo disponível no banco, patrimônio ou economia garantida.
 _Evitar_: dinheiro disponível, saldo bancário
 
+**Captura diária de notificações**:
+Recebimento local e consentido de novas notificações do banco selecionado, sem renovação diária de sessão. Preserva observações e candidatos na caixa cifrada; originais têm retenção de 30 dias. Não é consulta ao banco, extrato completo ou confirmação automática.
+_Evitar_: conexão bancária, sincronização de saldo
+
+**Extrato recebido**:
+Arquivo escolhido ou compartilhado explicitamente pelo usuário e interpretado localmente como candidatos. A prévia e a identificação de sobreposição antecedem a confirmação; receber o arquivo não habilita captura nem lança transações.
+_Evitar_: importação financeira automática, cópia integral garantida da conta
+
 **Conta financeira**:
 Local em que o usuário mantém dinheiro, como uma conta bancária ou dinheiro em espécie.
 _Evitar_: conta de acesso, cartão

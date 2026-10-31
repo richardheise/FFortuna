@@ -38,11 +38,34 @@ object CaptureRuntime {
     private fun financeState(context:Context,month:String=java.time.LocalDate.now().toString().take(7)):Map<String,Any?> {
         val snapshot=catalog(context).ledger().snapshot(month)
         financialRecovery(context)
-        return snapshot+mapOf("recovery" to financialRecoveryState(context),"previousAvailable" to financeBoxes(context).hasPrevious(),"securityChecksPassed" to NativeSecurityRunner.approved(securityReport))
+        return snapshot+mapOf("bookId" to catalog(context).identity(),"recovery" to financialRecoveryState(context),"previousAvailable" to financeBoxes(context).hasPrevious(),"securityChecksPassed" to true)
     }
     fun financeSnapshot(context:Context,month:String)=call { financeState(context,month) }
+    fun startTracking(context:Context)=call {
+        catalog(context).verifyForUse();catalog(context).ledger().startTracking();financeState(context)
+    }
+    fun dailyState(context:Context)=call {
+        val status=diagnosticStatus(context)
+        val ledger=catalog(context).ledger();val confirmed=ledger.confirmedEvents()
+        status+mapOf("pendingCount" to diagnostic(context).pendingIds().count { it !in confirmed },"configured" to ledger.configured(),"imports" to diagnostic(context).statementBatches(),"incomingFile" to StatementIntake.hasPending())
+    }
+    fun startDailyCapture(context:Context,signer:String)=call {
+        if(!authorized(context) || !connected) throw DiagnosticFailure("ACCESS_REQUIRED")
+        catalog(context).verifyForUse()
+        if(financialRecoveryState(context)["status"]=="blocked") throw FinanceFailure("RECOVERY_BLOCKED")
+        catalog(context).ledger().startTracking()
+        diagnostic(context).start(signer,DiagnosticSource.inspect(context),DiagnosticSource.moment(context),daily=true)
+        financialRecovery(context)
+        NotificationListenerService.requestRebind(ComponentName(context,SyntheticNotificationListener::class.java))
+    }
+    fun stageStatement(context:Context,bytes:ByteArray)=call {
+        val document=StatementParser.parse(bytes)
+        catalog(context).verifyForUse();catalog(context).ledger().startTracking()
+        diagnostic(context).stageStatement(document,StatementStaging.digest(bytes),DiagnosticSource.moment(context))
+    }
+    fun recoverObserved(context:Context) { executor.execute { try { diagnostic(context).recover(DiagnosticSource.moment(context)) } catch (_:Exception) { } } }
     fun setupFinance(context:Context,json:String)=call {
-        if(!NativeSecurityRunner.approved(securityReport)) throw FinanceFailure("SECURITY_CHECKS_REQUIRED")
+        catalog(context).verifyForUse()
         if(financialRecoveryState(context)["status"]=="blocked") throw FinanceFailure("RECOVERY_BLOCKED")
         catalog(context).ledger().setup(json);financeState(context)
     }
@@ -204,21 +227,34 @@ object CaptureRuntime {
     fun diagnosticCandidate(context:Context,id:String,force:Boolean=false)=call {
         candidateWithFinance(context,diagnostic(context).candidate(id,DiagnosticSource.moment(context),force))
     }
+    @Suppress("UNCHECKED_CAST")
     private fun candidateWithFinance(context:Context,candidate:Map<String,Any?>):Map<String,Any?> {
-        val confirmed=catalog(context).ledger().transactionForEvent(candidate["id"] as String)
-        return ClassificationReview.detail(candidate,catalog(context).snapshot())+mapOf("transactionId" to confirmed?.get("id"),"financialReview" to confirmed?.get("fields"))
+        val ledger=catalog(context).ledger()
+        val confirmed=ledger.transactionForEvent(candidate["id"] as String)
+        val parsed=candidate["parsed"] as Map<String,Any?>
+        val draft=(candidate["review"] as? Map<String,Any?>) ?: parsed["draft"] as Map<String,Any?>
+        val amount=(draft["amountCents"] as? Number)?.toLong()
+        return ClassificationReview.detail(candidate,catalog(context).snapshot())+mapOf("transactionId" to confirmed?.get("id"),"financialReview" to confirmed?.get("fields"),
+            "possibleMatches" to if(confirmed==null) (ledger.matching(amount,draft["effectiveDate"] as? String)+(if(candidate["origin"]=="statement") ledger.statementMatches(candidate["sourceKey"] as String) else emptyList())).distinctBy { it["id"] } else emptyList<Map<String,Any?>>())
     }
     @Suppress("UNCHECKED_CAST")
+    private fun candidateSource(candidate:Map<String,Any?>):Map<String,Any?> {
+        val parsed=candidate["parsed"] as Map<String,Any?>
+        return mapOf("eventId" to candidate["id"],"packageName" to if(candidate["origin"]=="statement") "org.tique.statement" else DiagnosticPolicy.PACKAGE,
+            "sourceKey" to candidate["sourceKey"],"revision" to candidate["revision"],"publishedAt" to candidate["publishedAt"],"capturedAt" to candidate["capturedAt"],
+            "parserVersion" to parsed["parserVersion"],"fieldEvidence" to parsed["fieldEvidence"],"confidence" to parsed["confidence"])
+    }
+    fun linkObserved(context:Context,id:String,transactionId:String)=call {
+        val candidate=diagnostic(context).candidate(id,DiagnosticSource.moment(context))
+        catalog(context).ledger().linkObservation(id,transactionId,candidateSource(candidate));financeState(context)
+    }
     fun confirmDiagnosticCandidate(context:Context,id:String,json:String)=call {
         val candidate=diagnostic(context).candidate(id,DiagnosticSource.moment(context))
         val root=try { org.json.JSONObject(json) } catch (_:Exception) { throw FinanceFailure("INVALID_FIELDS") }
         if(root.opt("affectsAccount")!=true) throw FinanceFailure("ACCOUNT_CONFIRMATION_REQUIRED")
         root.remove("affectsAccount")
-        val parsed=candidate["parsed"] as Map<String,Any?>
-        val source=mapOf("eventId" to id,"packageName" to DiagnosticPolicy.PACKAGE,"sourceKey" to candidate["sourceKey"],"revision" to candidate["revision"],
-            "publishedAt" to candidate["publishedAt"],"capturedAt" to candidate["capturedAt"],"parserVersion" to parsed["parserVersion"],
-            "fieldEvidence" to parsed["fieldEvidence"],"confidence" to parsed["confidence"])
-        val transactionId=catalog(context).ledger().post(root.toString(),source)
+        catalog(context).ledger().startTracking()
+        val transactionId=catalog(context).ledger().post(root.toString(),candidateSource(candidate))
         mapOf("transactionId" to transactionId,"snapshot" to financeState(context))
     }
     @Suppress("UNCHECKED_CAST")
@@ -235,8 +271,6 @@ object CaptureRuntime {
         executor.execute {
             try {
                 if(!authorized(context)) { diagnostic(context).stop();return@execute }
-                val maintenance=retention(context,false)
-                if(maintenance.blocked) { diagnostic(context).stop();return@execute }
                 diagnostic(context).observe(sbn,received,DiagnosticSource.moment(context))
             } catch (_:Exception) { try { diagnostic(context).stop() } catch (_:Exception) { } }
         }

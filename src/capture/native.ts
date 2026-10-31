@@ -37,6 +37,15 @@ export interface CaptureSnapshot {
 }
 export type BackupResult = { status: 'saved' | 'restored' | 'cancelled' | 'error'; code?: string; count?: number; unavailable?: number };
 export interface CaptureModule {
+  dailyState(): Promise<DailyState>;
+  openBankApp(): Promise<void>;
+  reconnectCapture(): Promise<void>;
+  startTracking(): Promise<FinanceResult>;
+  startDailyCapture(signer: string): Promise<DiagnosticResult>;
+  chooseStatement(): Promise<StatementResult>;
+  importSharedStatement(): Promise<StatementResult>;
+  dismissSharedStatement(): Promise<void>;
+  linkObserved(id: string, transactionId: string): Promise<FinanceResult>;
   financeSnapshot(month: string): Promise<FinanceResult>;
   setupFinance(fieldsJson: string): Promise<FinanceResult>;
   createFinanceTransaction(fieldsJson: string): Promise<FinanceResult>;
@@ -92,10 +101,11 @@ export interface FinanceResult { status: 'ok' | 'error'; code?: string; snapshot
 export interface FinanceTransaction {
   id: string; kind: 'income' | 'expense'; amountCents: number; effectiveDate: string; description: string;
   categoryId: string | null; category: string; tagIds: string[]; tags: string[]; sourceEventId: string | null;
+  sourceType?: 'manual' | 'notification' | 'statement';
   voided: boolean; cancellationReason: string | null;
 }
 export interface FinanceSnapshot {
-  configured: boolean; profile: { openingDate: string; openingBalanceCents: number } | null;
+  bookId?: string; configured: boolean; profile: { openingDate: string; openingBalanceCents: number } | null;
   balanceCents: number; month: string; incomeCents: number; expenseCents: number; total: number;
   byCategory: Array<{ categoryId: string | null; name: string; amountCents: number }>;
   transactions: FinanceTransaction[];
@@ -114,13 +124,20 @@ export interface DiagnosticSource {
   versionName: string | null; signer: string | null;
 }
 export interface DiagnosticStatus {
-  status: 'absent' | 'ready' | 'blocked'; active: boolean; securityChecksPassed: boolean;
+  status: 'absent' | 'ready' | 'blocked' | 'error'; mode?: 'daily' | 'diagnostic'; code?: string; active: boolean; securityChecksPassed: boolean;
   authorized: boolean; connected: boolean; source: DiagnosticSource;
   startedAt: string | null; expiresAt: string | null;
   count: number; reviewedCount: number; limitReached: boolean; failureCode: string | null; processingFailureCode?: string | null;
 }
+export interface StatementResult { status: 'ok' | 'error' | 'cancelled'; code?: string; count?: number; existing?: number }
+export interface DailyState extends DiagnosticStatus {
+  pendingCount: number; configured: boolean; incomingFile: boolean;
+  imports: Array<{ id: string; format: string; capturedAt: string; count: number }>;
+}
 export interface DiagnosticFields { title: string; text: string; bigText: string; subText: string; textLines: string[] }
 export interface DiagnosticSampleInfo {
+  description?: string; amountCents?: number | null; effectiveDate?: string | null;
+  mode?: string; origin?: 'notification' | 'statement';
   transactionId?: string | null;
   id: string; revision: number; publishedAt: string; capturedAt: string;
   isSummary: boolean; truncated: boolean; hasText: boolean; hasReview: boolean; candidateParsedAt?: string | null; candidateReviewStatus?: string | null;
@@ -149,6 +166,8 @@ export interface NotificationCandidate {
     reasonCode: string; reason: string; automaticPostingAllowed: false;
   };
   original: DiagnosticFields; review: NotificationCandidateReview | null; reviewedAt: string | null;
-  previousSampleId: string | null; relatedReviewExists: boolean; hasLaterRevision: boolean; temporary: true; transactionId: string | null;
+  previousSampleId: string | null; relatedReviewExists: boolean; hasLaterRevision: boolean; temporary: boolean; transactionId: string | null;
+  originalAvailable?: boolean; origin?: 'notification' | 'statement';
+  possibleMatches?: Array<{ id: string; description: string; amountCents: number; effectiveDate: string; kind: 'income' | 'expense' }>;
   financialReview?: NotificationCandidateFields | null;
 }

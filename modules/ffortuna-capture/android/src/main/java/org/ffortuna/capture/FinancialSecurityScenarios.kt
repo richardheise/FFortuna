@@ -92,7 +92,7 @@ class FinancialSecurityScenarios(private val context: Context) {
                 fails("INVALID_AMOUNT") { ledger.post(movement(amount = 0, date = opening)) }
                 fails("INVALID_AMOUNT") { ledger.post(movement(amount = -1, date = opening)) }
                 fails("UNSUPPORTED_MOVEMENT") { ledger.post(movement(amount = 10, kind = "transfer", date = LocalDate.now().minusDays(1).toString())) }
-                fails("DATE_BEFORE_OPENING") { ledger.post(movement(amount = 10, date = LocalDate.now().minusDays(1).toString())) }
+                fails("INVALID_DATE") { ledger.post(movement(amount = 10, date = "2026-02-30")) }
                 fails("FUTURE_DATE") { ledger.post(movement(amount = 10, date = LocalDate.now().plusDays(1).toString())) }
                 fails("AMOUNT_LIMIT") { ledger.post(movement(amount = 1, kind = "income", date = opening)) }
                 expect(ledger.rows("finance_transactions").size == 1, "FINANCE_INVALID_PARTIAL_ROW")

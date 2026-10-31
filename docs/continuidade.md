@@ -1,8 +1,18 @@
-# Continuidade — Tique 0.9.0
+# Continuidade — Tique 0.10.0
 
 Atualizado em 30/10/2026. Prioridade do usuário: funcionalidades em incrementos pequenos, depois refinamento UI/UX. A demonstração financeira e os exemplos nativos são sintéticos. A captura diagnóstica é temporária e opcional; a 0.8.0 implementa um livro permanente cifrado de uma conta, com confirmação manual e recuperação.
 
-## Próximo recorte — uso diário, três telas e foco nas movimentações
+## Incremento 0.10.0 — uso diário autorizado
+
+Usuário autorizou implementar a proposta e reforçou: extratos são opcionais, mas quer exportar/compartilhar para o Tique. Três abas (Fontes, Movimentos e Análises), foco nos registros em vez de saldo bancário, engrenagem/painéis, revisão compacta e filtros. Uso cotidiano substitui novos roteiros de teste ao usuário; verificações de desenvolvimento continuam, sem presumir aprovação física.
+
+[ADR 0012](adr/0012-uso-diario-e-entrada-de-extratos.md): consentimento diário novo, distinto do diagnóstico antigo, persistente entre processo/reinício; bruto 30 dias, candidatos/correções duráveis e verificação cifrada interna em lugar de bateria manual como trava. Esquemas diagnóstico/catálogo 2→3. Livro único e recuperação preservados; nova abertura técnica zero para começar sem saldo. Datas históricas podem preceder a abertura antiga. Análises mostram registros confirmados do mês, sem representar disponibilidade bancária.
+
+Entrada opcional por seletor e ACTION_SEND/ACTION_VIEW: URI content em memória, leitura só na ação do usuário, parsing Kotlin limitado a CSV/OFX de conta UTF-8 (2 MiB/2.000 linhas) e staging cifrado, sem arquivo em claro. Sem PDF/cartão/conversor remoto, sem layout Nubank validado por amostra real. Valor/data extraídos com evidência; sinal só sugere natureza, sem postagem automática. Identidade conta+FITID ou arquivo+linha evita repetição; sobreposição sem identidade exige revisão. Conteúdo conflitante com o mesmo identificador não cria despesa duplicada silenciosamente.
+
+Vínculos explícitos entre múltiplas evidências e um movimento ficam no livro e backup v2; restauração aceita v1. Cópias financeiras não incluem bruto/pendências/staging. Ferramentas legadas estão em CaptureTools dentro das opções avançadas; runner opcional mantém 72 callbacks locais no escopo v6, sem requisito na captura diária. Novos testes Android de uso diário/importação/backup são compilados, não executados no servidor. [Notas de uso](releases/v0.10.0-alpha.1.md), sem bateria manual solicitada. Build final aprovado: 38 testes TypeScript e 61 JVM, 76 testes Android compilados sem execução no servidor. APK 0.10.0/code 13, 46484428 bytes, SHA-256 `fd044bc9ee76cc483d62661224ecd483909ca8af4e6059c89a4e9be42d037452`. Fonte do bundle conferido com 12 arquivos da captura/interface. Inspeção e auditoria aprovadas: 71 npm, 189 Maven, 23 bibliotecas nativas, 24 suplementos C/C++, zero pendências de textos identificadas; assinatura preservada, sem INTERNET, backup Android desabilitado e alinhamento 16 KiB. Logs `.local/daily-final-verification.log` e `.local/daily-final-apk.log`. Publicação em preparação. Limites de 12 GiB/16 CPUs mantidos.
+
+## Histórico do alinhamento — uso diário, três telas e foco nas movimentações
 
 Após a publicação 0.9.0, o usuário pediu usar o app de verdade por alguns dias e anotar percepções, sem mais roteiros específicos. Quer primeiro definir boas práticas de IHC: pouco texto, ícones e navegação fluida em três telas. Esclareceu que não quer replicar seu dinheiro/saldo bancário, mas registrar as movimentações. Não inferir aprovação física da 0.9.0 a partir dessa preferência; a observação de uso normal substitui o pedido de novos roteiros ao usuário.
 

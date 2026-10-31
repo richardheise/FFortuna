@@ -14,7 +14,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 open class SecurityCheckFailure(val safeCode:String):IllegalStateException(safeCode)
 
 object NativeSecurityRunner {
-    const val SCOPE="isolated-native-checks/v5"
+    const val SCOPE="isolated-native-checks/v6"
     const val REQUIRED_CHECKS=72
     fun approved(report:Map<String,Any?>?):Boolean=report?.let {
         it["scope"]==SCOPE && it["passed"]==REQUIRED_CHECKS && it["failed"]==0 && it["notVerified"]==0
