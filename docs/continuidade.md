@@ -2,6 +2,14 @@
 
 Atualizado em 30/10/2026. Prioridade do usuário: funcionalidades em incrementos pequenos, depois refinamento UI/UX. A demonstração financeira e os exemplos nativos são sintéticos. A captura diagnóstica é temporária e opcional; a 0.8.0 implementa um livro permanente cifrado de uma conta, com confirmação manual e recuperação.
 
+## Retorno de uso e próximo incremento — 31/10/2026
+
+O usuário relatou que o importador funcionou, mas a importação não alterou os dashboards. O código atual cria candidatos pendentes e calcula as análises apenas sobre transações confirmadas do mês selecionado. Isso explica o comportamento antes da confirmação; não comprova ausência de falha de atualização após confirmar. Não foram informados confirmação dos itens, mês observado ou resultados de testes físicos adicionais.
+
+O usuário propôs retirar Fontes da navegação diária, mantendo Movimentos e Análises. A proposta é mover importação/captura para Dados e captura na engrenagem, simplificar a lista e permitir revisão em lote com atualização clara das análises no período importado. Reclassificação de confirmados, regras locais reutilizáveis e comparações mensais ficam como incrementos posteriores.
+
+A pedido do usuário, foi preparado o [prompt de implementação para o Sol](prompt-sol-uso-diario.md), com escopo, invariantes, critérios e referências. Esta rodada altera somente documentação; as duas abas, revisão em lote e melhorias propostas ainda não foram implementadas ou publicadas.
+
 ## Incremento 0.10.0 — uso diário autorizado
 
 Usuário autorizou implementar a proposta e reforçou: extratos são opcionais, mas quer exportar/compartilhar para o Tique. Três abas (Fontes, Movimentos e Análises), foco nos registros em vez de saldo bancário, engrenagem/painéis, revisão compacta e filtros. Uso cotidiano substitui novos roteiros de teste ao usuário; verificações de desenvolvimento continuam, sem presumir aprovação física.
