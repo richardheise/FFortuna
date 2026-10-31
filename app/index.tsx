@@ -1,6 +1,7 @@
+import { Text } from '../src/ui/Typography';
 import { CaptureScreen } from '../src/capture/CaptureScreen';
 import React, { useCallback, useRef, useState } from 'react';
-import { ActivityIndicator, Pressable, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable,  View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFinance } from '../src/demo/provider';
 import { History } from '../src/ui/history';

@@ -1,5 +1,6 @@
+import { Text } from '../ui/Typography';
 import { useEffect, useRef, useState } from 'react';
-import { AppState, Text, View } from 'react-native';
+import { AppState,  View } from 'react-native';
 import { Action, Card, Chip, ErrorBox, Field, styles } from '../ui/common';
 import type { CaptureModule, ClassificationItem, ClassificationResult } from './native';
 
@@ -10,7 +11,7 @@ type Props = {
 };
 const errors: Record<string, string> = {
   CLASSIFICATION_DUPLICATE_NAME: 'Esse nome já existe, inclusive entre as opções arquivadas.',
-  CLASSIFICATION_INVALID_NAME: 'Use um nome de 1 a 80 caracteres, sem caracteres de controle.',
+  CLASSIFICATION_INVALID_NAME: 'Use até 80 caracteres.',
   CLASSIFICATION_ITEM_LIMIT: 'O limite é de 200 categorias e tags no total.',
   CLASSIFICATION_ITEM_MISSING: 'A opção não está disponível. Reabra o gerenciamento.',
 };
@@ -79,22 +80,22 @@ export function ClassificationPanel({ native, busy, run, selection, onChange }: 
     {!ready && !error && <Text style={styles.small}>Carregando opções…</Text>}
     {selection && <>
       <Text style={styles.label}>Categoria principal</Text>
-      {!selection.categoryId && selection.category && selection.category !== 'A classificar' && <Text style={styles.small}>Texto da revisão anterior: {selection.category}. Escolha uma opção para vinculá-la ao catálogo.</Text>}
+      {!selection.categoryId && selection.category && selection.category !== 'A classificar' && <Text style={styles.small}>Categoria anotada antes: {selection.category}. Escolha outra para substituí-la.</Text>}
       <View style={styles.wrap}>
         <Chip title="A classificar" active={!selection.categoryId} onPress={() => { if (!disabled) onChange?.({ ...selection, categoryId: null, category: 'A classificar' }); }} />
         {items.filter(item => item.kind === 'category' && (!item.archived || item.id === selection.categoryId)).map(item =>
           <Chip key={item.id} title={`${item.name}${item.archived ? ' (arquivada)' : ''}`} active={selection.categoryId === item.id} onPress={() => { if (!disabled && !item.archived) onChange?.({ ...selection, categoryId: item.id, category: item.name }); }} />)}
       </View>
-      <Text style={styles.label}>Tags opcionais · várias por revisão</Text>
+      <Text style={styles.label}>Tags opcionais · pode escolher várias</Text>
       <View style={styles.wrap}>{items.filter(item => item.kind === 'tag' && (!item.archived || selection.tagIds.includes(item.id))).map(item =>
         <Chip key={item.id} title={`${item.name}${item.archived ? ' (arquivada)' : ''}`} active={selection.tagIds.includes(item.id)} onPress={() => { if (!item.archived || selection.tagIds.includes(item.id)) toggleTag(item.id); }} />)}</View>
       {!items.some(item => item.kind === 'tag' && !item.archived) && <Text style={styles.small}>Crie tags como Viagem ou Trabalho no gerenciamento abaixo.</Text>}
       <Action secondary title={manage ? 'Fechar gerenciamento' : 'Gerenciar categorias e tags'} disabled={busy} onPress={() => setManage(value => !value)} />
     </>}
     {manage && <>
-      <Text style={styles.small}>Opções cifradas neste aparelho e incluídas no backup financeiro. Arquivar preserva os vínculos e impede novas seleções. Apagar o diagnóstico não apaga o catálogo. Cópias locais automáticas começam ao configurar o livro; desinstalar remove dados e cópias locais. Um backup portátil salvo fora do app permite restaurar depois.</Text>
+      <Text style={styles.small}>Itens arquivados não aparecem em novos registros. Os vínculos existentes são preservados.</Text>
       <View style={styles.wrap}>{(['category', 'tag'] as const).map(value => <Chip key={value} title={value === 'category' ? 'Categorias' : 'Tags'} active={kind === value} onPress={() => { if (!busy) { setKind(value);setEditing(null);setName(''); } }} />)}</View>
-      <Field label={editing ? 'Novo nome' : kind === 'category' ? 'Nome da nova categoria' : 'Nome da nova tag'} value={name} onChangeText={setName} editable={!disabled} maxLength={80} autoCorrect={false} autoComplete="off" importantForAutofill="no" />
+      <Field label={editing ? 'Novo nome' : kind === 'category' ? 'Crie uma categoria de gasto' : 'Crie uma tag'} value={name} onChangeText={setName} editable={!disabled} maxLength={80} autoCorrect={false} autoComplete="off" importantForAutofill="no" />
       <Action title={editing ? 'Salvar nome' : kind === 'category' ? 'Criar categoria' : 'Criar tag'} disabled={disabled || !name.trim()} onPress={() => mutate(() => editing ? native.renameClassification(editing, name) : native.createClassification(kind, name))} />
       {editing && <Action secondary title="Cancelar renomeação" disabled={busy} onPress={() => { setEditing(null);setName(''); }} />}
       {items.filter(item => item.kind === kind).map(item => <View key={item.id} style={{ gap: 6 }}>

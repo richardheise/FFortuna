@@ -1,5 +1,6 @@
+import { Text } from './Typography';
 import React, { useState } from 'react';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 import type { MovementKind, Reserve, ReviewInput, TransferDirection } from '../core/types';
 import { formatBRL, moneyInput, parseBRL } from '../core/money';
 import { today, validDate } from '../core/dates';

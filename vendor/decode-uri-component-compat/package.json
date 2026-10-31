@@ -6,6 +6,6 @@
   "type": "commonjs",
   "main": "index.cjs",
   "dependencies": {
-    "decode-uri-component-fixed": "npm:decode-uri-component@0.5.0"
+    "decode-uri-component-fixed": "npm:decode-uri-component@0.5.1"
   }
 }

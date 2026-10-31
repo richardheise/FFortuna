@@ -1,5 +1,6 @@
+import { Text } from './Typography';
 import React, { useState } from 'react';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 import type { FinanceService, Snapshot } from '../core/types';
 import { formatBRL } from '../core/money';
 import { formatDate } from '../core/dates';

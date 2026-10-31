@@ -76,6 +76,19 @@ object CaptureRuntime {
         val id=catalog(context).ledger().post(json)
         mapOf("transactionId" to id,"snapshot" to financeState(context))
     }
+    fun createFinanceReserve(context:Context,json:String)=call { val id=catalog(context).ledger().createReserve(json);financialRecovery(context);mapOf("id" to id,"snapshot" to financeState(context)) }
+    fun moveFinanceReserve(context:Context,json:String)=call { val id=catalog(context).ledger().moveReserve(json);financialRecovery(context);mapOf("transactionId" to id,"snapshot" to financeState(context)) }
+    fun transferFinanceReserve(context:Context,json:String)=call { val id=catalog(context).ledger().transferReserve(json);financialRecovery(context);mapOf("transactionId" to id,"snapshot" to financeState(context)) }
+    fun updateFinanceReserve(context:Context,json:String)=call { val id=catalog(context).ledger().updateReserve(json);financialRecovery(context);mapOf("transactionId" to id,"snapshot" to financeState(context)) }
+    fun createFinanceCard(context:Context,json:String)=call { val id=catalog(context).ledger().createCard(json);financialRecovery(context);mapOf("id" to id,"snapshot" to financeState(context)) }
+    fun createFinanceCommitment(context:Context,json:String)=call { val id=catalog(context).ledger().createCommitment(json);financialRecovery(context);mapOf("id" to id,"snapshot" to financeState(context)) }
+    fun createCardPurchase(context:Context,json:String)=call { val id=catalog(context).ledger().cardPurchase(json);financialRecovery(context);mapOf("transactionId" to id,"snapshot" to financeState(context)) }
+    fun payFinanceCommitment(context:Context,json:String)=call { val id=catalog(context).ledger().payCommitment(json);financialRecovery(context);mapOf("transactionId" to id,"snapshot" to financeState(context)) }
+    fun listFinanceRules(context:Context)=call { mapOf("status" to "ok","rules" to catalog(context).ledger().listMetadataRules()) }
+    fun saveFinanceRule(context:Context,json:String)=call { val rule=catalog(context).ledger().saveMetadataRule(json);financialRecovery(context);mapOf("status" to "ok","rule" to rule) }
+    fun setFinanceRuleEnabled(context:Context,id:String,enabled:Boolean)=call { val rule=catalog(context).ledger().setMetadataRuleEnabled(id,enabled);financialRecovery(context);mapOf("status" to "ok","rule" to rule) }
+    fun previewFinanceRule(context:Context,id:String)=call { mapOf("status" to "ok","matches" to catalog(context).ledger().previewMetadataRule(id)) }
+    fun reclassifyFinanceTransactions(context:Context,json:String)=call { val updated=catalog(context).ledger().reclassifyMetadata(json)["updated"];financialRecovery(context);mapOf("status" to "ok","updated" to updated,"snapshot" to financeState(context)) }
     fun recordFinanceBalance(context:Context,json:String)=call { catalog(context).ledger().recordBalance(json);financeState(context) }
     fun cancelFinanceTransaction(context:Context,json:String)=call { catalog(context).ledger().cancel(json);financeState(context) }
     fun restartFinance(context:Context)=call {
@@ -235,10 +248,17 @@ object CaptureRuntime {
         val ledger=catalog(context).ledger()
         val confirmed=ledger.transactionForEvent(candidate["id"] as String)
         val parsed=candidate["parsed"] as Map<String,Any?>
-        val draft=(candidate["review"] as? Map<String,Any?>) ?: parsed["draft"] as Map<String,Any?>
-        val amount=(draft["amountCents"] as? Number)?.toLong()
-        return ClassificationReview.detail(candidate,catalog(context).snapshot())+mapOf("transactionId" to confirmed?.get("id"),"financialReview" to confirmed?.get("fields"),
-            "possibleMatches" to if(confirmed==null) (ledger.matching(amount,draft["effectiveDate"] as? String)+(if(candidate["origin"]=="statement") ledger.statementMatches(candidate["sourceKey"] as String) else emptyList())).distinctBy { it["id"] } else emptyList<Map<String,Any?>>())
+        val originalDraft=parsed["draft"] as Map<String,Any?>
+        val review=candidate["review"] as? Map<String,Any?>
+        val suggestion=if(confirmed==null&&review==null) (originalDraft["description"] as? String)?.let { ledger.suggestMetadata(it) } else null
+        val draft=if(suggestion!=null) originalDraft+mapOf("categoryId" to suggestion["categoryId"],"category" to suggestion["category"],"tagIds" to suggestion["tagIds"]) else originalDraft
+        val describedCandidate=if(suggestion==null) candidate else candidate+
+            mapOf("parsed" to (parsed+mapOf("draft" to draft)),"ruleExplanation" to mapOf(
+                "ruleId" to suggestion["ruleId"],"description" to suggestion["description"],"text" to "Classificado pela sua regra."))
+        val effectiveFields=review ?: draft
+        val amount=(effectiveFields["amountCents"] as? Number)?.toLong()
+        return ClassificationReview.detail(describedCandidate,catalog(context).snapshot())+mapOf("transactionId" to confirmed?.get("id"),"financialReview" to confirmed?.get("fields"),
+            "possibleMatches" to if(confirmed==null) (ledger.matching(amount,effectiveFields["effectiveDate"] as? String)+(if(candidate["origin"]=="statement") ledger.statementMatches(candidate["sourceKey"] as String) else emptyList())).distinctBy { it["id"] } else emptyList<Map<String,Any?>>())
     }
     @Suppress("UNCHECKED_CAST")
     private fun candidateSource(candidate:Map<String,Any?>):Map<String,Any?> {

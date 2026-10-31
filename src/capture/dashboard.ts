@@ -81,7 +81,7 @@ export function buildDashboard(snapshot: DashboardInput): Dashboard {
   ];
 
   const recent = snapshot.transactions.map((row, sourceIndex) => {
-    if (row.kind !== 'income' && row.kind !== 'expense') throw new Error('INVALID_FINANCE_TRANSACTION');
+    if (!['income', 'expense', 'card_purchase', 'card_payment', 'transfer', 'reserve_move', 'reserve_opening', 'reserve_adjustment', 'commitment_opening'].includes(row.kind)) throw new Error('INVALID_FINANCE_TRANSACTION');
     requireCents(row.amountCents, false, 'transaction');
     if (typeof row.effectiveDate !== 'string' || typeof row.description !== 'string' || typeof row.category !== 'string' ||
         (row.categoryId !== null && typeof row.categoryId !== 'string') || !Array.isArray(row.tags) ||
@@ -105,7 +105,7 @@ export function filterTransactions(
 ): FinanceTransaction[] {
   const query = filters.query?.trim() ? normalizeSearch(filters.query.trim()) : '';
   return rows.filter(row => {
-    if (filters.kind && filters.kind !== 'all' && row.kind !== filters.kind) return false;
+    if (filters.kind && filters.kind !== 'all' && row.kind !== filters.kind && !(filters.kind === 'expense' && String(row.kind) === 'card_purchase')) return false;
     if (filters.category != null && categoryKey(row.categoryId, row.category) !== filters.category) return false;
     if (!query) return true;
     const searchable = normalizeSearch([row.description, row.category, ...row.tags].join('\n'));

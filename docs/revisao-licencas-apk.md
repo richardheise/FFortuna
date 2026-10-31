@@ -129,3 +129,8 @@ Sem novas dependências, código/assets de terceiros ou serviços externos. Inve
 APK 0.10.0/code 13: 46484428 bytes, SHA-256 `fd044bc9ee76cc483d62661224ecd483909ca8af4e6059c89a4e9be42d037452`. TypeScript estrito e 38 testes TypeScript, 61 JVM aprovados; 76 testes Android compilados, não executados no servidor. Source map comparado com 12 arquivos finais de captura/interface. A avaliação física será pelo uso cotidiano, sem novo roteiro ou aprovação presumida. [Notas](releases/v0.10.0-alpha.1.md). Fonte exato da tag e nove anexos acompanham a distribuição; releases anteriores preservadas.
 
 Pré-release [`v0.10.0-alpha.1`](https://github.com/richardheise/Tique/releases/tag/v0.10.0-alpha.1) publicada com nove anexos, tamanhos/digests remotos conferidos e download público HTTP 200. Fonte `72a6442a6700494491fec2676688ef56aa70f416`, 235 arquivos conferidos; fonte SHA-256 `3a2b47f19db39eaac1abe434265e5a16eac47b9c3d14b54010a93a8c5b4533f2`, release ID `429680753`. Snapshot local preservado. Publicação não equivale à execução Android; avaliação cotidiana pendente.
+
+
+## Tique 1.0 — 31/10/2026
+
+Space Grotesk original (Regular, Medium, Bold), de Florian Karsten, incluída como assets locais, licença OFL-1.1 em `assets/fonts/OFL.txt` e avisos do APK. Expo-font alinhado ao SDK 57; decodificador corrigido em 0.5.1 e node-forge em 1.4.2. Inventário real: 63 pacotes JavaScript, 22 módulos npm nativos (70 npm distintos), 189 coordenadas Maven, 23 bibliotecas nativas, 24 suplementos C/C++, 82 textos deduplicados e zero pendências de avisos identificadas. Inspeção confirma os três arquivos de fonte byte a byte no APK. Não confundir cobertura de avisos com auditoria completa de segurança; alertas npm remanescentes estão descritos nas notas de release.

@@ -1,5 +1,6 @@
+import { Text } from '../ui/Typography';
 import { useCallback, useEffect, useState } from 'react';
-import { Alert, AppState, BackHandler, Modal, Text, View } from 'react-native';
+import { Alert, AppState, BackHandler, Modal,  View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Action, Card, ErrorBox, Field, ScreenScroll, colors, styles } from '../ui/common';
 import { captureModule, type CaptureSnapshot, type LocalRecoveryEntry, type SecurityReport } from './native';

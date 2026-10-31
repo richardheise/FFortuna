@@ -1,5 +1,6 @@
+import { Text } from './Typography';
 import React, { useState } from 'react';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 import type { Candidate, ConfirmImportInput, FinanceService, ImportDecision, ImportPreview, MovementKind, Reserve, ReviewInput, Snapshot, TransferDirection } from '../core/types';
 import { makeDemoEvent, makeUpdatedEvent } from '../demo/scenarios';
 import { formatBRL, moneyInput, parseBRL } from '../core/money';

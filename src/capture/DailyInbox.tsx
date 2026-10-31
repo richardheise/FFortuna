@@ -1,5 +1,6 @@
+import { Text } from '../ui/Typography';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Alert, AppState, Modal, Pressable, Text, View } from 'react-native';
+import { Alert, AppState, Modal, Pressable,  View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { formatBRL } from '../core/money';
 import { Action, Card, ErrorBox, ScreenScroll, colors, styles } from '../ui/common';
@@ -84,7 +85,7 @@ export function DailyInbox({ native, busy, run, epoch, onChanged, onBatchConfirm
       const result = response.value;
       if (!result || result.status === 'error') {
         setSamples([]);
-        setError(result?.code ? `Não foi possível carregar as pendências (${result.code}).` : 'Não foi possível carregar as pendências.');
+        setError('Não foi possível carregar as revisões.');
         return;
       }
       const next = ((result.samples ?? []) as InboxSample[]).filter(sample =>
@@ -99,7 +100,7 @@ export function DailyInbox({ native, busy, run, epoch, onChanged, onBatchConfirm
       if (failure instanceof Error && failure.message === 'BUSY') { needsRefresh.current = true; return; }
       if (mounted.current && active.current && generation.current === request) {
         setSamples([]);
-        setError('Não foi possível carregar as pendências.');
+        setError('Não foi possível carregar as revisões.');
       }
     } finally {
       if (mounted.current && active.current && generation.current === request) setLoading(false);
@@ -181,7 +182,7 @@ export function DailyInbox({ native, busy, run, epoch, onChanged, onBatchConfirm
       const result = response.value;
       const candidate = result?.candidate;
       if (!result || result.status === 'error' || !candidate) {
-        setError('Não foi possível verificar esta pendência. Nenhuma seleção foi alterada.');
+        setError('Não foi possível conferir esta revisão. Nenhuma seleção foi alterada.');
         return;
       }
       const reason = batchBlockReason(candidate, todayIso());
@@ -194,7 +195,7 @@ export function DailyInbox({ native, busy, run, epoch, onChanged, onBatchConfirm
       setSelectedBatch(ids => [...ids, sample.id]);
       setBlockedBatch(current => { const next = { ...current }; delete next[sample.id]; return next; });
     } catch {
-      if (mounted.current && active.current && batchGeneration.current === request) setError('Não foi possível verificar esta pendência. Nenhuma seleção foi alterada.');
+      if (mounted.current && active.current && batchGeneration.current === request) setError('Não foi possível conferir esta revisão. Nenhuma seleção foi alterada.');
     } finally {
       if (mounted.current && active.current && batchGeneration.current === request) setCheckingId(null);
     }
@@ -208,7 +209,7 @@ export function DailyInbox({ native, busy, run, epoch, onChanged, onBatchConfirm
     const items = ids.map(id => ({ id, kind: batchKind, ...currentClassification }));
     Alert.alert(
       'Confirmar movimentos selecionados?',
-      `${ids.length} movimento(s) serão registrados como ${batchKind === 'income' ? 'receita' : 'despesa'} e entrarão nas análises. Confira antes: sinal do arquivo não define natureza. Transferências, faturas, investimentos, estornos e reembolsos exigem revisão individual.`,
+      `${ids.length} movimento(s) serão registrados como ${batchKind === 'income' ? 'receita' : 'despesa'} e entrarão nas análises. O sinal do arquivo não diz se é receita ou despesa. Transferências, faturas, investimentos, estornos e reembolsos exigem revisão individual.`,
       [
         { text: 'Voltar', style: 'cancel' },
         { text: 'Confirmar selecionados', onPress: () => {
@@ -224,7 +225,7 @@ export function DailyInbox({ native, busy, run, epoch, onChanged, onBatchConfirm
               if (result.status === 'ok') changedRef.current();
               if (!mounted.current || !active.current || batchGeneration.current !== request) return;
               if (result.status !== 'ok') {
-                setError(result.code ? `Não foi possível registrar o lote (${result.code}). Sua seleção foi preservada.` : 'Não foi possível registrar o lote. Sua seleção foi preservada.');
+                setError('Não foi possível registrar o lote. Sua seleção foi preservada.');
                 return;
               }
               setSelectedBatch([]);
@@ -259,14 +260,14 @@ export function DailyInbox({ native, busy, run, epoch, onChanged, onBatchConfirm
       </View>
       <ErrorBox message={error} />
       {loading && <Text style={styles.small}>Atualizando…</Text>}
-      {!loading && pendingCount === 0 && !error && <Text style={styles.small}>Nenhuma pendência.</Text>}
+      {!loading && pendingCount === 0 && !error && <Text style={styles.small}>Nenhuma revisão pendente.</Text>}
       {!!pendingCount && <View style={{ gap: 8, borderTopWidth: 1, borderColor: colors.line, paddingTop: 12 }}>
         <View style={[styles.row, { justifyContent: 'space-between' }]}>
           <Text style={styles.label}>Revisão em lote</Text>
           <Action secondary title={batchMode ? 'Cancelar seleção' : 'Selecionar'} disabled={busy || batchSaving} onPress={() => { setBatchMode(value => !value); setSelectedBatch([]); setBatchCandidates({}); setBlockedBatch({}); setBatchKind(null); setBatchMessage(null); }} />
         </View>
         {batchMode && <>
-          <Text style={styles.small}>Marque manualmente cada item. A natureza será aplicada a todos os selecionados; o sinal do extrato não a escolhe.</Text>
+          <Text style={styles.small}>Selecione os movimentos. Todos serão registrados como o tipo escolhido; o sinal do extrato não define se é receita ou despesa.</Text>
           {selectedBatch.length > 0 && <>
             <Text style={styles.warning}>Transferências, faturas, investimentos, estornos e reembolsos exigem revisão individual.</Text>
             <View style={styles.wrap}>
@@ -274,7 +275,7 @@ export function DailyInbox({ native, busy, run, epoch, onChanged, onBatchConfirm
               <Action title={batchKind === 'expense' ? '✓ Despesa' : 'Despesa'} secondary disabled={busy || batchSaving} onPress={() => setBatchKind(batchKind === 'expense' ? null : 'expense')} />
             </View>
             <ClassificationPanel native={native} busy={busy || batchSaving} run={run} selection={classification} onChange={setClassification} />
-            <Text style={styles.small}>{selectedBatch.length} selecionado(s) de {pendingCount} pendência(s).</Text>
+            <Text style={styles.small}>{selectedBatch.length} de {pendingCount} revisões selecionadas.</Text>
             <ErrorBox message={batchMessage} />
             <Action title={batchSaving ? 'Registrando…' : 'Confirmar selecionados'} disabled={busy || batchSaving || !batchKind} onPress={confirmBatch} />
           </>}
@@ -293,7 +294,7 @@ export function DailyInbox({ native, busy, run, epoch, onChanged, onBatchConfirm
         const effectiveDate = corrected ? corrected.effectiveDate : sample.effectiveDate;
         const effective = effectiveDate ? displayDate(effectiveDate) : null;
         const captured = displayDate(sample.capturedAt);
-        const dateLabel = effective ? effective : corrected ? 'Data efetiva não definida' : captured ? `Recebida ${captured}` : null;
+        const dateLabel = effective ? effective : corrected ? 'Data do movimento não informada' : captured ? `Recebida ${captured}` : null;
         const selected = selectedBatch.includes(sample.id);
         const blocked = blockedBatch[sample.id];
         const possibleMatches = batchCandidates[sample.id]?.possibleMatches ?? [];
@@ -306,11 +307,11 @@ export function DailyInbox({ native, busy, run, epoch, onChanged, onBatchConfirm
             </View>
           </Pressable>
           {batchMode && possibleMatches.length > 0 && <View style={{ gap: 4, paddingVertical: 6, paddingHorizontal: 10, backgroundColor: '#FFF4D6', borderRadius: 10 }}>
-            <Text style={styles.warning}>Há possível lançamento correspondente. Valor e dia iguais não provam duplicidade; confira antes de selecionar como uma movimentação distinta. Para vincular, abra a revisão individual.</Text>
-            {possibleMatches.map(match => <Text key={match.id} style={styles.small}>{match.description || 'Lançamento sem descrição'} · {valuesHidden ? '••••' : formatBRL(match.amountCents)} · {displayDate(match.effectiveDate) ?? 'Data não disponível'}</Text>)}
+            <Text style={styles.warning}>Há um movimento parecido. Valor e dia iguais não provam duplicidade. Confira antes de incluí-lo; para vincular, abra a revisão individual.</Text>
+            {possibleMatches.map(match => <Text key={match.id} style={styles.small}>{match.description || 'Movimento sem descrição'} · {valuesHidden ? '••••' : formatBRL(match.amountCents)} · {displayDate(match.effectiveDate) ?? 'Data não disponível'}</Text>)}
           </View>}
           {batchMode && <View style={styles.wrap}>
-            <Action secondary title={checkingId === sample.id ? 'Verificando…' : selected ? 'Remover do lote' : blocked ? 'Revisar individualmente' : 'Verificar para selecionar'} disabled={busy || batchSaving || (!!checkingId && checkingId !== sample.id)} onPress={() => void toggleBatchSelection(sample)} />
+            <Action secondary title={checkingId === sample.id ? 'Conferindo…' : selected ? 'Remover do lote' : blocked ? 'Revisar individualmente' : 'Conferir para selecionar'} disabled={busy || batchSaving || (!!checkingId && checkingId !== sample.id)} onPress={() => void toggleBatchSelection(sample)} />
             {!!blocked && <Text style={styles.warning}>{blocked}</Text>}
           </View>}
         </View>;
@@ -322,7 +323,7 @@ export function DailyInbox({ native, busy, run, epoch, onChanged, onBatchConfirm
       <SafeAreaView style={styles.page}>
         <ScreenScroll>
           <View style={[styles.row, { justifyContent: 'space-between' }]}>
-            <Text style={styles.title}>Revisar pendência</Text>
+            <Text style={styles.title}>Revisar movimento</Text>
             <Action title="Voltar" secondary disabled={busy || batchSaving} onPress={closeReview} />
           </View>
           {selectedId && <CandidatePanel key={selectedId} native={native} busy={busy} run={run} sampleId={selectedId} onClose={closeReview} onConfirmedMonth={month => batchConfirmedRef.current?.([month])} />}

@@ -1,5 +1,10 @@
 # Tique — interface e uso diário
 
+## Direção 1.0
+
+Análises é a primeira aba e a abertura padrão, seguida de Movimentos. Fonte Space Grotesk incluída no APK (Regular, Medium e Bold), com adaptação dos pesos por componente. Tarefas usam textos curtos para leigos; segurança, captura, retenção e cópias são explicadas em Sobre o Tique nas configurações. Avisos de perda de dados/irreversibilidade permanecem próximos das ações. A paleta e as formas retas aprovadas são preservadas. Reclassificação, regras e caixinhas/cartões são painéis, sem criar novas abas.
+
+
 ## Direção atual — duas abas, revisão em lote
 
 Em 31/10/2026, o usuário pediu implementar a primeira entrega do [prompt de uso diário](../prompt-sol-uso-diario.md). Movimentos passa a ser a abertura e divide a navegação com Análises. Fontes migra para **Dados e captura** na engrenagem; importação e compartilhamento continuam acessíveis, sem exigir extrato ou saldo para começar. As pendências são identificadas e permanecem fora dos totais. Revisão em lote exige seleção e natureza explícitas; os meses dos registros confirmados podem ser abertos nas análises. A lista oferece Todos, A revisar e A classificar. Preservar contexto entre abas e detalhes respeitando o bloqueio de informações ao ir para segundo plano.

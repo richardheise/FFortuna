@@ -114,7 +114,7 @@ class DailyUseTest {
         }
     }
 
-    @Test fun internalOpeningAllowsHistoricalEqualExpensesAndLinkedObservationSurvivesBackupV2() {
+    @Test fun internalOpeningAllowsHistoricalEqualExpensesAndLinkedObservationSurvivesBackupV3() {
         SecuritySandbox(InstrumentationRegistry.getInstrumentation().targetContext).use { sandbox ->
             val sourceName = sandbox.newName()
             val eventId = UUID.randomUUID().toString()
@@ -150,7 +150,7 @@ class DailyUseTest {
                 assertEquals(firstId, ledger.transactionForEvent(eventId)?.get("id"))
                 assertEquals(1, ledger.rows("finance_observation_links").size)
                 backup = catalog.exportFinance()
-                assertEquals(2, JSONObject(backup.toString(Charsets.UTF_8)).get("version"))
+                assertEquals(3, JSONObject(backup.toString(Charsets.UTF_8)).get("version"))
             }
 
             try {
@@ -181,7 +181,10 @@ class DailyUseTest {
             try {
                 val oldRoot = JSONObject(backup.toString(Charsets.UTF_8))
                 oldRoot.put("version", 1)
-                oldRoot.getJSONObject("data").remove("finance_observation_links")
+                val legacyData = oldRoot.getJSONObject("data")
+                listOf("finance_observation_links", "finance_reserves", "finance_cards", "finance_commitments", "finance_extended_transactions",
+                    "finance_extended_entries", "finance_extended_tags", "finance_extended_cancellations", "finance_extended_observation_links",
+                    "finance_metadata_rules", "finance_metadata_audit").forEach(legacyData::remove)
                 val legacyBackup = oldRoot.toString().toByteArray(Charsets.UTF_8)
                 try {
                     ClassificationCatalog(sandbox.context, sandbox.newName(), true).use { restored ->

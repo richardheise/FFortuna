@@ -1,5 +1,6 @@
+import { Text } from '../ui/Typography';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Alert, AppState, Modal, Pressable, ScrollView, Text, View } from 'react-native';
+import { Alert, AppState, Modal, Pressable, ScrollView,  View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Action, Card, Chip, ErrorBox, ScreenScroll, colors, formatMonth, styles } from '../ui/common';
 import { captureModule, type DailyState, type StatementResult } from './native';
@@ -7,6 +8,7 @@ import { FinanceNavigation, TiqueMark, type MainTab } from './FinanceNavigation'
 import { FinancePanel, type FinanceView } from './FinancePanel';
 import { SourcesPanel } from './SourcesPanel';
 import { DailyInbox } from './DailyInbox';
+import { AboutPanel } from './AboutPanel';
 import { CaptureTools } from './CaptureTools';
 
 const errors: Record<string, string> = {
@@ -26,9 +28,9 @@ const currentMonth = () => {
 };
 export function CaptureScreen() {
   const [native] = useState(captureModule);
-  const [tab, setTab] = useState<MainTab>('transactions');
+  const [tab, setTab] = useState<MainTab>('home');
   const [state, setState] = useState<DailyState | null>(null);
-  const [overlay, setOverlay] = useState<FinanceView | 'tools' | null>(null);
+  const [overlay, setOverlay] = useState<FinanceView | 'tools' | 'about' | null>(null);
   const [movementFilter, setMovementFilter] = useState<'all' | 'pending' | 'uncategorized'>('all');
   const [selectedMonth, setSelectedMonth] = useState(currentMonth);
   const [availableMonths, setAvailableMonths] = useState<string[]>([]);
@@ -41,7 +43,7 @@ export function CaptureScreen() {
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const busyRef = useRef(false);
-  const tabRef = useRef<MainTab>('transactions');
+  const tabRef = useRef<MainTab>('home');
   const scrollRef = useRef<ScrollView>(null);
   const scrollY = useRef(0);
   const scrollPositions = useRef<Record<MainTab, number>>({ transactions: 0, home: 0 });
@@ -220,10 +222,12 @@ export function CaptureScreen() {
     <FinanceNavigation active={tab} disabled={busy} onTab={next => { switchTab(next); setMessage(null); setError(null); }} />
     <Modal visible={overlay !== null} animationType="slide" onRequestClose={() => { if (!busyRef.current) { setOverlay(null); changed(); } }}>
       {overlay === 'tools' ? <CaptureTools onClose={() => { setOverlay('more'); changed(); void refresh().catch(() => {}); }} /> : <SafeAreaView style={styles.page}>
-        <View style={[styles.row, { justifyContent: 'space-between', padding: 16 }]}><Text style={styles.heading}>{overlay === 'entry' ? 'Novo movimento' : overlay === 'categories' ? 'Categorias e tags' : overlay === 'balance' ? 'Conferência de saldo' : 'Dados e captura'}</Text><Action title="×" accessibilityLabel="Fechar painel" secondary disabled={busy} onPress={() => { setOverlay(null); changed(); }} /></View>
+        <View style={[styles.row, { justifyContent: 'space-between', padding: 16 }]}><Text style={styles.heading}>{overlay === 'entry' ? 'Novo movimento' : overlay === 'categories' ? 'Categorias e tags' : overlay === 'balance' ? 'Conferência de saldo' : overlay === 'resources' ? 'Caixinhas e cartões' : overlay === 'metadata' ? 'Classificar movimentos' : overlay === 'rules' ? 'Regras' : overlay === 'about' ? 'Sobre o Tique' : 'Dados e captura'}</Text><Action title="×" accessibilityLabel="Fechar painel" secondary disabled={busy} onPress={() => { setOverlay(null); changed(); }} /></View>
         <ScreenScroll>
+          {overlay === 'more' && <Action title="Sobre o Tique" secondary onPress={() => setOverlay('about')} />}
+          {overlay === 'about' && <AboutPanel />}
           {overlay === 'more' && <SourcesPanel state={state} busy={busy} onActivate={activate} onPause={() => void act(() => native.stopDiagnostic(), 'Captura pausada.')} onPermission={() => native.openSettings()} onReconnect={() => void act(() => native.reconnectCapture())} onImport={() => void importFile(false)} onBank={() => void act(() => native.openBankApp())} onReceive={() => void importFile(true)} onDismissShared={() => void act(() => native.dismissSharedStatement())} onManual={() => void manual()} onReview={goReview} />}
-          <FinancePanel native={native} busy={busy} run={run} view={overlay ?? 'more'} onNavigate={navigate} onTools={() => setOverlay('tools')} entryKind={entryKind} entryRequest={entryRequest} valuesHidden={hidden} onToggleValues={() => setHidden(value => !value)} onChanged={changed} selectedMonth={selectedMonth} onSelectedMonthChange={setSelectedMonth} onBookChanged={bookChanged} />
+          {overlay !== 'about' && <FinancePanel native={native} busy={busy} run={run} view={overlay ?? 'more'} onNavigate={navigate} onTools={() => setOverlay('tools')} entryKind={entryKind} entryRequest={entryRequest} valuesHidden={hidden} onToggleValues={() => setHidden(value => !value)} onChanged={changed} selectedMonth={selectedMonth} onSelectedMonthChange={setSelectedMonth} onBookChanged={bookChanged} />}
         </ScreenScroll>
       </SafeAreaView>}
     </Modal>

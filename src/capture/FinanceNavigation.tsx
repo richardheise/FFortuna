@@ -1,4 +1,5 @@
-import { Pressable, Text, View } from 'react-native';
+import { Text } from '../ui/Typography';
+import { Pressable,  View } from 'react-native';
 import { colors } from '../ui/common';
 
 export type MainTab = 'transactions' | 'home';
@@ -21,7 +22,7 @@ function Icon({ tab, active }: { tab: MainTab; active: boolean }) {
 }
 
 export function FinanceNavigation({ active, disabled, onTab }: { active: MainTab; disabled: boolean; onTab: (tab: MainTab) => void }) {
-  const items: Array<{ tab: MainTab; title: string }> = [{ tab: 'transactions', title: 'Movimentos' },{ tab: 'home', title: 'Análises' }];
+  const items: Array<{ tab: MainTab; title: string }> = [{ tab: 'home', title: 'Análises' },{ tab: 'transactions', title: 'Movimentos' }];
   const item = ({ tab, title }: typeof items[number]) => <Pressable key={tab} accessibilityRole="tab" accessibilityLabel={title} accessibilityState={{ selected: active === tab, disabled }} disabled={disabled} onPress={() => onTab(tab)} style={{ flex: 1, minHeight: 64, alignItems: 'center', justifyContent: 'center', gap: 7, paddingHorizontal: 2, opacity: disabled ? 0.55 : 1 }}>
     <Icon tab={tab} active={active === tab} /><Text style={{ color: active === tab ? colors.gold : colors.muted, fontSize: 11, textAlign: 'center' }}>{title}</Text>
   </Pressable>;

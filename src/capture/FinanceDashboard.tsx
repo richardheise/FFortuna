@@ -1,12 +1,14 @@
-import { useMemo, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Text } from '../ui/Typography';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { AppState, Pressable, StyleSheet,  View } from 'react-native';
 import { Action, Card, colors, styles } from '../ui/common';
 import { formatBRL } from '../core/money';
 import { buildDashboard } from './dashboard';
-import type { FinanceSnapshot } from './native';
+import { compareMonths, previousMonth } from './monthlyComparison';
+import type { CaptureModule, FinanceSnapshot } from './native';
 
 type Props = {
-  snapshot: FinanceSnapshot; busy: boolean;
+  snapshot: FinanceSnapshot; busy: boolean; native?: CaptureModule;
   onCategory: (key: string) => void;
   onMovements: (kind?: 'income' | 'expense') => void;
   onNew?: (kind: 'income' | 'expense') => void;
@@ -15,8 +17,34 @@ type Props = {
 };
 const percentage = (bps: number) => { const tenths = Math.floor((bps + 5) / 10); return `${Math.floor(tenths / 10)},${tenths % 10}%`; };
 
-export function FinanceDashboard({ snapshot, busy, onCategory, onMovements, hidden, onToggleValues }: Props) {
+export function FinanceDashboard({ snapshot, busy, onCategory, onMovements, hidden, onToggleValues, native }: Props) {
   const [expanded, setExpanded] = useState(false);
+  const [previous, setPrevious] = useState<FinanceSnapshot | null>(null);
+  const compareGeneration = useRef(0);
+  useEffect(() => {
+    let alive = true;
+    async function load() {
+      const token = ++compareGeneration.current;
+      setPrevious(null);
+      try {
+        const result = await native?.financeSnapshot(previousMonth(snapshot.month));
+        if (alive && token === compareGeneration.current && result?.status === 'ok') setPrevious(result.snapshot ?? null);
+      } catch { /* An unavailable comparison must not hide current records. */ }
+    }
+    void load();
+    const listener = AppState.addEventListener('change', state => {
+      compareGeneration.current++; setPrevious(null);
+      if (state === 'active') void load();
+    });
+    return () => { alive = false; compareGeneration.current++; listener.remove(); };
+  }, [native, snapshot]);
+  const comparison = useMemo(() => {
+    if (!previous) return null;
+    const now = new Date();
+    const today = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+    try { return compareMonths(snapshot, previous, today); } catch { return null; }
+  }, [snapshot, previous]);
+
   const model = useMemo(() => {
     try { return buildDashboard(snapshot); } catch { return null; }
   }, [snapshot]);
@@ -40,6 +68,15 @@ export function FinanceDashboard({ snapshot, busy, onCategory, onMovements, hidd
         <Text style={dashboard.metricValue}>{money(row.amountCents)}</Text>
       </Pressable>)}
     </View>
+    <Card>
+      <Text style={styles.heading}>Comparação mensal</Text>
+      <Text style={styles.small}>Registros disponíveis; períodos podem estar incompletos.</Text>
+      {comparison ? <>
+        <Text style={styles.body}>Despesas: {money(comparison.current.expense)} · mês anterior: {money(comparison.previous.expense)}</Text>
+        <Text style={styles.small}>{comparison.cut < 31 ? `Até o dia ${comparison.cut} de cada mês.` : 'Meses completos no recorte.'} {comparison.comparable ? `Variação: ${money(comparison.difference)}.` : 'Sem registros anteriores para comparação confiável.'}</Text>
+        <Pressable accessibilityRole="button" onPress={() => onCategory('label:A classificar')} disabled={busy} style={{ minHeight: 48, justifyContent: 'center' }}><Text style={styles.label}>A classificar: {money(comparison.current.unclassified)}</Text></Pressable>
+      </> : <Text style={styles.small}>Comparação indisponível.</Text>}
+    </Card>
     <Card>
       <Text style={styles.heading}>Gastos por categoria</Text>
       {categories.length === 0 ? <Text style={styles.small}>Nenhuma despesa confirmada neste mês.</Text> : <>

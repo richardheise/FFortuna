@@ -59,6 +59,19 @@ class FFortunaCaptureModule:Module() {
         AsyncFunction("financeSnapshot") { month:String -> diagnosticAction { mapOf("status" to "ok","snapshot" to CaptureRuntime.financeSnapshot(context(),month)) } }
         AsyncFunction("setupFinance") { json:String -> diagnosticAction { mapOf("status" to "ok","snapshot" to CaptureRuntime.setupFinance(context(),json)) } }
         AsyncFunction("createFinanceTransaction") { json:String -> diagnosticAction { mapOf("status" to "ok")+CaptureRuntime.createFinanceTransaction(context(),json) } }
+        AsyncFunction("createFinanceReserve") { json:String -> diagnosticAction { mapOf("status" to "ok")+CaptureRuntime.createFinanceReserve(context(),json) } }
+        AsyncFunction("moveFinanceReserve") { json:String -> diagnosticAction { mapOf("status" to "ok")+CaptureRuntime.moveFinanceReserve(context(),json) } }
+        AsyncFunction("transferFinanceReserve") { json:String -> diagnosticAction { mapOf("status" to "ok")+CaptureRuntime.transferFinanceReserve(context(),json) } }
+        AsyncFunction("updateFinanceReserve") { json:String -> diagnosticAction { mapOf("status" to "ok")+CaptureRuntime.updateFinanceReserve(context(),json) } }
+        AsyncFunction("createFinanceCard") { json:String -> diagnosticAction { mapOf("status" to "ok")+CaptureRuntime.createFinanceCard(context(),json) } }
+        AsyncFunction("createFinanceCommitment") { json:String -> diagnosticAction { mapOf("status" to "ok")+CaptureRuntime.createFinanceCommitment(context(),json) } }
+        AsyncFunction("createCardPurchase") { json:String -> diagnosticAction { mapOf("status" to "ok")+CaptureRuntime.createCardPurchase(context(),json) } }
+        AsyncFunction("payFinanceCommitment") { json:String -> diagnosticAction { mapOf("status" to "ok")+CaptureRuntime.payFinanceCommitment(context(),json) } }
+        AsyncFunction("listFinanceRules") { diagnosticAction { CaptureRuntime.listFinanceRules(context()) } }
+        AsyncFunction("saveFinanceRule") { json:String -> diagnosticAction { CaptureRuntime.saveFinanceRule(context(),json) } }
+        AsyncFunction("setFinanceRuleEnabled") { id:String,enabled:Boolean -> diagnosticAction { CaptureRuntime.setFinanceRuleEnabled(context(),id,enabled) } }
+        AsyncFunction("previewFinanceRule") { id:String -> diagnosticAction { CaptureRuntime.previewFinanceRule(context(),id) } }
+        AsyncFunction("reclassifyFinanceTransactions") { json:String -> diagnosticAction { CaptureRuntime.reclassifyFinanceTransactions(context(),json) } }
         AsyncFunction("recordFinanceBalance") { json:String -> diagnosticAction { mapOf("status" to "ok","snapshot" to CaptureRuntime.recordFinanceBalance(context(),json)) } }
         AsyncFunction("cancelFinanceTransaction") { json:String -> diagnosticAction { mapOf("status" to "ok","snapshot" to CaptureRuntime.cancelFinanceTransaction(context(),json)) } }
         AsyncFunction("restartFinance") { diagnosticAction { mapOf("status" to "ok","snapshot" to CaptureRuntime.restartFinance(context())) } }

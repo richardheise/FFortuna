@@ -1,5 +1,6 @@
+import { Text } from '../ui/Typography';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Alert, AppState, Text, View } from 'react-native';
+import { Alert, AppState,  View } from 'react-native';
 import { CandidatePanel } from './CandidatePanel';
 import { ClassificationPanel } from './ClassificationPanel';
 import { Action, Card, Field, colors, styles } from '../ui/common';

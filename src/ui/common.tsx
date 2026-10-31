@@ -1,5 +1,6 @@
+import { Text, TextInput } from './Typography';
 import React from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View, type TextInputProps, type ViewStyle } from 'react-native';
+import { Pressable, ScrollView, StyleSheet,   View, type TextInputProps, type ViewStyle } from 'react-native';
 
 export const colors = { paper: '#080B10', card: '#121820', ink: '#F3EFE6', muted: '#A2AEBE', green: '#FFB020', gold: '#FFB020', cyan: '#9DECF4', pale: '#1B2430', line: '#263240', yellow: '#302619', red: '#FFAAA2', white: '#F3EFE6' };
 export const styles = StyleSheet.create({

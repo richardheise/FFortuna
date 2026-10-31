@@ -4,7 +4,7 @@
   "summary": {
     "javascriptPackages": 63,
     "nativeNpmPackages": 22,
-    "npmPackagesTotal": 71,
+    "npmPackagesTotal": 70,
     "mavenCoordinates": 189,
     "nativeLibraries": 23,
     "cppSupplements": 24,
@@ -61,6 +61,22 @@
           "textFile": "node_modules/@expo-google-fonts/material-symbols/LICENSE_FONT",
           "sha256": "58d1e17ffe5109a7ae296caafcadfdbe6a7d176f0bc4ab01e12a689b0499d8bd",
           "source": "installed:node_modules/@expo-google-fonts/material-symbols/LICENSE_FONT"
+        }
+      ]
+    },
+    {
+      "key": "node_modules/@expo/cli",
+      "name": "@expo/cli",
+      "version": "57.0.32",
+      "declaredLicense": "MIT",
+      "scope": "third-party",
+      "javascript": true,
+      "native": false,
+      "notices": [
+        {
+          "textFile": "node_modules/@expo/cli/LICENSE",
+          "sha256": "fb3ca4a837f5779e83cef89b78253a8949cfb9429c340309f62d0465ec6610b4",
+          "source": "installed:node_modules/@expo/cli/LICENSE"
         }
       ]
     },
@@ -355,7 +371,7 @@
     {
       "key": "node_modules/decode-uri-component-fixed",
       "name": "decode-uri-component",
-      "version": "0.5.0",
+      "version": "0.5.1",
       "declaredLicense": "MIT",
       "scope": "third-party",
       "javascript": true,
@@ -451,11 +467,11 @@
     {
       "key": "node_modules/expo-font",
       "name": "expo-font",
-      "version": "58.0.9",
+      "version": "57.0.4",
       "declaredLicense": "MIT",
       "scope": "third-party",
       "javascript": true,
-      "native": false,
+      "native": true,
       "notices": [
         {
           "textFile": "node_modules/expo-font/LICENSE",
@@ -609,22 +625,6 @@
       ]
     },
     {
-      "key": "node_modules/expo/node_modules/@expo/cli",
-      "name": "@expo/cli",
-      "version": "57.0.32",
-      "declaredLicense": "MIT",
-      "scope": "third-party",
-      "javascript": true,
-      "native": false,
-      "notices": [
-        {
-          "textFile": "node_modules/expo/node_modules/@expo/cli/LICENSE",
-          "sha256": "fb3ca4a837f5779e83cef89b78253a8949cfb9429c340309f62d0465ec6610b4",
-          "source": "installed:node_modules/expo/node_modules/@expo/cli/LICENSE"
-        }
-      ]
-    },
-    {
       "key": "node_modules/expo/node_modules/expo-asset",
       "name": "expo-asset",
       "version": "57.0.20",
@@ -653,22 +653,6 @@
           "textFile": "node_modules/expo/node_modules/expo-file-system/LICENSE",
           "sha256": "fb3ca4a837f5779e83cef89b78253a8949cfb9429c340309f62d0465ec6610b4",
           "source": "installed:node_modules/expo/node_modules/expo-file-system/LICENSE"
-        }
-      ]
-    },
-    {
-      "key": "node_modules/expo/node_modules/expo-font",
-      "name": "expo-font",
-      "version": "57.0.4",
-      "declaredLicense": "MIT",
-      "scope": "third-party",
-      "javascript": false,
-      "native": true,
-      "notices": [
-        {
-          "textFile": "node_modules/expo/node_modules/expo-font/LICENSE",
-          "sha256": "fb3ca4a837f5779e83cef89b78253a8949cfb9429c340309f62d0465ec6610b4",
-          "source": "installed:node_modules/expo/node_modules/expo-font/LICENSE"
         }
       ]
     },
@@ -5533,13 +5517,13 @@
           "url": "NPM source project"
         }
       ],
-      "licenseEvidence": "node_modules/expo/node_modules/expo-font",
+      "licenseEvidence": "node_modules/expo-font",
       "artifacts": [],
       "notices": [
         {
-          "textFile": "node_modules/expo/node_modules/expo-font/LICENSE",
+          "textFile": "node_modules/expo-font/LICENSE",
           "sha256": "fb3ca4a837f5779e83cef89b78253a8949cfb9429c340309f62d0465ec6610b4",
-          "source": "installed:node_modules/expo/node_modules/expo-font/LICENSE"
+          "source": "installed:node_modules/expo-font/LICENSE"
         }
       ],
       "scope": "release dependency graph (includes BOM/metadata; conservative)"
@@ -6274,6 +6258,14 @@
       "textFile": "legal/native-license-texts/zstd-fse-copyright.txt",
       "reason": "Copyright and redistribution conditions in the exact source headers of the statically linked Zstandard library.",
       "evidence": "square/okio-zstd parent-0.4.0 zstd submodule and static linkage"
+    }
+  ],
+  "fonts": [
+    {
+      "name": "Space Grotesk",
+      "license": "OFL-1.1",
+      "source": "https://github.com/floriankarsten/space-grotesk",
+      "licenseFile": "assets/fonts/OFL.txt"
     }
   ],
   "publicSuffix": {

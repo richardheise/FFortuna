@@ -61,7 +61,10 @@ for module in resolved['modules']:
         directory=Path(project['sourceDir']).parent
         if (directory/'package.json').exists():native_keys.add(relative(directory))
         pub=project.get('publication')
-        if pub:publications[f"{pub['groupId']}:{pub['artifactId']}:{pub['version']}"]=relative(directory)
+        if pub:
+            version=pub.get('version') or module.get('packageVersion')
+            assert version, f"Publication version missing: {module.get('packageName')}"
+            publications[f"{pub['groupId']}:{pub['artifactId']}:{version}"]=relative(directory)
 # The app's own Expo module is AGPL under the root LICENSE, not a third-party package.
 packages=[];package_by_key={}
 for key in sorted(js_keys|native_keys):
@@ -175,10 +178,12 @@ with zipfile.ZipFile(apk) as z:
             if '--check' not in sys.argv:(ROOT/path).write_bytes(raw)
             include(path,'Original APK notice '+name,'APK:'+name)
 
+include('assets/fonts/OFL.txt','Space Grotesk font','https://github.com/floriankarsten/space-grotesk')
 summary={'javascriptPackages':len(js_keys),'nativeNpmPackages':len(native_keys),'npmPackagesTotal':len(packages),
          'mavenCoordinates':len(maven),'nativeLibraries':len(native),'cppSupplements':len(cpp),'unresolved':len(issues)}
 report={'schemaVersion':1,'variant':'capture-poc release arm64-v8a','summary':summary,
  'npm':packages,'maven':maven,'nativeLibraries':native,'cppSupplements':cpp,
+ 'fonts':[{'name':'Space Grotesk','license':'OFL-1.1','source':'https://github.com/floriankarsten/space-grotesk','licenseFile':'assets/fonts/OFL.txt'}],
  'publicSuffix':{'license':'MPL-2.0','resourceSha256':sha(psl),'sourceFile':'legal/source/okhttp-4.9.2-public_suffix_list.dat','sourceUrl':'https://github.com/square/okhttp/blob/parent-4.9.2/okhttp/src/test/resources/okhttp3/internal/publicsuffix/public_suffix_list.dat'},
  'publicationRequirements':['Publish the matching AGPL source revision/archive with the APK.','Keep the third-party notice assets and the MPL source file with the distribution.'],
  'unresolved':issues}

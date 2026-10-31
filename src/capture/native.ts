@@ -49,6 +49,19 @@ export interface CaptureModule {
   financeSnapshot(month: string): Promise<FinanceResult>;
   setupFinance(fieldsJson: string): Promise<FinanceResult>;
   createFinanceTransaction(fieldsJson: string): Promise<FinanceResult>;
+  createFinanceReserve(fieldsJson: string): Promise<FinanceResult>;
+  moveFinanceReserve(fieldsJson: string): Promise<FinanceResult>;
+  transferFinanceReserve(fieldsJson: string): Promise<FinanceResult>;
+  updateFinanceReserve(fieldsJson: string): Promise<FinanceResult>;
+  createFinanceCard(fieldsJson: string): Promise<FinanceResult>;
+  createFinanceCommitment(fieldsJson: string): Promise<FinanceResult>;
+  createCardPurchase(fieldsJson: string): Promise<FinanceResult>;
+  payFinanceCommitment(fieldsJson: string): Promise<FinanceResult>;
+  listFinanceRules(): Promise<FinanceRuleListResult>;
+  saveFinanceRule(fieldsJson: string): Promise<FinanceRuleMutationResult>;
+  setFinanceRuleEnabled(id: string, enabled: boolean): Promise<FinanceRuleMutationResult>;
+  previewFinanceRule(id: string): Promise<FinanceRulePreviewResult>;
+  reclassifyFinanceTransactions(fieldsJson: string): Promise<FinanceReclassificationResult>;
   recordFinanceBalance(fieldsJson: string): Promise<FinanceResult>;
   cancelFinanceTransaction(fieldsJson: string): Promise<FinanceResult>;
   restartFinance(): Promise<FinanceResult>;
@@ -98,11 +111,13 @@ export interface CaptureModule {
   verifyDiagnosticExport(password: string): Promise<DiagnosticResult>;
   exportDiagnostic(password: string): Promise<DiagnosticResult>;
 }
-export interface FinanceResult { status: 'ok' | 'error'; code?: string; snapshot?: FinanceSnapshot; transactionId?: string }
+export interface FinanceResult { status: 'ok' | 'error'; code?: string; snapshot?: FinanceSnapshot; id?: string; transactionId?: string }
 export interface FinanceTransaction {
-  id: string; kind: 'income' | 'expense'; amountCents: number; effectiveDate: string; description: string;
+  id: string; scope?: 'finance' | 'extended'; kind: 'income' | 'expense' | 'transfer' | 'reserve_move' | 'reserve_opening' | 'reserve_adjustment' | 'card_purchase' | 'commitment_opening' | 'card_payment'; amountCents: number; effectiveDate: string; description: string;
   categoryId: string | null; category: string; tagIds: string[]; tags: string[]; sourceEventId: string | null;
-  sourceType?: 'manual' | 'notification' | 'statement';
+  sourceType?: 'manual' | 'notification' | 'statement' | 'card'; resourceId?: string | null; resourceName?: string | null;
+  commitmentId?: string | null; invoiceMonth?: string | null; direction?: string | null;
+  targetResourceId?: string | null; targetResourceName?: string | null;
   voided: boolean; cancellationReason: string | null;
 }
 export interface FinanceSnapshot {
@@ -110,9 +125,19 @@ export interface FinanceSnapshot {
   balanceCents: number; month: string; incomeCents: number; expenseCents: number; total: number;
   byCategory: Array<{ categoryId: string | null; name: string; amountCents: number }>;
   transactions: FinanceTransaction[];
+  assetsCents?: number; debtCents?: number; reservesCents?: number;
+  reserves?: FinanceReserve[]; cards?: FinanceCard[]; commitments?: FinanceCommitment[];
   balanceCheck: { date: string; amountCents: number; calculatedCents: number; differenceCents: number } | null;
   recovery: LocalRecoveryStatus; previousAvailable: boolean; securityChecksPassed: boolean;
 }
+export interface FinanceReserve { id: string; name: string; modality: string; balanceCents: number; updatedOn: string }
+export interface FinanceCard { id: string; name: string; closingDay: number; dueDay: number; debtCents: number }
+export interface FinanceCommitment { id: string; description: string; dueDate: string; amountCents: number; paidCents: number; remainingCents: number; cardId: string | null; cardName: string | null; invoiceMonth: string | null }
+export interface FinanceRule { id: string; description: string; categoryId: string | null; category: string; tagIds: string[]; enabled: boolean; createdAt: string; updatedAt: string }
+export interface FinanceRuleListResult { status: 'ok' | 'error'; code?: string; rules?: FinanceRule[] }
+export interface FinanceRuleMutationResult { status: 'ok' | 'error'; code?: string; rule?: FinanceRule }
+export interface FinanceRulePreviewResult { status: 'ok' | 'error'; code?: string; matches?: FinanceTransaction[] }
+export interface FinanceReclassificationResult { status: 'ok' | 'error'; code?: string; updated?: number; snapshot?: FinanceSnapshot }
 
 /** Never look up a custom native module in Expo Go. Only the PoC screen calls this. */
 export function captureModule(): CaptureModule | null {
@@ -176,6 +201,7 @@ export interface NotificationCandidate {
   original: DiagnosticFields; review: NotificationCandidateReview | null; reviewedAt: string | null;
   previousSampleId: string | null; relatedReviewExists: boolean; hasLaterRevision: boolean; temporary: boolean; transactionId: string | null;
   originalAvailable?: boolean; origin?: 'notification' | 'statement';
-  possibleMatches?: Array<{ id: string; description: string; amountCents: number; effectiveDate: string; kind: 'income' | 'expense' }>;
+  possibleMatches?: Array<{ id: string; description: string; amountCents: number; effectiveDate: string; kind: FinanceTransaction['kind']; scope?: FinanceTransaction['scope'] }>;
+  ruleExplanation?: { ruleId: string; description: string; text: string };
   financialReview?: NotificationCandidateFields | null;
 }

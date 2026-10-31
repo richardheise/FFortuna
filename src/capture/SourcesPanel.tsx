@@ -1,4 +1,5 @@
-import { Text, View } from 'react-native';
+import { Text } from '../ui/Typography';
+import { View } from 'react-native';
 import { Action, Card, colors, styles } from '../ui/common';
 import type { DailyState } from './native';
 
@@ -40,7 +41,7 @@ export function SourcesPanel({ state, busy, onActivate, onPause, onPermission, o
         : state.mode === 'diagnostic' && state.active
           ? 'Diagnóstico ativo'
           : state.mode === 'daily' && state.active && !state.connected
-            ? 'Reconectando'
+            ? 'Conectando'
             : 'Pausada';
 
   return <>
@@ -62,20 +63,20 @@ export function SourcesPanel({ state, busy, onActivate, onPause, onPermission, o
       <Text style={styles.heading}>Notificações</Text>
       <Text style={styles.body}>{sourceName} {source?.installed ? 'instalado' : 'não instalado'}</Text>
       <View style={[styles.row, { justifyContent: 'space-between', flexWrap: 'wrap' }]}>
-        <Text style={styles.small}>{state?.authorized ? 'Acesso Android concedido' : 'Acesso Android necessário'}</Text>
-        {!state?.authorized && <Action secondary title="Abrir acesso" disabled={busy || !state} onPress={onPermission} />}
+        <Text style={styles.small}>{state?.authorized ? 'Acesso às notificações concedido' : 'Permita o acesso às notificações'}</Text>
+        {!state?.authorized && <Action secondary title="Permitir notificações" disabled={busy || !state} onPress={onPermission} />}
       </View>
       <View style={[styles.row, { justifyContent: 'space-between', flexWrap: 'wrap' }]}>
-        <Text style={styles.label}>Captura: <Text style={{ color: captureStatus === 'Ativa' ? colors.cyan : captureStatus === 'Bloqueada' ? colors.red : colors.muted }}>{captureStatus}</Text></Text>
+        <Text style={styles.label}>Notificações: <Text style={{ color: captureStatus === 'Ativa' ? colors.cyan : captureStatus === 'Bloqueada' ? colors.red : colors.muted }}>{captureStatus}</Text></Text>
         <Action title={enabled ? 'Pausar' : 'Ativar'} secondary={!active} disabled={busy || (!enabled && missingSetup)} onPress={enabled ? onPause : onActivate} />
       </View>
       {state?.authorized && !state.connected && <Action title="Reconectar" secondary disabled={busy} onPress={onReconnect} />}
-      {state?.limitReached && <Text style={styles.warning}>Caixa de entrada cheia. Seus registros foram preservados.</Text>}
+      {state?.limitReached && <Text style={styles.warning}>A lista de notificações atingiu o limite. Seus registros foram preservados.</Text>}
     </Card>
 
     {state?.incomingFile && <Card>
       <Text style={styles.heading}>Arquivo compartilhado</Text>
-      <Text style={styles.small}>Um arquivo está pronto para receber.</Text>
+      <Text style={styles.small}>Um arquivo compartilhado está pronto.</Text>
       <View style={styles.wrap}>
         <Action title="Receber arquivo" disabled={busy} onPress={onReceive} />
         <Action title="Dispensar" secondary disabled={busy} onPress={onDismissShared} />

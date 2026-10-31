@@ -38,6 +38,9 @@ with zipfile.ZipFile(apk) as archive:
     assert archive.read('assets/ffortuna-legal/THIRD_PARTY_NOTICES.txt') == notice_asset.read_bytes(), 'Third-party notices missing/stale in APK'
     assert archive.read('assets/ffortuna-legal/LICENSE.txt') == Path('LICENSE').read_bytes(), 'AGPL text missing/stale in APK'
     assert 'assets/index.android.bundle' in archive.namelist(), 'Offline JS bundle missing'
+    font_payloads=[archive.read(name) for name in archive.namelist() if name.lower().endswith('.ttf')]
+    for font in Path('assets/fonts').glob('*.ttf'):
+        assert font.read_bytes() in font_payloads, f'Bundled font missing: {font.name}'
     for name in archive.namelist():
         if not name.startswith('lib/') or not name.endswith('.so'): continue
         data=archive.read(name)

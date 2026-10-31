@@ -17,7 +17,7 @@ class ClassificationCatalog(
 ) : AutoCloseable {
     companion object {
         const val DEFAULT_NAME = "ffortuna-classifications-v1"
-        private const val VERSION = 3
+        private const val VERSION = 4
         private val seedCategories = listOf("Comida", "Lazer", "Contas", "Transporte", "Saúde", "Educação", "Compras", "Outros")
 
         private fun createSchema(db: SQLiteDatabase) {
@@ -70,6 +70,7 @@ class ClassificationCatalog(
                 }
                 if(db.version==1) { FinancialLedger.createSchema(db);db.version=2 }
                 if(db.version==2) { FinancialLedger.createLinksSchema(db);db.version=3 }
+                if(db.version==3) { FinancialLedger.createResourcesSchema(db);MetadataRules.createSchema(db);db.version=4 }
                 db.setTransactionSuccessful()
             } finally { db.endTransaction() }
             verify()

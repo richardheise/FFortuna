@@ -18,9 +18,12 @@
     "native:test": "EXPO_NO_TELEMETRY=1 node scripts/build-capture-poc.mjs --test-only"
   },
   "dependencies": {
+    "decode-uri-component": "file:vendor/decode-uri-component-compat",
+    "decode-uri-component-fixed": "npm:decode-uri-component@0.5.1",
     "expo": "~57.0.31",
     "expo-constants": "~57.0.22",
     "expo-crypto": "~57.0.4",
+    "expo-font": "~57.0.4",
     "expo-linking": "~57.0.13",
     "expo-router": "~57.0.29",
     "expo-sqlite": "~57.0.4",
@@ -32,9 +35,7 @@
     "react-native-reanimated": "4.5.1",
     "react-native-safe-area-context": "~5.7.0",
     "react-native-screens": "~4.26.0",
-    "react-native-worklets": "0.10.1",
-    "decode-uri-component-fixed": "npm:decode-uri-component@0.5.0",
-    "decode-uri-component": "file:vendor/decode-uri-component-compat"
+    "react-native-worklets": "0.10.1"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",

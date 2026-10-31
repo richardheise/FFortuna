@@ -1,4 +1,15 @@
-# Continuidade — Tique 0.11.0
+# Continuidade — Tique 1.0
+
+## Entrega 1.0 — 31/10/2026
+
+Usuário autorizou implementar reclassificação, regras locais, transferências/caixinhas, cartão/fatura e comparação mensal, inverter as abas para abrir Análises e publicar 1.0. Escolheu Space Grotesk e pediu linguagem curta para leigos, concentrando explicações técnicas em Sobre o Tique. Esta direção substitui a abertura em Movimentos da 0.11.
+
+Esquema 4 migra o catálogo 3 sem apagar registros. Livro único com diário estendido equilibrado, caixinhas (posição/modalidade/aporte/resgate/transferência/ajuste explícito), cartões e compromissos. Compra no crédito é despesa uma vez; pagamento, dívida inicial e movimentações patrimoniais não entram como renda/consumo. Não se exige saldo bancário real; o caixa conhecido pode ficar negativo por cobertura parcial. Reservas não podem ser resgatadas além da posição conhecida; pagamentos não excedem a dívida. Anulação estendida ainda não disponível e explicitada na interface/notas.
+
+Reclassificação auditada de categoria/tags, regras por descrição normalizada exata editáveis/desativáveis com prévia para histórico e sugestões para candidaturas ainda não revistas; sem confirmação automática nem substituição de correções humanas. Backup financeiro v3 inclui recursos/regras/auditoria e lê v1/v2. [ADR 0014](adr/0014-recursos-e-classificacao-1-0.md), [notas de uso](releases/v1.0.0.md). Comparação usa o mesmo trecho do mês corrente; registros incompletos são sinalizados. Space Grotesk original, OFL incluída nos avisos, carregada de assets locais. Textos técnicos ficam em Sobre o Tique/opções avançadas, mantendo riscos concretos junto de ações irreversíveis.
+
+Verificações: TypeScript/45 testes aprovados, 62 JVM aprovados, 81 testes Android compilados sem execução. Limite de 12 GiB/16 CPUs mantido. Logs `.local/v1-final-check.log`, `.local/v1-final-build.log`. Inspeção final aprovada, mesma assinatura, fonts offline/avisos/backup/permissões/alinhamento 16 KiB conferidos. APK 1.0.0/code 15, 46798924 bytes, SHA-256 `1c857bb3bf067ba9802234569734e36f656eefb612175af25f9577d54b917116`; 27 fontes do bundle conferidos. Nenhuma validação física 1.0 presumida.
+
 
 ## Entrega 0.11.0 verificada — 31/10/2026
 

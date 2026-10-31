@@ -1,5 +1,6 @@
+import { Text } from '../ui/Typography';
 import { useMemo, useState } from 'react';
-import { FlatList, Modal, Pressable, Text, View } from 'react-native';
+import { FlatList, Modal, Pressable,  View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors } from '../ui/common';
 import notices from './notices.json';
