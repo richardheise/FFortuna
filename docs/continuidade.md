@@ -10,6 +10,8 @@ Confirmação individual/lote oferece os meses dos registros nas análises. Tota
 
 Atualizado em 30/10/2026. Prioridade do usuário: funcionalidades em incrementos pequenos, depois refinamento UI/UX. A demonstração financeira e os exemplos nativos são sintéticos. A captura diagnóstica é temporária e opcional; a 0.8.0 implementa um livro permanente cifrado de uma conta, com confirmação manual e recuperação.
 
+Publicada a pré-release [v0.11.0-alpha.1](https://github.com/richardheise/Tique/releases/tag/v0.11.0-alpha.1), ID `429715826`. Fonte/tag `aa1d8f1014bae5d328b7ddc83011723fabc9a83f`, 239 arquivos conferidos no arquivo fonte. APK de 46.519.108 bytes. Nove anexos verificados por tamanho e SHA-256 remoto antes de publicar; API pública e download do APK HTTP 200 sem autenticação. Snapshot permanente em `artifacts/releases/v0.11.0-alpha.1/`. Não sobrescrever anexos ou mover a tag. Atualização por cima da instalação anterior. Avaliação física pendente em uso normal, sem nova bateria obrigatória. Próximas ideias permanecem no backlog do prompt.
+
 ## Retorno de uso e próximo incremento — 31/10/2026
 
 O usuário relatou que o importador funcionou, mas a importação não alterou os dashboards. O código atual cria candidatos pendentes e calcula as análises apenas sobre transações confirmadas do mês selecionado. Isso explica o comportamento antes da confirmação; não comprova ausência de falha de atualização após confirmar. Não foram informados confirmação dos itens, mês observado ou resultados de testes físicos adicionais.
