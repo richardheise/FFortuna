@@ -13,6 +13,7 @@ type Props = {
   run: (task: () => Promise<unknown>) => Promise<void>;
   sampleId: string;
   onClose: () => void;
+  onConfirmedMonth?: (month: string) => void;
 };
 type Editor = { amount: string; kind: NotificationCandidateFields['kind']; effectiveDate: string; description: string; category: string; categoryId: string | null; tagIds: string[] };
 type ReviewCandidate = Omit<NotificationCandidate, 'temporary' | 'original'> & {
@@ -83,7 +84,7 @@ function validDate(value: string): boolean {
   return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value;
 }
 
-export function CandidatePanel({ native, busy, run, sampleId, onClose }: Props) {
+export function CandidatePanel({ native, busy, run, sampleId, onClose, onConfirmedMonth }: Props) {
   const [candidate, setCandidate] = useState<ReviewCandidate | null>(null);
   const [editor, setEditor] = useState<Editor | null>(null);
   const [baseline, setBaseline] = useState<NotificationCandidateFields | null>(null);
@@ -98,9 +99,11 @@ export function CandidatePanel({ native, busy, run, sampleId, onClose }: Props) 
   const active = useRef(AppState.currentState !== 'background' && AppState.currentState !== 'inactive');
   const nativeRef = useRef(native);
   const runRef = useRef(run);
+  const confirmedMonthRef = useRef(onConfirmedMonth);
   const busyRef = useRef(busy);
   nativeRef.current = native;
   runRef.current = run;
+  confirmedMonthRef.current = onConfirmedMonth;
   busyRef.current = busy;
 
   const clearSensitive = useCallback((rerender = true) => {
@@ -227,7 +230,7 @@ export function CandidatePanel({ native, busy, run, sampleId, onClose }: Props) 
     const payload = JSON.stringify({ amountCents: currentFields.amountCents, kind: currentFields.kind,
       effectiveDate: currentFields.effectiveDate, description: currentFields.description, category: currentFields.category,
       categoryId: currentFields.categoryId ?? null, tagIds: currentFields.tagIds ?? [], affectsAccount: true });
-    const id = candidate.id;const request = generation.current;
+    const id = candidate.id;const request = generation.current;const confirmedMonth = currentFields.effectiveDate.slice(0, 7);
     Alert.alert('Confirmar receita ou despesa?', 'Este movimento entrará nas análises. Compras no cartão, pagamento de fatura, transferências, aportes e estornos precisam de tratamento próprio; mantenha esses casos em revisão.', [
       { text: 'Cancelar', style: 'cancel' },
       { text: 'Confirmo receita/despesa', onPress: () => {
@@ -242,7 +245,7 @@ export function CandidatePanel({ native, busy, run, sampleId, onClose }: Props) 
             confirmed = true;
           } catch { if(mounted.current && active.current && generation.current === request) setError('Não foi possível concluir. Reabra a prévia para conferir antes de repetir.'); }
           finally { if(mounted.current && active.current && generation.current === request) setSaving(false); }
-        }).then(() => { if (confirmed && mounted.current && active.current && generation.current === request) setTimeout(() => { if (mounted.current && active.current && generation.current === request) onClose(); }, 0); });
+        }).then(() => { if (confirmed && mounted.current && active.current && generation.current === request) { confirmedMonthRef.current?.(confirmedMonth); setTimeout(() => { if (mounted.current && active.current && generation.current === request) onClose(); }, 0); } });
       } },
     ]);
   }

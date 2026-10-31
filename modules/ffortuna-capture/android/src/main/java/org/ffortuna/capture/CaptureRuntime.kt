@@ -60,8 +60,11 @@ object CaptureRuntime {
     }
     fun stageStatement(context:Context,bytes:ByteArray)=call {
         val document=StatementParser.parse(bytes)
-        catalog(context).verifyForUse();catalog(context).ledger().startTracking()
-        diagnostic(context).stageStatement(document,StatementStaging.digest(bytes),DiagnosticSource.moment(context))
+        catalog(context).verifyForUse();val ledger=catalog(context).ledger();ledger.startTracking()
+        val staged=diagnostic(context).stageStatement(document,StatementStaging.digest(bytes),DiagnosticSource.moment(context))
+        val ids=(staged["candidateIds"] as? List<*>)?.filterIsInstance<String>()?.distinct().orEmpty()
+        val confirmed=ledger.confirmedEvents()
+        (staged-"candidateIds")+mapOf("confirmed" to ids.count { it in confirmed },"pending" to ids.count { it !in confirmed })
     }
     fun recoverObserved(context:Context) { executor.execute { try { diagnostic(context).recover(DiagnosticSource.moment(context)) } catch (_:Exception) { } } }
     fun setupFinance(context:Context,json:String)=call {
@@ -256,6 +259,58 @@ object CaptureRuntime {
         catalog(context).ledger().startTracking()
         val transactionId=catalog(context).ledger().post(root.toString(),candidateSource(candidate))
         mapOf("transactionId" to transactionId,"snapshot" to financeState(context))
+    }
+    fun confirmObservedBatch(context:Context,json:String)=call {
+        if(json.length>2*1024*1024) throw FinanceFailure("BATCH_LIMIT")
+        val root=try { org.json.JSONObject(json) } catch (_:Exception) { throw FinanceFailure("INVALID_FIELDS") }
+        if(root.keys().asSequence().toSet()!=setOf("items")) throw FinanceFailure("INVALID_FIELDS")
+        val array=root.optJSONArray("items") ?: throw FinanceFailure("INVALID_FIELDS")
+        if(array.length() !in 1..StatementParser.MAX_ROWS) throw FinanceFailure("BATCH_LIMIT")
+        val now=DiagnosticSource.moment(context)
+        val ledger=catalog(context).ledger()
+        val seen=mutableSetOf<String>()
+        val posts=mutableListOf<ObservedBatchPost>()
+        for(index in 0 until array.length()) {
+            val item=array.optJSONObject(index) ?: throw FinanceFailure("INVALID_FIELDS")
+            if(item.keys().asSequence().toSet()!=setOf("id","kind","categoryId","category","tagIds")) throw FinanceFailure("INVALID_FIELDS")
+            val id=item.optString("id")
+            if(runCatching { java.util.UUID.fromString(id).toString()==id }.getOrDefault(false)!=true || !seen.add(id)) throw FinanceFailure("INVALID_FIELDS")
+            val kind=item.optString("kind")
+            if(kind !in setOf("income","expense")) throw FinanceFailure("UNSUPPORTED_MOVEMENT")
+            val categoryId=if(item.isNull("categoryId")) null else item.opt("categoryId") as? String ?: throw FinanceFailure("INVALID_CLASSIFICATION")
+            val category=item.opt("category") as? String ?: throw FinanceFailure("INVALID_CLASSIFICATION")
+            FinanceRules.text(category,80)
+            val tagArray=item.optJSONArray("tagIds") ?: throw FinanceFailure("INVALID_CLASSIFICATION")
+            if(tagArray.length()>20) throw FinanceFailure("INVALID_CLASSIFICATION")
+            val tagIds=(0 until tagArray.length()).map { tagArray.opt(it) as? String ?: throw FinanceFailure("INVALID_CLASSIFICATION") }
+            if(tagIds.distinct().size!=tagIds.size) throw FinanceFailure("INVALID_CLASSIFICATION")
+
+            val candidate=diagnostic(context).candidate(id,now)
+            if(candidate["id"]!=id) throw DiagnosticFailure("SAMPLE_MISSING")
+            val alreadyPosted=ledger.hasPostedEvent(id)
+            if(ledger.hasObservationLink(id) && !alreadyPosted) throw FinanceFailure("OBSERVATION_ALREADY_LINKED")
+            if(!alreadyPosted && (candidate["relatedReviewExists"]==true || candidate["hasLaterRevision"]==true || candidate["previousSampleId"]!=null)) throw FinanceFailure("OBSERVATION_CONFLICT")
+            val review=candidate["review"] as? Map<String,Any?>
+            if(review?.get("status")=="dismissed" && !alreadyPosted) throw FinanceFailure("OBSERVATION_DISMISSED")
+            if(review?.get("kind") in setOf("transfer","other")) throw FinanceFailure("UNSUPPORTED_MOVEMENT")
+            val parsed=candidate["parsed"] as? Map<String,Any?> ?: throw FinanceFailure("OBSERVATION_INVALID")
+            val draft=parsed["draft"] as? Map<String,Any?> ?: throw FinanceFailure("OBSERVATION_INVALID")
+            val confidence=parsed["confidence"] as? Map<String,Any?> ?: throw FinanceFailure("OBSERVATION_INVALID")
+            if(!alreadyPosted && review?.get("status")!="reviewed" &&
+                listOf("movement","amount","date").any { confidence[it]!="certain" }) throw FinanceFailure("OBSERVATION_REVIEW_REQUIRED")
+            val values=review ?: draft
+            val amount=when(val raw=values["amountCents"]) { is Int -> raw.toLong();is Long -> raw;else -> throw FinanceFailure("INVALID_AMOUNT") }
+            FinanceRules.cents(amount)
+            val date=values["effectiveDate"] as? String ?: throw FinanceFailure("INVALID_DATE")
+            FinanceRules.date(date)
+            val description=values["description"] as? String ?: throw FinanceFailure("INVALID_FIELDS")
+            FinanceRules.text(description,500)
+            val source=candidateSource(candidate)
+            posts.add(ObservedBatchPost(id,amount,kind,date,description,category,categoryId,tagIds,source))
+        }
+        val result=ledger.confirmObservedBatch(posts)
+        financialRecovery(context)
+        result
     }
     @Suppress("UNCHECKED_CAST")
     fun saveDiagnosticCandidate(context:Context,id:String,json:String)=call {

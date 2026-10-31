@@ -25,6 +25,12 @@ class DailyUseTest {
         .put("amountCents", 1234).put("kind", "expense").put("effectiveDate", date)
         .put("description", "Compra fictícia").put("category", "A classificar")
         .put("categoryId", JSONObject.NULL).put("tagIds", org.json.JSONArray()).toString()
+    private fun batchPost(id: String, date: String, categoryId: String?, category: String, tagIds: List<String>, amount: Long = 1234) =
+        ObservedBatchPost(id, amount, "expense", date, "Movimento fictício", category, categoryId, tagIds,
+            mapOf("eventId" to id, "packageName" to DiagnosticPolicy.PACKAGE, "sourceKey" to "batch-fixture-$id", "revision" to 1,
+                "publishedAt" to start.wall.toString(), "capturedAt" to start.wall.toString(), "parserVersion" to BrlNotificationParser.VERSION,
+                "fieldEvidence" to emptyMap<String, Any?>(), "confidence" to mapOf("movement" to "certain", "amount" to "certain",
+                    "nature" to "certain", "account" to "missing", "date" to "certain", "category" to "uncertain")))
 
     @Test fun dailyConsentSurvivesElapsedWindowAndRebootWhileOrdinaryConsentExpires() {
         SecuritySandbox(InstrumentationRegistry.getInstrumentation().targetContext).use { sandbox ->
@@ -187,6 +193,47 @@ class DailyUseTest {
                     }
                 } finally { legacyBackup.fill(0) }
             } finally { backup.fill(0) }
+        }
+    }
+
+    @Test fun observedBatchIsAtomicIdempotentKeepsEqualRowsAndReportsMonths() {
+        SecuritySandbox(InstrumentationRegistry.getInstrumentation().targetContext).use { sandbox ->
+            ClassificationCatalog(sandbox.context, sandbox.newName(), true).use { catalog ->
+                val ledger = catalog.ledger()
+                ledger.startTracking()
+                val category = catalog.snapshot().first { it["kind"] == "category" }
+                val categoryId = category["id"] as String
+                val categoryName = category["name"] as String
+                catalog.create("tag", "Etiqueta de lote")
+                val tagId = catalog.snapshot().first { it["kind"] == "tag" }["id"] as String
+                val items = listOf(
+                    batchPost(UUID.randomUUID().toString(), "2020-01-14", categoryId, categoryName, listOf(tagId)),
+                    batchPost(UUID.randomUUID().toString(), "2020-01-14", categoryId, categoryName, listOf(tagId)),
+                    batchPost(UUID.randomUUID().toString(), "2021-02-15", categoryId, categoryName, listOf(tagId))
+                )
+                val first = ledger.confirmObservedBatch(items)
+                assertEquals(3, first["registered"])
+                assertEquals(listOf("2020-01", "2021-02"), first["months"])
+                assertEquals(2, ledger.snapshot("2020-01")["total"])
+                assertEquals(1, ledger.snapshot("2021-02")["total"])
+
+                catalog.rename(categoryId, "Categoria fictícia renomeada")
+                catalog.rename(tagId, "Etiqueta fictícia renomeada")
+                val retry = ledger.confirmObservedBatch(items)
+                assertEquals(3, retry["registered"])
+                assertEquals(first["months"], retry["months"])
+                assertEquals(4, ledger.rows("finance_transactions").size) // Includes the internal opening row.
+
+                val before = ledger.rows("finance_transactions").size
+                val invalidCategory = UUID.randomUUID().toString()
+                val invalidBatch = listOf(
+                    batchPost(UUID.randomUUID().toString(), "2022-03-16", categoryId, "Categoria fictícia renomeada", listOf(tagId)),
+                    batchPost(UUID.randomUUID().toString(), "2022-04-17", invalidCategory, "A classificar", emptyList())
+                )
+                val error = try { ledger.confirmObservedBatch(invalidBatch);null } catch (failure: DiagnosticFailure) { failure.code }
+                assertEquals("CLASSIFICATION_MISSING", error)
+                assertEquals(before, ledger.rows("finance_transactions").size)
+            }
         }
     }
 }

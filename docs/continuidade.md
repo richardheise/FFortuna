@@ -1,4 +1,12 @@
-# Continuidade — Tique 0.10.0
+# Continuidade — Tique 0.11.0
+
+## Entrega 0.11.0 verificada — 31/10/2026
+
+O usuário solicitou executar a primeira entrega de `docs/prompt-sol-uso-diario.md`. Implementadas duas abas (Movimentos inicial e Análises), Dados e captura na engrenagem, filtros Todos/A revisar/A classificar, estado discreto da captura e contexto de mês/scroll por aba. Pendências de todos os períodos estão identificadas; confirmados usam o mês selecionado. Novas observações atualizam a fila; troca do livro invalida a seleção transitória.
+
+Recebimento CSV/OFX retorna quantidade, meses, itens conhecidos, confirmados/vinculados e pendentes. Seleção em lote é manual, com natureza explícita e categoria/tags conjuntas. Candidatos conflitantes, possíveis vínculos e tipos financeiros sem suporte exigem revisão individual. O núcleo usa executor serial, um commit no livro e identidade por evento, sem repetir lançamentos no replay. [ADR 0013](adr/0013-revisao-em-lote.md). Nenhuma migração de schema ou dependência nova.
+
+Confirmação individual/lote oferece os meses dos registros nas análises. Totais continuam apenas de confirmados, incluindo A classificar. Comparações adicionais, regras reutilizáveis, edição de metadados de confirmados e suporte financeiro de caixinhas/cartão permanecem no backlog. TypeScript e 42 testes executados com sucesso; 61 testes JVM aprovados e 77 testes Android compilados, sem execução física. APK 0.11.0/code 14 inspecionado: mesma assinatura, sem INTERNET, backup Android desabilitado, avisos e alinhamento 16 KiB aprovados. Treze fontes do bundle comparados byte a byte. SHA-256 `1c65ebe8bf3024b8956b763243ce87124f8d8e7c2e422e366fd5e914844e19cc`. [Notas da entrega](releases/v0.11.0-alpha.1.md).
 
 Atualizado em 30/10/2026. Prioridade do usuário: funcionalidades em incrementos pequenos, depois refinamento UI/UX. A demonstração financeira e os exemplos nativos são sintéticos. A captura diagnóstica é temporária e opcional; a 0.8.0 implementa um livro permanente cifrado de uma conta, com confirmação manual e recuperação.
 

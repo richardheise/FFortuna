@@ -9,7 +9,7 @@ import { categoryKey, filterTransactions } from './dashboard';
 import type { BackupResult, CaptureModule, FinanceResult, FinanceSnapshot, FinanceTransaction, LocalRecoveryEntry } from './native';
 
 export type FinanceView = 'home' | 'transactions' | 'entry' | 'more' | 'balance' | 'categories';
-type Props = { native: CaptureModule; busy: boolean; run: (task: () => Promise<unknown>) => Promise<void>; view: FinanceView; onNavigate: (view: FinanceView) => void; onTools: () => void; entryKind?: 'income' | 'expense'; entryRequest?: number; valuesHidden: boolean; onToggleValues: () => void; epoch?: number; onChanged?: () => void };
+type Props = { native: CaptureModule; busy: boolean; run: (task: () => Promise<unknown>) => Promise<void>; view: FinanceView; onNavigate: (view: FinanceView) => void; onTools: () => void; entryKind?: 'income' | 'expense'; entryRequest?: number; valuesHidden: boolean; onToggleValues: () => void; epoch?: number; onChanged?: () => void; selectedMonth?: string; onSelectedMonthChange?: (month: string) => void; uncategorizedOnly?: boolean; onBookChanged?: () => void };
 type ClassificationSelection = { categoryId: string | null; category: string; tagIds: string[] };
 
 const todayLocal = () => {
@@ -81,8 +81,9 @@ const errorMessages: Record<string, string> = {
 };
 function failure(code?: string) { return code ? `${errorMessages[code] ?? 'Operação não concluída.'} (${code})` : 'Operação não concluída.'; }
 
-export function FinancePanel({ native, busy, run, view, onNavigate, onTools, entryKind, entryRequest, valuesHidden, onToggleValues, epoch, onChanged }: Props) {
-  const [month, setMonth] = useState(currentMonthLocal);
+export function FinancePanel({ native, busy, run, view, onNavigate, onTools, entryKind, entryRequest, valuesHidden, onToggleValues, epoch, onChanged, selectedMonth, onSelectedMonthChange, uncategorizedOnly = false, onBookChanged }: Props) {
+  const [internalMonth, setInternalMonth] = useState(currentMonthLocal);
+  const month = selectedMonth ?? internalMonth;
   const [visibleCount, setVisibleCount] = useState(50);
   const [catalogEpoch, setCatalogEpoch] = useState(0);
   const [historyKind, setHistoryKind] = useState<'all' | 'income' | 'expense'>('all');
@@ -171,10 +172,11 @@ export function FinancePanel({ native, busy, run, view, onNavigate, onTools, ent
   }, [clearPrivate, refresh]);
 
   useEffect(() => { if (mounted.current && active.current) void refresh(month); }, [month, refresh, epoch]);
+  useEffect(() => { if (selectedMonth && selectedMonth !== internalMonth) setInternalMonth(selectedMonth); }, [selectedMonth, internalMonth]);
   useEffect(() => {
-    if (snapshot?.bookId && previousBook.current && snapshot.bookId !== previousBook.current) resetAfterBoxChange();
+    if (snapshot?.bookId && previousBook.current && snapshot.bookId !== previousBook.current) { resetAfterBoxChange(); onBookChanged?.(); }
     if (snapshot?.bookId) previousBook.current = snapshot.bookId;
-  }, [snapshot?.bookId]);
+  }, [snapshot?.bookId, onBookChanged]);
   useEffect(() => {
     if (!entryKind) return;
     commandId.current = null;setKind(entryKind);setAmount('');setDescription('');setEffectiveDate(todayLocal());
@@ -371,13 +373,14 @@ export function FinancePanel({ native, busy, run, view, onNavigate, onTools, ent
 
   const blocked = busy || localBusy || loading;
   const ready = snapshot?.configured && snapshot.month === month;
-  const filtered = snapshot ? filterTransactions(snapshot.transactions, { kind: historyKind, category: categoryFilter, query }) : [];
+  const activeCategoryFilter = uncategorizedOnly ? categoryKey(null, 'A classificar') : categoryFilter;
+  const filtered = snapshot ? filterTransactions(snapshot.transactions, { kind: historyKind, category: activeCategoryFilter, query }) : [];
   const transactions = filtered.slice(0, visibleCount);
-  const selectedCategory = snapshot?.byCategory.find(row => categoryKey(row.categoryId, row.name) === categoryFilter)?.name;
+  const selectedCategory = snapshot?.byCategory.find(row => categoryKey(row.categoryId, row.name) === activeCategoryFilter)?.name;
   function openMovements(kind: 'all' | 'income' | 'expense' = 'all', category: string | null = null) {
     setHistoryKind(kind);setCategoryFilter(category);setQuery('');setVisibleCount(50);onNavigate('transactions');
   }
-  function monthStep(step: number) { setVisibleCount(50);setCategoryFilter(null);setMonth(value => moveMonth(value, step)); }
+  function monthStep(step: number) { setVisibleCount(50);setCategoryFilter(null);const next = moveMonth(month, step);setInternalMonth(next);onSelectedMonthChange?.(next); }
   return <>
     {error && <Card><ErrorBox message={error} /><Action title="Tentar novamente" secondary disabled={blocked} onPress={() => void refresh(monthRef.current)} /></Card>}
     {message && <Text accessibilityRole="alert" style={styles.small}>{message}</Text>}
@@ -398,14 +401,13 @@ export function FinancePanel({ native, busy, run, view, onNavigate, onTools, ent
     {ready && view === 'transactions' && <Card>
       <Field label="Buscar descrição, categoria ou tag" value={query} onChangeText={value => { setVisibleCount(50);setQuery(value); }} editable={!blocked} autoCorrect={false} autoComplete="off" importantForAutofill="no" maxLength={100} />
       <View style={styles.wrap}>{(['all','expense','income'] as const).map(value => <Chip key={value} title={value === 'all' ? 'Tudo' : value === 'expense' ? 'Despesas' : 'Receitas'} active={historyKind === value} onPress={() => { if(!blocked) { setHistoryKind(value);setVisibleCount(50); } }} />)}</View>
-      <Chip title="A classificar" active={categoryFilter === categoryKey(null, 'A classificar')} onPress={() => { setCategoryFilter(value => value === categoryKey(null, 'A classificar') ? null : categoryKey(null, 'A classificar'));setVisibleCount(50); }} />
-      {categoryFilter && <Action secondary title={`${selectedCategory ?? 'Categoria selecionada'} · limpar filtro`} disabled={blocked} onPress={() => setCategoryFilter(null)} />}
+      {!!categoryFilter && !uncategorizedOnly && <Action secondary title={`${selectedCategory ?? 'Categoria selecionada'} · limpar filtro`} disabled={blocked} onPress={() => setCategoryFilter(null)} />}
       <Text style={styles.small}>{filtered.length} registros</Text>
       {transactions.length === 0 && <Text style={styles.small}>Nenhum movimento encontrado.</Text>}
       {transactions.map((item: FinanceTransaction, index: number) => <View key={item.id} style={{ borderTopWidth: 1, borderColor: colors.line, paddingTop: 14, gap: 7 }}>
         {index === 0 || transactions[index-1]?.effectiveDate !== item.effectiveDate ? <Text style={styles.small}>{localDateLabel(item.effectiveDate)}</Text> : null}
         <Pressable accessibilityRole="button" accessibilityLabel={`Detalhes de ${item.description}`} onPress={() => setDetailsId(value => value === item.id ? null : item.id)} style={{ minHeight: 48, justifyContent: 'center', gap: 6 }}>
-        <View style={[styles.row, { justifyContent: 'space-between', flexWrap: 'wrap' }]}><Text style={[styles.label, { flexShrink: 1 }]}>{item.description || 'Sem descrição'}</Text><Text style={{ color: item.voided ? colors.muted : item.kind === 'income' ? colors.cyan : colors.ink, fontSize: 16, fontWeight: '600', textDecorationLine: item.voided ? 'line-through' : 'none' }}>{item.kind === 'income' ? '+ ' : '− '}{formatBRL(item.amountCents)}</Text></View>
+        <View style={[styles.row, { justifyContent: 'space-between', flexWrap: 'wrap' }]}><Text style={[styles.label, { flexShrink: 1 }]}>{item.description || 'Sem descrição'}</Text><Text style={{ color: item.voided ? colors.muted : item.kind === 'income' ? colors.cyan : colors.ink, fontSize: 16, fontWeight: '600', textDecorationLine: item.voided ? 'line-through' : 'none' }}>{item.kind === 'income' ? '+ ' : '− '}{valuesHidden ? '••••' : formatBRL(item.amountCents)}</Text></View>
         <Text style={styles.small}>{item.kind === 'income' ? 'Receita' : 'Despesa'} · {item.category}{item.tags.length ? ` · ${item.tags.join(', ')}` : ''}</Text>
         <Text style={styles.small}>{item.sourceType === 'statement' ? 'Extrato' : item.sourceEventId ? 'Notificação' : 'Manual'}</Text>
         </Pressable>

@@ -4,6 +4,14 @@ Vocabulário do aplicativo para distinguir fatos observados, decisões do usuár
 
 ## Linguagem
 
+**Confirmação em lote**:
+Decisão explícita de registrar um conjunto selecionado de candidatos com natureza e classificação indicadas pelo usuário. O núcleo aplica as validações e a proveniência de cada item e grava o conjunto atomicamente. O sinal de um extrato não substitui a confirmação de natureza.
+_Evitar_: confirmar tudo automaticamente, importar pelo sinal
+
+**A classificar**:
+Registro confirmado cuja categoria principal ainda não foi definida. Participa dos totais de sua natureza e período. Não equivale a candidato com valor ou natureza pendentes de revisão.
+_Evitar_: fora dos totais, movimentação ainda não confirmada
+
 **Registro de movimentações**:
 Histórico das movimentações conhecidas pelo aplicativo, obtidas por lançamento manual ou por evidências revisadas. Pode ser parcial e não exige reproduzir o saldo bancário ou o patrimônio do usuário. Seu acompanhamento continua exigindo distinguir receitas, despesas e movimentações entre recursos próprios.
 _Evitar_: réplica da conta bancária, extrato completo garantido

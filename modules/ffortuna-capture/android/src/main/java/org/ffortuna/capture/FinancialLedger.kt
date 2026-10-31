@@ -7,6 +7,18 @@ import java.time.LocalDate
 import java.time.Instant
 import java.util.UUID
 
+data class ObservedBatchPost(
+    val eventId: String,
+    val amountCents: Long,
+    val kind: String,
+    val effectiveDate: String,
+    val description: String,
+    val category: String,
+    val categoryId: String?,
+    val tagIds: List<String>,
+    val source: Map<String, Any?>
+)
+
 /** One permanent BRL book, on the catalog owner's connection and serial executor. */
 class FinancialLedger(private val db:SQLiteDatabase) {
     companion object {
@@ -85,7 +97,8 @@ class FinancialLedger(private val db:SQLiteDatabase) {
         FinanceRules.date(date)
         if(date>LocalDate.now().toString()) throw FinanceFailure("FUTURE_DATE")
     }
-    fun setup(json:String) = atomic {
+    fun setup(json:String) = atomic { setupInternal(json) }
+    private fun setupInternal(json:String) {
         if(configured()) throw FinanceFailure("ACCOUNT_EXISTS")
         val value=root(json,setOf("openingDate","openingBalanceCents"));val date=string(value,"openingDate");currentDate(date)
         val balance=FinanceRules.cents(value.get("openingBalanceCents"),true)
@@ -109,7 +122,8 @@ class FinancialLedger(private val db:SQLiteDatabase) {
             mapOf("id" to it.getString(0),"fields" to jsonMap(fields))
         }
     }
-    fun post(json:String,source:Map<String,Any?>?=null):String = atomic {
+    fun post(json:String,source:Map<String,Any?>?=null):String = atomic { postInternal(json,source) }
+    private fun postInternal(json:String,source:Map<String,Any?>?):String {
         profile()
         val manual=source==null
         val keys=setOf("amountCents","kind","effectiveDate","description","category","categoryId","tagIds")+(if(manual) setOf("commandId") else emptySet())
@@ -134,17 +148,47 @@ class FinancialLedger(private val db:SQLiteDatabase) {
             "category" to (if(categoryId==null) category else ""),"categoryId" to categoryId,"tagIds" to ids)).toString()
         if(existing!=null) {
             if(JSONObject(existing.second).toString()!=JSONObject(request).toString()) throw FinanceFailure("CONFIRMATION_CONFLICT")
-            return@atomic existing.first
+            return existing.first
         }
         if(source?.get("packageName")=="org.tique.statement" && statementMatches(source["sourceKey"] as String).isNotEmpty()) throw FinanceFailure("IMPORT_CONFLICT")
-        if(rows("finance_transactions").size>=10_000) throw FinanceFailure("TRANSACTION_LIMIT")
+        val transactionCount=db.rawQuery("SELECT COUNT(*) FROM finance_transactions",null).use { it.moveToFirst();it.getInt(0) }
+        if(transactionCount>=10_000) throw FinanceFailure("TRANSACTION_LIMIT")
         val id=UUID.randomUUID().toString();val sourceJson=source?.let { JSONObject(it).toString() }
         if(sourceJson!=null && sourceJson.length>4096) throw FinanceFailure("INVALID_SOURCE")
         db.execSQL("INSERT INTO finance_transactions VALUES(?,?,?,?,?,?,?,?,?,?,?,?)",arrayOf<Any?>(id,key,request,kind,amount,date,description,categoryId,category,Instant.now().toString(),if(manual) null else command,sourceJson))
         entries(id,if(kind=="income") amount else -amount,kind)
         for(tag in ids) db.execSQL("INSERT INTO finance_tags VALUES(?,?)",arrayOf(id,tag))
-        id
+        return id
     }
+    fun confirmObservedBatch(items:List<ObservedBatchPost>):Map<String,Any?> {
+        if(items.size>StatementParser.MAX_ROWS) throw FinanceFailure("BATCH_LIMIT")
+        if(items.map { it.eventId }.distinct().size!=items.size) throw FinanceFailure("INVALID_FIELDS")
+        if(items.isEmpty()) return mapOf("registered" to 0,"months" to emptyList<String>())
+        return atomic {
+            if(!configured()) setupInternal("{\"openingDate\":\"0001-01-01\",\"openingBalanceCents\":0}")
+            // Check against the pre-batch book before inserting any selected row. Equal rows
+            // inside this batch remain distinct; only an existing posted movement needs review.
+            for(item in items) if(!hasPostedEvent(item.eventId) && hasMatchingPostedMovement(item.amountCents,item.effectiveDate))
+                throw FinanceFailure("OBSERVATION_CONFLICT")
+            val months=items.map { item ->
+                if(UUID.fromString(item.eventId).toString()!=item.eventId || item.source["eventId"]!=item.eventId) throw FinanceFailure("INVALID_SOURCE")
+                if(item.kind !in setOf("income","expense")) throw FinanceFailure("UNSUPPORTED_MOVEMENT")
+                val request=JSONObject().put("amountCents",item.amountCents).put("kind",item.kind)
+                    .put("effectiveDate",item.effectiveDate).put("description",item.description)
+                    .put("category",item.category).put("categoryId",item.categoryId ?: JSONObject.NULL)
+                    .put("tagIds",JSONArray(item.tagIds)).toString()
+                postInternal(request,item.source)
+                FinanceRules.date(item.effectiveDate).take(7)
+            }.distinct().sorted()
+            mapOf("registered" to items.size,"months" to months)
+        }
+    }
+    fun hasObservationLink(eventId:String)=db.rawQuery("SELECT event_id FROM finance_observation_links WHERE event_id=?",arrayOf(eventId)).use { it.moveToFirst() }
+    fun hasPostedEvent(eventId:String)=db.rawQuery("SELECT source_event_id FROM finance_transactions WHERE source_event_id=?",arrayOf(eventId)).use { it.moveToFirst() }
+    fun hasMatchingPostedMovement(amount:Long,date:String)=db.rawQuery("""SELECT t.id FROM finance_transactions t
+        WHERE t.kind IN ('income','expense') AND t.amount=? AND t.effective_date=?
+        AND NOT EXISTS(SELECT 1 FROM finance_cancellations c WHERE c.transaction_id=t.id) LIMIT 1""",
+        arrayOf(amount.toString(),date)).use { it.moveToFirst() }
     fun recordBalance(json:String)=atomic {
         val value=root(json,setOf("date","amountCents"));val date=string(value,"date");currentDate(date)
         if(date<profile().first) throw FinanceFailure("DATE_BEFORE_OPENING")

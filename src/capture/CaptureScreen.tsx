@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Alert, AppState, Modal, Pressable, Text, View } from 'react-native';
+import { Alert, AppState, Modal, Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Action, Chip, ErrorBox, ScreenScroll, colors, styles } from '../ui/common';
+import { Action, Card, Chip, ErrorBox, ScreenScroll, colors, formatMonth, styles } from '../ui/common';
 import { captureModule, type DailyState, type StatementResult } from './native';
 import { FinanceNavigation, TiqueMark, type MainTab } from './FinanceNavigation';
 import { FinancePanel, type FinanceView } from './FinancePanel';
@@ -20,28 +20,37 @@ const errors: Record<string, string> = {
   RECOVERY_BLOCKED: 'A recuperação local precisa de atenção nas configurações.',
   DIAGNOSTIC_STORAGE: 'Não foi possível abrir os dados protegidos. Eles foram preservados.',
 };
+const currentMonth = () => {
+  const date = new Date();
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+};
 export function CaptureScreen() {
   const [native] = useState(captureModule);
-  const [tab, setTab] = useState<MainTab>('sources');
+  const [tab, setTab] = useState<MainTab>('transactions');
   const [state, setState] = useState<DailyState | null>(null);
   const [overlay, setOverlay] = useState<FinanceView | 'tools' | null>(null);
-  const [movementMode, setMovementMode] = useState<'pending' | 'confirmed'>('pending');
+  const [movementFilter, setMovementFilter] = useState<'all' | 'pending' | 'uncategorized'>('all');
+  const [selectedMonth, setSelectedMonth] = useState(currentMonth);
+  const [availableMonths, setAvailableMonths] = useState<string[]>([]);
   const [entryKind, setEntryKind] = useState<'income' | 'expense'>('expense');
   const [entryRequest, setEntryRequest] = useState(0);
   const [epoch, setEpoch] = useState(0);
+  const [inboxGeneration, setInboxGeneration] = useState(0);
   const [busy, setBusy] = useState(false);
   const [hidden, setHidden] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const busyRef = useRef(false);
-  const overlayRef = useRef(overlay);
-  overlayRef.current = overlay;
-  const initialized = useRef(false);
+  const tabRef = useRef<MainTab>('transactions');
+  const scrollRef = useRef<ScrollView>(null);
+  const scrollY = useRef(0);
+  const scrollPositions = useRef<Record<MainTab, number>>({ transactions: 0, home: 0 });
   const hadShared = useRef(false);
   const active = useRef(AppState.currentState !== 'background');
   const alive = useRef(true);
   const generation = useRef(0);
   const changed = useCallback(() => setEpoch(value => value + 1), []);
+  useEffect(() => { changed(); }, [state?.pendingCount, changed]);
   const refresh = useCallback(async () => {
     if (!native) return;
     const token = ++generation.current;
@@ -49,9 +58,6 @@ export function CaptureScreen() {
     if (!alive.current || !active.current || token !== generation.current) return;
     if (next.status === 'error') throw new Error(next.code ?? 'STORAGE');
     setState(next);
-    if (!initialized.current) { initialized.current = true; setTab(next.configured ? 'transactions' : 'sources'); }
-    if (next.incomingFile && !hadShared.current && !overlayRef.current && !busyRef.current) { setTab('sources'); hadShared.current = true; }
-    if (!next.incomingFile) hadShared.current = false;
   }, [native]);
   useEffect(() => {
     alive.current = true;
@@ -65,7 +71,8 @@ export function CaptureScreen() {
     return () => { alive.current = false; generation.current++; listener.remove(); clearInterval(timer); };
   }, [changed, refresh]);
   useEffect(() => {
-    if (state?.incomingFile && !hadShared.current && !overlay && !busy) { setTab('sources'); hadShared.current = true; }
+    if (!state?.incomingFile) { hadShared.current = false; return; }
+    if (!hadShared.current && !overlay && !busy) { hadShared.current = true; setOverlay('more'); }
   }, [state?.incomingFile, overlay, busy]);
   const run = useCallback(async (task: () => Promise<unknown>) => {
     if (busyRef.current) throw new Error('BUSY');
@@ -95,10 +102,24 @@ export function CaptureScreen() {
     }
     setEntryKind(kind); setEntryRequest(value => value + 1); setOverlay('entry');
   }
+  function switchTab(next: MainTab) {
+    scrollPositions.current[tabRef.current] = scrollY.current;
+    tabRef.current = next;
+    setTab(next);
+    scrollY.current = scrollPositions.current[next];
+    requestAnimationFrame(() => scrollRef.current?.scrollTo({ y: scrollPositions.current[next], animated: false }));
+  }
   function navigate(view: FinanceView) {
     if (view === 'home' || view === 'transactions') {
-      setOverlay(null); setTab(view); if (view === 'transactions') setMovementMode('confirmed'); changed();
+      setOverlay(null); switchTab(view); if (view === 'transactions') setMovementFilter('all'); changed();
     } else setOverlay(view);
+  }
+  function addMovement() {
+    Alert.alert('Adicionar ao Tique', 'Escolha como começar.', [
+      { text: 'Cancelar', style: 'cancel' },
+      { text: 'Lançar manualmente', onPress: () => void manual() },
+      { text: 'Importar extrato', onPress: () => void importFile(false) },
+    ]);
   }
   function activate() {
     if (!native || !state?.source.signer) return;
@@ -116,41 +137,94 @@ export function CaptureScreen() {
     });
     const received = result as StatementResult | null;
     if (received?.status === 'ok') {
-      setTab('transactions'); setMovementMode('pending');
-      setMessage(received.count ? `${received.count} movimentos para revisar.` : 'Este arquivo já foi recebido. Nenhum registro duplicado.');
+      setOverlay(null); switchTab('transactions'); setMovementFilter('pending');
+      const months = [...new Set((received.months ?? []).filter(value => /^\d{4}-\d{2}$/.test(value)))];
+      if (months.length) setAvailableMonths(current => [...new Set([...current, ...months])].sort());
+      const total = received.rowCount ?? received.count ?? 0;
+      const pending = received.pending ?? total;
+      const confirmed = received.confirmed ?? 0;
+      const existing = received.existing ?? 0;
+      setMessage(`${total} movimentos recebidos · ${pending} a revisar · ${confirmed} já registrados${existing ? ` · ${existing} já recebidos antes` : ''}. Receber não registra pendências.`);
     }
   }
-  const goReview = () => { setTab('transactions'); setMovementMode('pending'); changed(); };
+  const goReview = () => { setOverlay(null); switchTab('transactions'); setMovementFilter('pending'); changed(); };
+  const batchConfirmed = useCallback((months: string[]) => {
+    const valid = [...new Set(months.filter(value => /^\d{4}-\d{2}$/.test(value)))].sort();
+    setAvailableMonths(current => [...new Set([...current, ...valid])].sort());
+    setMovementFilter('all');
+    changed();
+    if (valid.length) setMessage('Movimentos confirmados. Veja o período importado em Análises.');
+  }, [changed]);
+  function viewImportedPeriod(month?: string) {
+    if (month) setSelectedMonth(month);
+    setOverlay(null);
+    switchTab('home');
+  }
+  const bookChanged = useCallback(() => {
+    setInboxGeneration(value => value + 1);
+    setAvailableMonths([]);
+    setMovementFilter('all');
+    setSelectedMonth(currentMonth());
+  }, []);
+  const captureActive = !!state && state.active && state.mode === 'daily' && state.authorized && state.connected;
+  const captureAttention = !!state && (state.status === 'blocked' || state.status === 'error' || !state.source.installed || !state.source.enabled || !state.source.signer || (state.mode === 'daily' && state.active && (!state.authorized || !state.connected)));
+  const captureLabel = !state ? 'Captura · …' : captureAttention ? 'Captura · Atenção' : captureActive ? 'Captura · Ativa' : 'Captura · Pausada';
   if (!native) return <SafeAreaView style={styles.page}><Text style={styles.body}>Abra o APK Tique para usar seus registros. O Expo Go oferece somente a demonstração.</Text></SafeAreaView>;
   return <SafeAreaView style={styles.page}>
-    <View style={[styles.row, { justifyContent: 'space-between', paddingHorizontal: 20, paddingVertical: 8 }]}>
+    <View style={[styles.row, { justifyContent: 'space-between', paddingHorizontal: 12, paddingVertical: 8 }]}>
       <View style={styles.row}><TiqueMark /><Text style={styles.title}>tique</Text></View>
-      <Pressable accessibilityRole="button" accessibilityLabel="Configurações" disabled={busy} onPress={() => setOverlay('more')} style={{ minWidth: 48, minHeight: 48, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: colors.gold, fontSize: 26 }}>⚙</Text></Pressable>
+      <View style={styles.row}>
+        <Pressable accessibilityRole="button" accessibilityLabel={`${captureLabel}. Abrir dados e captura`} disabled={busy} onPress={() => setOverlay('more')} style={{ minHeight: 48, justifyContent: 'center', paddingHorizontal: 6 }}>
+          <Text style={{ color: captureAttention ? colors.red : captureActive ? colors.cyan : colors.muted, fontSize: 11 }}>{captureLabel}</Text>
+        </Pressable>
+        <Pressable accessibilityRole="button" accessibilityLabel={hidden ? 'Mostrar valores' : 'Ocultar valores'} onPress={() => setHidden(value => !value)} style={{ minWidth: 48, minHeight: 48, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: colors.cyan, fontSize: 20 }}>{hidden ? '◉' : '◎'}</Text></Pressable>
+        <Pressable accessibilityRole="button" accessibilityLabel="Dados e captura" disabled={busy} onPress={() => setOverlay('more')} style={{ minWidth: 48, minHeight: 48, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: colors.gold, fontSize: 26 }}>⚙</Text></Pressable>
+      </View>
     </View>
-    <ScreenScroll>
+    <ScrollView ref={scrollRef} keyboardShouldPersistTaps="handled" contentContainerStyle={styles.scroll} scrollEventThrottle={100} onScroll={event => {
+      const offset = event.nativeEvent.contentOffset.y;
+      scrollY.current = offset;
+      scrollPositions.current[tabRef.current] = offset;
+    }}>
       <ErrorBox message={error} />
       {message && <Text accessibilityRole="alert" style={styles.small}>{message}</Text>}
-      {tab === 'sources' && <SourcesPanel state={state} busy={busy} onActivate={activate} onPause={() => void act(() => native.stopDiagnostic(), 'Captura pausada.')} onPermission={() => native.openSettings()} onReconnect={() => void act(() => native.reconnectCapture())} onImport={() => void importFile(false)} onBank={() => void act(() => native.openBankApp())} onReceive={() => void importFile(true)} onDismissShared={() => void act(() => native.dismissSharedStatement())} onManual={() => void manual()} onReview={goReview} />}
       {tab === 'transactions' && <>
         <View style={[styles.row, { justifyContent: 'space-between' }]}>
           <Text style={styles.heading}>Movimentos</Text>
-          <Action title="+" accessibilityLabel="Adicionar gasto ou ganho" disabled={busy} onPress={() => void manual()} />
+          <Action title="+" accessibilityLabel="Adicionar movimento ou importar extrato" disabled={busy} onPress={addMovement} />
         </View>
-        <View style={styles.wrap}><Chip title="A revisar" active={movementMode === 'pending'} onPress={() => setMovementMode('pending')} /><Chip title="Registrados" active={movementMode === 'confirmed'} onPress={() => setMovementMode('confirmed')} /></View>
+        <View style={styles.wrap}>
+          <Chip title="Todos" active={movementFilter === 'all'} onPress={() => setMovementFilter('all')} />
+          <Chip title="A revisar" active={movementFilter === 'pending'} onPress={() => setMovementFilter('pending')} />
+          <Chip title="A classificar" active={movementFilter === 'uncategorized'} onPress={() => setMovementFilter('uncategorized')} />
+        </View>
+        {availableMonths.length > 0 && <Action title="Ver período dos registros" secondary disabled={busy} onPress={() => viewImportedPeriod(availableMonths.length === 1 ? availableMonths[0] : undefined)} />}
       </>}
-      <View style={tab === 'transactions' && movementMode === 'pending' ? undefined : { display: 'none' }}>
-        <DailyInbox native={native} busy={busy} run={run} epoch={epoch} onChanged={changed} />
+      <View style={tab === 'transactions' && movementFilter !== 'uncategorized' ? undefined : { display: 'none' }}>
+        <Text style={styles.small}>Pendências · todos os períodos</Text>
+        <DailyInbox key={inboxGeneration} native={native} busy={busy} run={run} epoch={epoch} onChanged={changed} onBatchConfirmed={batchConfirmed} valuesHidden={hidden} />
       </View>
-      {tab === 'home' && !!state?.pendingCount && <Action title={`A revisar (${state.pendingCount})`} secondary disabled={busy} onPress={goReview} />}
-      <View style={tab === 'home' || (tab === 'transactions' && movementMode === 'confirmed') ? undefined : { display: 'none' }}>
-        <FinancePanel native={native} busy={busy} run={run} view={tab === 'home' ? 'home' : 'transactions'} onNavigate={navigate} onTools={() => setOverlay('tools')} valuesHidden={hidden} onToggleValues={() => setHidden(value => !value)} epoch={epoch} onChanged={changed} />
+      {tab === 'transactions' && movementFilter !== 'pending' && <Text style={styles.heading}>Registrados · {formatMonth(selectedMonth)}</Text>}
+      {tab === 'home' && <Card>
+        <Text style={styles.small}>{state?.pendingCount ?? 0} pendências fora dos totais.</Text>
+        {!!state?.pendingCount && <Action title="Revisar pendências" secondary disabled={busy} onPress={goReview} />}
+        {availableMonths.length > 0 && <View style={{ gap: 8 }}>
+          <Text style={styles.label}>Períodos disponíveis</Text>
+          {availableMonths.map(month => <Action key={month} title={`Ver ${formatMonth(month)}`} secondary disabled={busy} onPress={() => setSelectedMonth(month)} />)}
+        </View>}
+      </Card>}
+      <View style={tab === 'home' || (tab === 'transactions' && movementFilter !== 'pending') ? undefined : { display: 'none' }}>
+        <FinancePanel native={native} busy={busy} run={run} view={tab === 'home' ? 'home' : 'transactions'} onNavigate={navigate} onTools={() => setOverlay('tools')} valuesHidden={hidden} onToggleValues={() => setHidden(value => !value)} epoch={epoch} onChanged={changed} selectedMonth={selectedMonth} onSelectedMonthChange={setSelectedMonth} uncategorizedOnly={tab === 'transactions' && movementFilter === 'uncategorized'} onBookChanged={bookChanged} />
       </View>
-    </ScreenScroll>
-    <FinanceNavigation active={tab} disabled={busy} onTab={next => { setTab(next); setMessage(null); setError(null); }} />
+    </ScrollView>
+    <FinanceNavigation active={tab} disabled={busy} onTab={next => { switchTab(next); setMessage(null); setError(null); }} />
     <Modal visible={overlay !== null} animationType="slide" onRequestClose={() => { if (!busyRef.current) { setOverlay(null); changed(); } }}>
       {overlay === 'tools' ? <CaptureTools onClose={() => { setOverlay('more'); changed(); void refresh().catch(() => {}); }} /> : <SafeAreaView style={styles.page}>
-        <View style={[styles.row, { justifyContent: 'space-between', padding: 16 }]}><Text style={styles.heading}>{overlay === 'entry' ? 'Novo movimento' : overlay === 'categories' ? 'Categorias e tags' : overlay === 'balance' ? 'Conferência avançada' : 'Configurações'}</Text><Action title="×" accessibilityLabel="Fechar painel" secondary disabled={busy} onPress={() => { setOverlay(null); changed(); }} /></View>
-        <ScreenScroll><FinancePanel native={native} busy={busy} run={run} view={overlay ?? 'more'} onNavigate={navigate} onTools={() => setOverlay('tools')} entryKind={entryKind} entryRequest={entryRequest} valuesHidden={hidden} onToggleValues={() => setHidden(value => !value)} onChanged={changed} /></ScreenScroll>
+        <View style={[styles.row, { justifyContent: 'space-between', padding: 16 }]}><Text style={styles.heading}>{overlay === 'entry' ? 'Novo movimento' : overlay === 'categories' ? 'Categorias e tags' : overlay === 'balance' ? 'Conferência de saldo' : 'Dados e captura'}</Text><Action title="×" accessibilityLabel="Fechar painel" secondary disabled={busy} onPress={() => { setOverlay(null); changed(); }} /></View>
+        <ScreenScroll>
+          {overlay === 'more' && <SourcesPanel state={state} busy={busy} onActivate={activate} onPause={() => void act(() => native.stopDiagnostic(), 'Captura pausada.')} onPermission={() => native.openSettings()} onReconnect={() => void act(() => native.reconnectCapture())} onImport={() => void importFile(false)} onBank={() => void act(() => native.openBankApp())} onReceive={() => void importFile(true)} onDismissShared={() => void act(() => native.dismissSharedStatement())} onManual={() => void manual()} onReview={goReview} />}
+          <FinancePanel native={native} busy={busy} run={run} view={overlay ?? 'more'} onNavigate={navigate} onTools={() => setOverlay('tools')} entryKind={entryKind} entryRequest={entryRequest} valuesHidden={hidden} onToggleValues={() => setHidden(value => !value)} onChanged={changed} selectedMonth={selectedMonth} onSelectedMonthChange={setSelectedMonth} onBookChanged={bookChanged} />
+        </ScreenScroll>
       </SafeAreaView>}
     </Modal>
   </SafeAreaView>;

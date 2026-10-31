@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Action, Card, ErrorBox, Field, ScreenScroll, colors, styles } from '../ui/common';
 import { captureModule, type CaptureSnapshot, type LocalRecoveryEntry, type SecurityReport } from './native';
 import { DiagnosticPanel } from './DiagnosticPanel';
-import { FinanceNavigation, TiqueMark, type MainTab } from './FinanceNavigation';
+import { TiqueMark } from './FinanceNavigation';
 import { FinancePanel, type FinanceView } from './FinancePanel';
 import { LegalNotices } from '../legal/LegalNotices';
 
@@ -49,7 +49,7 @@ export function CaptureTools({ onClose }: { onClose: () => void }) {
     });
     return () => subscription.remove();
   }, [screen, busy]);
-  function navigate(next: FinanceView | MainTab | 'tools') { if(next === 'sources') { onClose(); return; } setPassword('');setConfirmation('');setScreen(next); }
+  function navigate(next: FinanceView | 'tools') { setPassword('');setConfirmation('');setScreen(next); }
   function newEntry(kind: 'income' | 'expense') { setNewOpen(false);setEntryKind(kind);setEntryRequest(value => value + 1);setScreen('entry'); }
   async function run(task: () => Promise<unknown> | unknown) {
     if(busy) return; setBusy(true); setError(null); setMessage(null);

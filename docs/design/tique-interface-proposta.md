@@ -1,6 +1,12 @@
 # Tique — interface e uso diário
 
-## Direção atual — registro de movimentações e três telas
+## Direção atual — duas abas, revisão em lote
+
+Em 31/10/2026, o usuário pediu implementar a primeira entrega do [prompt de uso diário](../prompt-sol-uso-diario.md). Movimentos passa a ser a abertura e divide a navegação com Análises. Fontes migra para **Dados e captura** na engrenagem; importação e compartilhamento continuam acessíveis, sem exigir extrato ou saldo para começar. As pendências são identificadas e permanecem fora dos totais. Revisão em lote exige seleção e natureza explícitas; os meses dos registros confirmados podem ser abertos nas análises. A lista oferece Todos, A revisar e A classificar. Preservar contexto entre abas e detalhes respeitando o bloqueio de informações ao ir para segundo plano.
+
+A direção visual aprovada permanece: preto, âmbar alaranjado, ciano e off-white; cantos pequenos, ações compactas, controles acessíveis. Comparações adicionais, regras reutilizáveis e edição dos metadados de confirmados permanecem no backlog. A implementação e suas verificações são registradas nas notas da release, sem presumir teste no celular.
+
+## Histórico — registro de movimentações e três telas
 
 Em 30/10/2026, o usuário pediu usar o aplicativo por alguns dias e anotar suas percepções, sem novos roteiros específicos de teste. Pediu três telas, navegação simples, pouco texto e prioridade para ícones. Esclareceu que quer **registrar a movimentação do dinheiro**, sem reproduzir exatamente seu dinheiro ou exigir que o saldo calculado coincida com o banco. Este recorte foi autorizado para implementação na 0.10.0; não constitui aprovação física da 0.9.0. O usuário reforçou que extratos são opcionais e quer compartilhá-los para o Tique.
 

@@ -53,6 +53,7 @@ export interface CaptureModule {
   cancelFinanceTransaction(fieldsJson: string): Promise<FinanceResult>;
   restartFinance(): Promise<FinanceResult>;
   confirmDiagnosticCandidate(id: string, fieldsJson: string): Promise<FinanceResult>;
+  confirmObservedBatch(itemsJson: string): Promise<ObservedBatchResult>;
   exportFinanceBackup(password: string): Promise<BackupResult>;
   restoreFinanceBackup(password: string): Promise<BackupResult>;
   financeRecoveryEntries(): Promise<LocalRecoveryEntry[]>;
@@ -129,7 +130,14 @@ export interface DiagnosticStatus {
   startedAt: string | null; expiresAt: string | null;
   count: number; reviewedCount: number; limitReached: boolean; failureCode: string | null; processingFailureCode?: string | null;
 }
-export interface StatementResult { status: 'ok' | 'error' | 'cancelled'; code?: string; count?: number; existing?: number }
+export interface StatementResult {
+  status: 'ok' | 'error' | 'cancelled'; code?: string; count?: number; existing?: number;
+  rowCount?: number; confirmed?: number; pending?: number; months?: string[];
+}
+export interface ObservedBatchItem {
+  id: string; kind: 'income' | 'expense'; categoryId: string | null; category: string; tagIds: string[];
+}
+export interface ObservedBatchResult { status: 'ok' | 'error'; code?: string; registered?: number; months?: string[] }
 export interface DailyState extends DiagnosticStatus {
   pendingCount: number; configured: boolean; incomingFile: boolean;
   imports: Array<{ id: string; format: string; capturedAt: string; count: number }>;

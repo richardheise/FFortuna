@@ -63,6 +63,7 @@ class FFortunaCaptureModule:Module() {
         AsyncFunction("cancelFinanceTransaction") { json:String -> diagnosticAction { mapOf("status" to "ok","snapshot" to CaptureRuntime.cancelFinanceTransaction(context(),json)) } }
         AsyncFunction("restartFinance") { diagnosticAction { mapOf("status" to "ok","snapshot" to CaptureRuntime.restartFinance(context())) } }
         AsyncFunction("confirmDiagnosticCandidate") { id:String,json:String -> diagnosticAction { mapOf("status" to "ok")+CaptureRuntime.confirmDiagnosticCandidate(context(),id,json) } }
+        AsyncFunction("confirmObservedBatch") { json:String -> diagnosticAction { mapOf("status" to "ok")+CaptureRuntime.confirmObservedBatch(context(),json) } }
         AsyncFunction("switchPreviousFinance") { diagnosticAction { mapOf("status" to "ok","snapshot" to CaptureRuntime.switchPreviousFinance(context())) } }
         AsyncFunction("discardPreviousFinance") { diagnosticAction { mapOf("status" to "ok","snapshot" to CaptureRuntime.discardPreviousFinance(context())) } }
         AsyncFunction("financeRecoveryEntries") { CaptureRuntime.financeRecoveryEntries(context()) }
