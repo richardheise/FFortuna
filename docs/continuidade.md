@@ -2,6 +2,14 @@
 
 Atualizado em 30/10/2026. Prioridade do usuário: funcionalidades em incrementos pequenos, depois refinamento UI/UX. A demonstração financeira e os exemplos nativos são sintéticos. A captura diagnóstica é temporária e opcional; a 0.8.0 implementa um livro permanente cifrado de uma conta, com confirmação manual e recuperação.
 
+## Próximo recorte — uso diário, três telas e foco nas movimentações
+
+Após a publicação 0.9.0, o usuário pediu usar o app de verdade por alguns dias e anotar percepções, sem mais roteiros específicos. Quer primeiro definir boas práticas de IHC: pouco texto, ícones e navegação fluida em três telas. Esclareceu que não quer replicar seu dinheiro/saldo bancário, mas registrar as movimentações. Não inferir aprovação física da 0.9.0 a partir dessa preferência; a observação de uso normal substitui o pedido de novos roteiros ao usuário.
+
+[Proposta atual e referências](design/tique-interface-proposta.md): Fontes (importar/ativar captura/início manual), Movimentos (tela habitual com pendentes, confirmados, busca/categorias e +) e Análises (totais dos registros, categorias/evolução). Manter rótulos curtos na navegação e acessibilidade dos ícones; configurações e formulários em painéis, sem quarta aba. Banco existente e auditoria preservados; não exigir abertura real ou conferência de saldo como objetivo de uso. Foram examinadas imagens/páginas oficiais de Organizze, Mobills e Cashew, além da documentação Android e da exportação Nubank. Assets de terceiros não incorporados.
+
+É uma proposta de produto em alinhamento, sem código ou nova release nesta rodada. A implementação ainda precisa resolver a captura diária (o diagnóstico atual expira em 24h/200 observações), retenção/pendências duráveis, verificações internas em lugar da bateria manual como tarefa de uso e a importação real com prévia/antiduplicidade. Acesso a notificações não dá acesso aos extratos do Nubank; o caminho previsto é exportação pelo usuário e importação local, sem prometer conexão bancária. Não apresentar importação ou automação fictícia na interface. Limites por categoria e recorrências ficam para incrementos posteriores. Verificações do desenvolvedor continuam; não pedir nova bateria específica ao usuário por padrão.
+
 ## Incremento 0.9.0 — interface aprovada e gráficos
 
 Usuário aprovou a revisão visual 02 e autorizou implementar, acrescentando gráficos. Paleta `#080B10`/`#FFB020`/`#9DECF4`/`#F3EFE6`, cantos pequenos, ícones próprios em Views e navegação inferior Início/Movimentos/Revisão/Mais com + central. Formulários foram retirados da visão geral. Gráficos nativos de categorias e receitas/despesas, filtros ao tocar, busca sem acentos, histórico mensal paginado e conferência datada. `dashboard.ts` valida totais e calcula dinheiro/pontos-base com BigInt; larguras visuais não são cálculos de saldo. Anulados ficam fora dos totais/recentes. Ocultar valores do resumo persiste entre meses/abas e é reativado ao retornar do fundo.

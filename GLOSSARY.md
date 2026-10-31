@@ -4,6 +4,14 @@ Vocabulário do aplicativo para distinguir fatos observados, decisões do usuár
 
 ## Linguagem
 
+**Registro de movimentações**:
+Histórico das movimentações conhecidas pelo aplicativo, obtidas por lançamento manual ou por evidências revisadas. Pode ser parcial e não exige reproduzir o saldo bancário ou o patrimônio do usuário. Seu acompanhamento continua exigindo distinguir receitas, despesas e movimentações entre recursos próprios.
+_Evitar_: réplica da conta bancária, extrato completo garantido
+
+**Resultado dos registros no período**:
+Diferença entre receitas e despesas confirmadas no recorte selecionado. Depende dos registros disponíveis e não representa saldo disponível no banco, patrimônio ou economia garantida.
+_Evitar_: dinheiro disponível, saldo bancário
+
 **Conta financeira**:
 Local em que o usuário mantém dinheiro, como uma conta bancária ou dinheiro em espécie.
 _Evitar_: conta de acesso, cartão
